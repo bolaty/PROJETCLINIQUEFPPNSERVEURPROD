@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  app:
+    container_name: tontine_server_test
+    image: mgappy_ser:v1
+    restart: always
+    environment:
+      - MYSQL_HOST=162.19.152.91
+      - MYSQL_USER=Python
+      - MYSQL_PASSWORD=PYTh@n2024#
+      - MYSQL_DATABASE=dbVitalFinancepython
+      - LIENAPISMS=http://162.19.152.91:722/
+      - LIENAPPLICATIONCLIENT=http://162.19.152.91:722/
+      - PORT_NUMBER=5980
+    ports:
+      - 5980:5980
+    deploy:
+      mode: replicated
+      replicas: 2
+      placement:
+        constraints: [node.role == manager]
