@@ -12,6 +12,7 @@ services:
       - LIENAPISMS=http://162.19.152.91:722/
       - LIENAPPLICATIONCLIENT=http://162.19.152.91:722/
       - PORT_NUMBER=5980
+      - CODECRYPTAGE=Y}@128eVIXfoi7
     ports:
       - 5980:5980
     deploy:
