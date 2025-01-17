@@ -1,6 +1,6 @@
 from flask import Blueprint,request, jsonify,current_app,current_app as app,send_file
 from service.dashboard import dashboard
-from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture
+from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture, get_code_facture
 from service.comptabilisationOperation import pvgComptabilisationOperations
 from service.edition import recu_edition, brouillard_caisse_edition, journal_edition, gd_livre_edition, balance_edition
 from service.auth import connexion_utilisateur
@@ -47,7 +47,6 @@ def pvg_creation_facture():
         objet_facture['STAT_CODESTATUT'] = str(row.get('STAT_CODESTATUT', ''))
         objet_facture['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR', ''))
         objet_facture['PL_CODENUMCOMPTE'] = str(row.get('PL_CODENUMCOMPTE', ''))
-        objet_facture['ACT_CODEACTE'] = str(row.get('ACT_CODEACTE', ''))
         objet_facture['AS_CODEASSURANCE'] = str(row.get('AS_CODEASSURANCE', ''))
         objet_facture['MC_DATESAISIE'] = str(row.get('PT_DATESAISIE', ''))
         objet_facture['FT_ANNULATION'] = str(row.get('FT_ANNULATION', ''))
@@ -61,7 +60,7 @@ def pvg_creation_facture():
         # with db_connexion.cursor() as cursor:
         cursor = db_connexion.cursor()
         cursor.execute("BEGIN TRANSACTION")
-    
+
         if objet_facture['TYPEOPERATION'] != '7':
             try:
                 # creer le patient
@@ -84,7 +83,8 @@ def pvg_creation_facture():
         # creer la facture du patient
         try:
             # generer le code de la facture
-            objet_facture['FT_CODEFACTURE'] = generer_code_facture(objet_facture['AG_CODEAGENCE'])
+            # objet_facture['FT_CODEFACTURE'] = generer_code_facture(objet_facture['AG_CODEAGENCE'])
+            objet_facture['FT_CODEFACTURE'] = get_code_facture(db_connexion, objet_facture['AG_CODEAGENCE'], objet_facture['OP_CODEOPERATEUR'])
         except ValueError as e:
             result = {}
 
@@ -92,13 +92,13 @@ def pvg_creation_facture():
             result['SL_RESULTAT'] = "FALSE"
             # Ajouter le dictionnaire à la liste des résultats
             response.append(result)
-    
+
             cursor.execute("ROLLBACK")
             return jsonify(response)
         
         # creation de la facture
         insert_facture(db_connexion, objet_facture)
-            
+        
         # Consigner les mouvements
         clsmouvement_infos = []
         for row in request_data['Objet'][0]['TABLEMODEREGLEMENT']:
@@ -153,15 +153,15 @@ def pvg_creation_facture():
             else:
                 #db_connexion.close()
                 return jsonify({"SL_MESSAGE":response['SL_MESSAGE'] ,"SL_RESULTAT": 'FALSE'})
-    
+        
         except Exception as e:
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 500
     except Exception as e:
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
-    finally:
-        db_connexion.close()
+    """ finally:
+        db_connexion.close() """
 
 
 
