@@ -200,8 +200,8 @@ def pvg_constatation_facture(connexion, cls_mouvement_comptable):
         'MC_NUMPIECE': cls_mouvement_comptable['MC_NUMPIECE'],
         'MC_NUMSEQUENCE': cls_mouvement_comptable['MC_NUMSEQUENCE'],
         'MR_CODEMODEREGLEMENT': cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] if 'MR_CODEMODEREGLEMENT' in cls_mouvement_comptable and cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] else None,
-        'PT_IDPATIENT': cls_mouvement_comptable['PT_IDPATIENT'],
-        'FT_CODEFACTURE': cls_mouvement_comptable['FT_CODEFACTURE'],
+        'PT_IDPATIENT': cls_mouvement_comptable.get('PT_IDPATIENT') or None,
+        'FT_CODEFACTURE': cls_mouvement_comptable.get('FT_CODEFACTURE') or None,
         'OP_CODEOPERATEUR': cls_mouvement_comptable['OP_CODEOPERATEUR'],
         'MC_MONTANTDEBIT': cls_mouvement_comptable['MC_MONTANTDEBIT'],
         'MC_MONTANTCREDIT': cls_mouvement_comptable['MC_MONTANTCREDIT'],
@@ -226,7 +226,7 @@ def pvg_constatation_facture(connexion, cls_mouvement_comptable):
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': '',
         'MONTANT': cls_mouvement_comptable['MC_MONTANT_FACTURE'],
-        'ACT_CODEACTE': cls_mouvement_comptable['ACT_CODEACTE']
+        'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None
     }
 
      # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
@@ -263,8 +263,8 @@ def pvg_comptabilisation_operation1(connexion, cls_mouvement_comptable):
         'MC_NUMPIECE': cls_mouvement_comptable['MC_NUMPIECE'],
         'MC_NUMSEQUENCE': cls_mouvement_comptable['MC_NUMSEQUENCE'],
         'MR_CODEMODEREGLEMENT': cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] if 'MR_CODEMODEREGLEMENT' in cls_mouvement_comptable and cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] else None,
-        'PT_IDPATIENT': cls_mouvement_comptable['PT_IDPATIENT'],
-        'FT_CODEFACTURE': cls_mouvement_comptable['FT_CODEFACTURE'],
+        'PT_IDPATIENT': cls_mouvement_comptable.get('PT_IDPATIENT') or None,
+        'FT_CODEFACTURE': cls_mouvement_comptable.get('FT_CODEFACTURE') or None,
         'OP_CODEOPERATEUR': cls_mouvement_comptable['OP_CODEOPERATEUR'],
         'MC_MONTANTDEBIT': cls_mouvement_comptable['MC_MONTANTDEBIT'],
         'MC_MONTANTCREDIT': cls_mouvement_comptable['MC_MONTANTCREDIT'],
@@ -289,7 +289,7 @@ def pvg_comptabilisation_operation1(connexion, cls_mouvement_comptable):
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': '',
         'MONTANT': cls_mouvement_comptable['MC_MONTANT_FACTURE'],
-        'ACT_CODEACTE': cls_mouvement_comptable['ACT_CODEACTE']
+        'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None
     }
 
      # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
@@ -324,8 +324,8 @@ def pvg_comptabilisation_operation2(connexion, cls_mouvement_comptable):
         'MC_NUMPIECE': cls_mouvement_comptable['MC_NUMPIECE'],
         'MC_NUMSEQUENCE': cls_mouvement_comptable['MC_NUMSEQUENCE'],
         'MR_CODEMODEREGLEMENT': cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] if 'MR_CODEMODEREGLEMENT' in cls_mouvement_comptable and cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] else None,
-        'PT_IDPATIENT': cls_mouvement_comptable['PT_IDPATIENT'],
-        'FT_CODEFACTURE': cls_mouvement_comptable['FT_CODEFACTURE'],
+        'PT_IDPATIENT': cls_mouvement_comptable.get('PT_IDPATIENT') or None,
+        'FT_CODEFACTURE': cls_mouvement_comptable.get('FT_CODEFACTURE') or None,
         'OP_CODEOPERATEUR': cls_mouvement_comptable['OP_CODEOPERATEUR'],
         'MC_MONTANTDEBIT': cls_mouvement_comptable['MC_MONTANTDEBIT'],
         'MC_MONTANTCREDIT': cls_mouvement_comptable['MC_MONTANTCREDIT'],
@@ -350,7 +350,7 @@ def pvg_comptabilisation_operation2(connexion, cls_mouvement_comptable):
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': '',
         'MONTANT': cls_mouvement_comptable['MC_MONTANT_FACTURE'],
-        'ACT_CODEACTE': cls_mouvement_comptable['ACT_CODEACTE']
+        'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None
     }
 
      # Récupérer la connexion et le curseur de la base de données depuis cls_donnee

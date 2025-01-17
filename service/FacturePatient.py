@@ -24,6 +24,8 @@ def insert_patient(connexion, patient_info):
     params = {
         'PT_IDPATIENT': patient_info.get('PT_IDPATIENT') or None,
         'PT_CODEPATIENT': patient_info.get('PT_CODEPATIENT') or None,
+        # 'PT_IDPATIENT': patient_info['PT_IDPATIENT'] if 'PT_IDPATIENT' in patient_info and patient_info['PT_IDPATIENT'] else None,
+        # 'PT_CODEPATIENT': patient_info['PT_CODEPATIENT'] if 'PT_CODEPATIENT' in patient_info and patient_info['PT_CODEPATIENT'] else None,
         'PT_MATRICULE': patient_info['PT_MATRICULE'],
         'AG_CODEAGENCE': patient_info['AG_CODEAGENCE'],
         'PT_NOMPRENOMS': patient_info['PT_NOMPRENOMS'],
@@ -32,21 +34,28 @@ def insert_patient(connexion, patient_info):
         'PT_DATENAISSANCE': datetime.strptime(patient_info['PT_DATENAISSANCE'], "%d/%m/%Y"),
         'PT_DATESAISIE': datetime.strptime(patient_info['PT_DATESAISIE'], "%d/%m/%Y"),
         'PT_LIEUHABITATION': patient_info['PT_LIEUHABITATION'],
-        'PF_CODEPROFESSION': patient_info['PF_CODEPROFESSION'],
+        'PF_CODEPROFESSION': patient_info.get('PF_CODEPROFESSION') or None,
+        # 'PF_CODEPROFESSION': patient_info['PF_CODEPROFESSION'] if 'PF_CODEPROFESSION' in patient_info and patient_info['PF_CODEPROFESSION'] else None,
         'SX_CODESEXE': patient_info['SX_CODESEXE'],
-        'STAT_CODESTATUT': patient_info['STAT_CODESTATUT'],
+        'STAT_CODESTATUT': patient_info.get('STAT_CODESTATUT') or None,
+        # 'STAT_CODESTATUT': patient_info['STAT_CODESTATUT'] if 'STAT_CODESTATUT' in patient_info and patient_info['STAT_CODESTATUT'] else None,
         'OP_CODEOPERATEUR': patient_info['OP_CODEOPERATEUR'],
-        'PL_CODENUMCOMPTE': patient_info['PL_CODENUMCOMPTE'],
+        'PL_CODENUMCOMPTE': patient_info.get('PL_CODENUMCOMPTE') or None,
+        # 'PL_CODENUMCOMPTE': patient_info['PL_CODENUMCOMPTE'] if 'PL_CODENUMCOMPTE' in patient_info and patient_info['PL_CODENUMCOMPTE'] else None,
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': patient_info['TYPEOPERATION'],  # 0
     }
-
+    
     try:
         cursor = connexion.cursor()
         
-        # verifie si le numero de telephone et/ou lemail existe deja. si oui, lever un message d'erreur sinon creer le patient
-        cursor.execute("SELECT * FROM dbo.FT_CONTACTEMAILEXIST(?,?,?,?)", (params['AG_CODEAGENCE'], params['PT_CONTACT'], params['PT_EMAIL'], params['CODECRYPTAGE']))
-       
+        try:
+            # verifie si le numero de telephone et/ou lemail existe deja. si oui, lever un message d'erreur sinon creer le patient
+            cursor.execute("SELECT * FROM dbo.FT_CONTACTEMAILEXIST(?,?,?,?)", (params['AG_CODEAGENCE'], params['PT_CONTACT'], params['PT_EMAIL'], params['CODECRYPTAGE']))
+        except Exception as e:
+                connexion.rollback()
+                raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
+            
         # Récupération des résultats
         result = cursor.fetchone()
         if result:
@@ -99,10 +108,10 @@ def get_id_patient(connexion, _OP_CODEOPERATEUR):
 def insert_facture(connexion, facture_info):
     # Préparation des paramètres
     params = {
-        'FT_CODEFACTURE': facture_info['FT_CODEFACTURE'] if 'FT_CODEFACTURE' in facture_info and facture_info['FT_CODEFACTURE'] else None,
-        'PT_IDPATIENT': facture_info['PT_IDPATIENT'],
-        'ACT_CODEACTE': facture_info['ACT_CODEACTE'],
-        'AS_CODEASSURANCE': facture_info['AS_CODEASSURANCE'],
+        'FT_CODEFACTURE': facture_info.get('FT_CODEFACTURE') or None,
+        'PT_IDPATIENT': facture_info.get('PT_IDPATIENT') or None,
+        'ACT_CODEACTE': facture_info.get('ACT_CODEACTE') or None,
+        'AS_CODEASSURANCE': facture_info.get('AS_CODEASSURANCE') or None,
         'MC_DATESAISIE': datetime.strptime(facture_info['MC_DATESAISIE'], "%d/%m/%Y"),
         'OP_CODEOPERATEUR': facture_info['OP_CODEOPERATEUR'],
         'FT_ANNULATION': facture_info['FT_ANNULATION'],
@@ -114,6 +123,38 @@ def insert_facture(connexion, facture_info):
     try:
         cursor = connexion.cursor()
         cursor.execute("EXEC dbo.PC_FACTUREPATIENT ?, ?, ?, ?, ?,?, ?, ?, ?, ?", list(params.values()))
+    except Exception as e:
+        connexion.rollback()
+        raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
+    
+    
+#creation de la facture
+def get_code_facture(connexion, _AG_CODEAGENCE, _OP_CODEOPERATEUR):
+    # Préparation des paramètres
+    params = {
+        'AG_CODEAGENCE': _AG_CODEAGENCE,
+        'OP_CODEOPERATEUR': _OP_CODEOPERATEUR
+    }
+
+    try:
+        cursor = connexion.cursor()
+        cursor.execute("EXEC dbo.PS_GENERATIONIDFACTUREPATIENT ?, ?", list(params.values()))
+        
+        try:
+            cursor = connexion.cursor()
+            
+            # Requête paramétrée
+            query = "SELECT * FROM dbo.TEMPGENERATIONIDFACTUREPATIENTRESULTAT{}".format(_OP_CODEOPERATEUR)
+
+            # Exécution de la requête
+            cursor.execute(query)
+
+            rows = cursor.fetchone()
+            return rows.FT_CODEFACTURE
+        except Exception as e:
+            # En cas d'erreur, lever une exception avec un message approprié
+            raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
+    
     except Exception as e:
         connexion.rollback()
         raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
@@ -221,7 +262,7 @@ def list_facture(connexion, clsListeFacture):
         'PT_IDPATIENT': clsListeFacture['PT_IDPATIENT'],
         'ACT_CODEACTE': clsListeFacture['ACT_CODEACTE'],
         'AS_CODEASSURANCE': clsListeFacture['AS_CODEASSURANCE'],
-        'MC_DATESAISIE': clsListeFacture['MC_DATESAISIE'],
+        'MC_DATESAISIE': datetime.strptime(clsListeFacture['MC_DATESAISIE'], "%d/%m/%Y"),
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': 0
     }
