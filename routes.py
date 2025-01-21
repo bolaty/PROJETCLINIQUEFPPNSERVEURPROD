@@ -1,9 +1,13 @@
 from flask import Blueprint,request, jsonify,current_app,current_app as app,send_file
 from service.dashboard import dashboard
-from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture, get_code_facture
+from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture, get_code_facture, get_info_comptabilisation
+from service.parametres import liste_operateur, liste_des_agences, liste_des_profils, liste_des_services, liste_des_parametres
 from service.comptabilisationOperation import pvgComptabilisationOperations
 from service.edition import recu_edition, brouillard_caisse_edition, journal_edition, gd_livre_edition, balance_edition
 from service.auth import connexion_utilisateur
+from service.journee_de_travail_et_exercice import valeur_scalaire_requete_max, valeur_scalaire_requete_count, insert_journee_travail, table_libelle_date_systeme_serveur, liste_journee_travail, update_journee_travail_statut
+from service.ChargementCombos import pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations
+from service.auth import connexion_utilisateur,pvgUserChangePasswordfist,pvgUserDemandePassword
 from service.ChargementCombos import pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession
 from models.models import clsObjetEnvoi
 from datetime import datetime
@@ -23,7 +27,7 @@ api_bp = Blueprint('api', __name__)
 ################################################################
 
 @api_bp.route('/creation_facture', methods=['POST'])
-def pvg_creation_facture():
+def pvgCreationFacture():
     # Récupérer les données du corps de la requête
     request_data = request.json
     
@@ -533,16 +537,16 @@ def pvgDashboard():
             db_connexion.close()
             
 ################################################################
-#                                                                      GESTION DASHBOARD                                                                  #
+#                      GESTION DASHBOARD                                                                  #
 ################################################################
 
 
 
 ################################################################
-#                                                        GESTION DE L'AUTHENTIFICATION                                                        #
+#                          GESTION DE L'AUTHENTIFICATION                                                        #
 ################################################################
 
-#service de connection
+#service de connexion
 @api_bp.route('/login', methods=['POST'])
 def pvgUserLogin():
     # Récupérer les données du corps de la requête
@@ -571,7 +575,7 @@ def pvgUserLogin():
             if len(response) > 0:
                 return jsonify({"SL_MESSAGE": "Connexion effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response[0])
             else:
-                return jsonify({"SL_MESSAGE": 'Longin ou mot de passe incorrect', "SL_RESULTAT": 'FALSE'})
+                return jsonify({"SL_MESSAGE": 'Login ou mot de passe incorrect', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
             db_connexion.rollback()
@@ -580,12 +584,105 @@ def pvgUserLogin():
         finally:
             db_connexion.close()                    
 
-################################################################
-#                                                        GESTION DE L'AUTHENTIFICATION                                                        #
-################################################################
+
+@api_bp.route('/pvgUserChangePasswordfist', methods=['POST'])
+def UserChangePasswordfist():
+    # Récupérer les données du corps de la requête
+    request_data = request.json
+    
+    # Parcourir les éléments de la liste Objet
+    for row in request_data['Objet']:
+        clsUserChangePasswordfist = {}
+        clsUserChangePasswordfist['PO_CODEPROFIL'] = row['PO_CODEPROFIL']
+        clsUserChangePasswordfist['OP_MOTPASSEOLD'] = row['OP_MOTPASSEOLD']
+        clsUserChangePasswordfist['OP_LOGINOLD'] = row['OP_LOGINOLD']
+        clsUserChangePasswordfist['OP_MOTPASSENEW'] = row['OP_MOTPASSENEW']
+        clsUserChangePasswordfist['OP_LOGINNEW'] = row['OP_LOGINNEW']
+  
+        
+        
+        
+    # Vérification que toutes les données obligatoires sont présentes
+        if not all([clsUserChangePasswordfist['PO_CODEPROFIL'], clsUserChangePasswordfist['OP_LOGINOLD'], 
+                    clsUserChangePasswordfist['OP_MOTPASSENEW'], clsUserChangePasswordfist['OP_LOGINNEW'] 
+                    ]):
+            return jsonify({"SL_MESSAGE": "Données manquantes ou incorrectes.code erreur (301)", "SL_RESULTAT": 'FALSE'}), 200    
+        
+        # Récupérer la connexion à la base de données depuis current_app
+        db_connection = connect_database()
+
+        try:
+            with db_connection.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction avec les données récupérées
+                response = pvgUserChangePasswordfist(cursor, clsUserChangePasswordfist)
+                
+                # Valider la transaction si tout s'est bien passé
+                db_connection.commit()
+            
+            # Retourner la réponse au client
+            if response[0]['SL_RESULTAT'] == 'TRUE':
+                return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response[0])
+            else:
+                return jsonify({"SL_MESSAGE": response['SL_MESSAGE'], "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connection.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la modification des accès : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connection.close()  
+            
+@api_bp.route('/pvgUserDemandePassword', methods=['POST'])
+def UserDemandePassword():
+    # Récupérer les données du corps de la requête
+    request_data = request.json
+    
+    # Parcourir les éléments de la liste Objet
+    for row in request_data['Objet']:
+        clspvgUserDemandePassword = {}
+        clspvgUserDemandePassword['OP_TELEPHONE'] = row['OP_TELEPHONE']
+        clspvgUserDemandePassword['OP_LOGIN'] = row['OP_LOGIN']
+        #clspvgUserDemandePassword['TYPEOPERATION'] = row['TYPEOPERATION']
+        #clspvgUserDemandePassword['CODECRYPTAGE'] = row['CODECRYPTAGE']
+        
+        # Récupérer la connexion à la base de données depuis current_app
+        db_connection = connect_database()
+
+        try:
+            with db_connection.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction avec les données récupérées
+                response = pvgUserDemandePassword(cursor, clspvgUserDemandePassword)
+                
+                # Valider la transaction si tout s'est bien passé
+                db_connection.commit()
+            
+            # Retourner la réponse au client
+            if response[0]['SL_RESULTAT'] == 'TRUE':
+                return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response[0])
+            else:
+                return jsonify({"SL_MESSAGE": response[0]['SL_MESSAGE'], "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connection.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la modification des accès : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connection.close() 
+
+
 
 ################################################################
-#                    GESTION COMBOS                            #
+#                           GESTION DE L'AUTHENTIFICATION                                                        #
+################################################################
+
+
+
+################################################################
+#                                                                           GESTION COMBOS                                                                    #
 ################################################################
 @api_bp.route('/ComboTableLabelAgence', methods=['POST'])
 def ComboTableLabelAgence():
@@ -598,17 +695,17 @@ def ComboTableLabelAgence():
         user_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', '')) 
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
                 if user_info['AG_CODEAGENCE']:  # Si une valeur est fournie
-                    response = pvgComboTableLabelAgence(db_connection, str(row.get('AG_CODEAGENCE', '')))
+                    response = pvgComboTableLabelAgence(db_connexion, str(row.get('AG_CODEAGENCE', '')))
                 else:  # Sinon, on appelle sans paramètre
-                    response = pvgComboTableLabelAgence(db_connection)
+                    response = pvgComboTableLabelAgence(db_connexion)
                 
                 
             if len(response) > 0 :
@@ -617,11 +714,11 @@ def ComboTableLabelAgence():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         finally:
-            db_connection.close()            
+            db_connexion.close()            
 
 @api_bp.route('/pvgComboExercice', methods=['POST'])
 def ComboExercice():
@@ -643,14 +740,14 @@ def ComboExercice():
             vpp_critere = ()
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = pvgComboExercice(db_connection, *vpp_critere)
+                response = pvgComboExercice(db_connexion, *vpp_critere)
                 
                 
                 
@@ -660,11 +757,11 @@ def ComboExercice():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         finally:
-            db_connection.close()  
+            db_connexion.close()  
             
             
 @api_bp.route('/pvgComboPeriodicite', methods=['POST'])
@@ -677,14 +774,14 @@ def ComboPeriodicite():
         
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = pvgComboPeriodicite(db_connection)
+                response = pvgComboPeriodicite(db_connexion)
                 
                 
                 
@@ -694,11 +791,11 @@ def ComboPeriodicite():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         finally:
-            db_connection.close()                        
+            db_connexion.close()                        
  
  
 @api_bp.route('/pvgComboperiode', methods=['POST'])
@@ -718,14 +815,14 @@ def Comboperiode():
        
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = pvgComboperiode(db_connection, PE_CODEPERIODICITE)
+                response = pvgComboperiode(db_connexion, PE_CODEPERIODICITE)
                 
                 
                 
@@ -735,11 +832,11 @@ def Comboperiode():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         finally:
-            db_connection.close()   
+            db_connexion.close()   
  
  
  
@@ -770,14 +867,14 @@ def ComboPeriodiciteDateDebutFin():
        
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = pvgPeriodiciteDateDebutFin(db_connection, EX_EXERCICE,MO_CODEMOIS,PE_CODEPERIODICITE)
+                response = pvgPeriodiciteDateDebutFin(db_connexion, EX_EXERCICE,MO_CODEMOIS,PE_CODEPERIODICITE)
                 
                 
                 
@@ -787,11 +884,11 @@ def ComboPeriodiciteDateDebutFin():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         finally:
-            db_connection.close()  
+            db_connexion.close()  
  
 @api_bp.route('/pvgComboOperateur', methods=['POST'])
 def ComboOperateur():
@@ -818,14 +915,14 @@ def ComboOperateur():
             vpp_critere = ()
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction 
-                response = pvgComboOperateur(db_connection, *vpp_critere)
+                response = pvgComboOperateur(db_connexion, *vpp_critere)
                
                 
                 
@@ -835,11 +932,11 @@ def ComboOperateur():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         finally:
-            db_connection.close()            
+            db_connexion.close()            
             
 @api_bp.route('/pvgComboModeReglement', methods=['POST'])
 def ComboModeReglement():
@@ -851,14 +948,14 @@ def ComboModeReglement():
         
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = pvgComboModeReglement(db_connection)
+                response = pvgComboModeReglement(db_connexion)
                 
                 
                 
@@ -868,11 +965,11 @@ def ComboModeReglement():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         finally:
-            db_connection.close()  
+            db_connexion.close()  
             
 @api_bp.route('/pvgComboActe', methods=['POST'])
 def ComboActe():
@@ -882,14 +979,14 @@ def ComboActe():
         user_info = {}
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = pvgComboActe(db_connection)
+                response = pvgComboActe(db_connexion)
                 
                 
                 
@@ -899,11 +996,11 @@ def ComboActe():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         finally:
-            db_connection.close()   
+            db_connexion.close()   
             
             
             
@@ -977,14 +1074,14 @@ def ComboAssurance():
         user_info = {}
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = pvgComboAssurance(db_connection)
+                response = pvgComboAssurance(db_connexion)
                 
                 
                 
@@ -994,11 +1091,11 @@ def ComboAssurance():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         finally:
-            db_connection.close()
+            db_connexion.close()
 @api_bp.route('/pvgComboAssure', methods=['POST'])
 def ComboAssure():
     request_data = request.json
@@ -1007,14 +1104,14 @@ def ComboAssure():
         user_info = {}
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = pvgComboAssure(db_connection)
+                response = pvgComboAssure(db_connexion)
                 
                 
                 
@@ -1024,11 +1121,11 @@ def ComboAssure():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         finally:
-            db_connection.close()       
+            db_connexion.close()       
  
 @api_bp.route('/pvgComboTypeshemacomptable', methods=['POST'])
 def ComboTypeshemacomptable():
@@ -1038,14 +1135,14 @@ def ComboTypeshemacomptable():
         user_info = {}
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = pvgComboTypeshemacomptable(db_connection)
+                response = pvgComboTypeshemacomptable(db_connexion)
                 
                 
             if len(response) > 0 :
@@ -1054,11 +1151,11 @@ def ComboTypeshemacomptable():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         finally:
-            db_connection.close()     
+            db_connexion.close()     
    
 
 @api_bp.route('/pvgComboCompte', methods=['POST'])
@@ -1092,14 +1189,14 @@ def ComboCompte():
             vpp_critere = ()
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = pvgComboCompte(db_connection, *vpp_critere)
+                response = pvgComboCompte(db_connexion, *vpp_critere)
                 
                 
                 
@@ -1109,14 +1206,684 @@ def ComboCompte():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connexion.close()                      
+################################################################
+#                   FIN GESTION COMBOS                         #
+################################################################
+
+
+
+################################################################
+#                                                             GESTION DES PARAMETRES                                                                  #
+################################################################
+
+@api_bp.route('/liste_operateur_par_type', methods=['POST'])
+def pvgGetOperateurParType():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+
+    for row in request_data['Objet']:
+        clsListeOperateur = {}
+        # Validation et récupération des données pour la suppression
+   
+        clsListeOperateur['OP_CODEOPERATEUR'] = row.get('OP_CODEOPERATEUR')
+        clsListeOperateur['AG_CODEAGENCE'] = row.get('AG_CODEAGENCE')
+        clsListeOperateur['PO_CODEPROFIL'] = row.get('PO_CODEPROFIL')
+        clsListeOperateur['SR_CODESERVICE'] = row.get('SR_CODESERVICE')
+        clsListeOperateur['OP_NOMBRECONNEXION'] = row.get('OP_NOMBRECONNEXION')
+        clsListeOperateur['TYPEOPERATION'] = row.get('TYPEOPERATION')
+        
+        required_keys = ['AG_CODEAGENCE']
+
+        # Vérifier si toutes les clés requises existent dans le dictionnaire
+        if not all(key in clsListeOperateur for key in required_keys):
+            return jsonify({"SL_MESSAGE": "Données manquantes ou incorrectes. Code erreur (301)", "SL_RESULTAT": 'FALSE'})
+        # Vérification que toutes les données obligatoires sont présentes
+        if not all([clsListeOperateur['AG_CODEAGENCE']]):
+           return jsonify({"SL_MESSAGE": "Données manquantes ou incorrectes.code erreur (301)", "SL_RESULTAT": 'FALSE'})
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression ou récupération
+                response = liste_operateur(db_connexion, clsListeOperateur)
+                
+                if response:
+                    cursor.execute("COMMIT")
+                    return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'}, response)
+                else:
+                    result = {}
+	
+                    result['SL_MESSAGE'] = "Opérateur non trouvé ou autre erreur."
+                    result['SL_RESULTAT'] = "FALSE"
+                    # Ajouter le dictionnaire à la liste des résultats
+                    response.append(result)
+            
+                    cursor.execute("ROLLBACK")
+                    return jsonify(response)
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connexion.close()
+            
+            
+            
+@api_bp.route('/liste_agence', methods=['POST'])
+def pvgGetAgence():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+
+    for row in request_data['Objet']:
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression ou récupération
+                response = liste_des_agences(db_connexion)
+                
+                if response:
+                    cursor.execute("COMMIT")
+                    return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'}, response)
+                else:
+                    result = {}
+	
+                    result['SL_MESSAGE'] = "Agence non trouvée ou autre erreur."
+                    result['SL_RESULTAT'] = "FALSE"
+                    # Ajouter le dictionnaire à la liste des résultats
+                    response.append(result)
+            
+                    cursor.execute("ROLLBACK")
+                    return jsonify(response)
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connexion.close()
+
+
+
+@api_bp.route('/liste_profil', methods=['POST'])
+def pvgGetProfil():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+
+    for row in request_data['Objet']:
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression ou récupération
+                response = liste_des_profils(db_connexion)
+                
+                if response:
+                    cursor.execute("COMMIT")
+                    return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'}, response)
+                else:
+                    result = {}
+	
+                    result['SL_MESSAGE'] = "Profil non trouvé ou autre erreur."
+                    result['SL_RESULTAT'] = "FALSE"
+                    # Ajouter le dictionnaire à la liste des résultats
+                    response.append(result)
+            
+                    cursor.execute("ROLLBACK")
+                    return jsonify(response)
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connexion.close()
+
+
+
+@api_bp.route('/liste_service', methods=['POST'])
+def pvgGetService():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+
+    for row in request_data['Objet']:
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression ou récupération
+                response = liste_des_services(db_connexion)
+                
+                if response:
+                    cursor.execute("COMMIT")
+                    return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'}, response)
+                else:
+                    result = {}
+	
+                    result['SL_MESSAGE'] = "Service non trouvé ou autre erreur."
+                    result['SL_RESULTAT'] = "FALSE"
+                    # Ajouter le dictionnaire à la liste des résultats
+                    response.append(result)
+            
+                    cursor.execute("ROLLBACK")
+                    return jsonify(response)
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connexion.close()
+            
+            
+
+@api_bp.route('/liste_parametre', methods=['POST'])
+def pvgGetParametre():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+
+    for row in request_data['Objet']:
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression ou récupération
+                response = liste_des_parametres(db_connexion)
+                
+                if response:
+                    cursor.execute("COMMIT")
+                    return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'}, response)
+                else:
+                    result = {}
+	
+                    result['SL_MESSAGE'] = "Paramètre non trouvé ou autre erreur."
+                    result['SL_RESULTAT'] = "FALSE"
+                    # Ajouter le dictionnaire à la liste des résultats
+                    response.append(result)
+            
+                    cursor.execute("ROLLBACK")
+                    return jsonify(response)
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connexion.close()
+            
+################################################################
+#                                                             GESTION DES PARAMETRES                                                                  #
+################################################################
+
+
+
+################################################################
+#                                                GESTION DES OPERATIONS DE CAISSES                                                        #
+################################################################
+
+@api_bp.route('/famille_operation', methods=['POST'])
+def pvgGetFamilleOperation():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+
+    for row in request_data['Objet']:
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression ou récupération
+                response = liste_des_familles_operations(db_connexion)
+                
+                if response:
+                    cursor.execute("COMMIT")
+                    return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'}, response)
+                else:
+                    result = {}
+	
+                    result['SL_MESSAGE'] = "Famille d'opération non trouvée ou autre erreur."
+                    result['SL_RESULTAT'] = "FALSE"
+                    # Ajouter le dictionnaire à la liste des résultats
+                    response.append(result)
+            
+                    cursor.execute("ROLLBACK")
+                    return jsonify(response)
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connexion.close()
+            
+            
+            
+@api_bp.route('/operation', methods=['POST'])
+def pvgGetOperation():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+
+    for row in request_data['Objet']:
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression ou récupération
+                response = liste_des_operations(db_connexion)
+                
+                if response:
+                    cursor.execute("COMMIT")
+                    return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'}, response)
+                else:
+                    result = {}
+	
+                    result['SL_MESSAGE'] = "Opération non trouvée ou autre erreur."
+                    result['SL_RESULTAT'] = "FALSE"
+                    # Ajouter le dictionnaire à la liste des résultats
+                    response.append(result)
+            
+                    cursor.execute("ROLLBACK")
+                    return jsonify(response)
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connexion.close()
+            
+################################################################
+#                                                GESTION DES OPERATIONS DE CAISSES                                                        #
+################################################################
+
+
+
+
+# ################################################################
+#                                                       GESTION DES JOURNEES DE TRAVAIL                                                         #
+#################################################################
+
+@api_bp.route('/valeur_scalaire_requete_max_journee', methods=['POST'])
+def pvgValeurScalaireRequeteMax():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        user_info = {}
+
+        # Validation et récupération des données pour la suppression
+        AG_CODEAGENCE = None
+        JT_DATEJOURNEETRAVAIL = None
+        JT_STATUT = None
+        if row.get('AG_CODEAGENCE', ''):
+           AG_CODEAGENCE = str(row.get('AG_CODEAGENCE', '')) 
+        if row.get('JT_DATEJOURNEETRAVAIL', ''):
+           JT_DATEJOURNEETRAVAIL = parse_datetime(row.get('JT_DATEJOURNEETRAVAIL', '')) 
+        if row.get('JT_STATUT', ''):
+           JT_STATUT  = str(row.get('JT_STATUT', '')) 
+
+        # Préparer les paramètres pour la fonction
+        if AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL and JT_STATUT:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL,JT_STATUT)
+        elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+        elif AG_CODEAGENCE:
+            vpp_critere = (AG_CODEAGENCE,)
+        else:
+            vpp_critere = ()
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = valeur_scalaire_requete_max(db_connexion, *vpp_critere)
+                
+            if len(response) > 0:
+                return jsonify({"SL_MESSAGE": "elements existant !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": "pas d'élement", "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connexion.close()
+
+
+
+@api_bp.route('/valeur_scalaire_requete_count_journee', methods=['POST'])
+def pvgValeurScalaireRequeteCount():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        user_info = {}
+
+        # Validation et récupération des données pour la suppression
+       
+        AG_CODEAGENCE = None
+        JT_STATUT = None
+        JT_DATEJOURNEETRAVAIL = None
+        if row.get('AG_CODEAGENCE', ''):
+           AG_CODEAGENCE = str(row.get('AG_CODEAGENCE', '')) 
+        if row.get('JT_STATUT', ''):
+           JT_STATUT  = str(row.get('JT_STATUT', '')) 
+        if row.get('JT_DATEJOURNEETRAVAIL', ''):
+           JT_DATEJOURNEETRAVAIL  = str(row.get('JT_DATEJOURNEETRAVAIL', '')) 
+
+        # Préparer les paramètres pour la fonction
+        if AG_CODEAGENCE and JT_STATUT:
+            vpp_critere = (AG_CODEAGENCE, JT_STATUT)
+        elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+        elif AG_CODEAGENCE:
+            vpp_critere = (AG_CODEAGENCE,)
+        else:
+            vpp_critere = ()
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = valeur_scalaire_requete_count(db_connexion, *vpp_critere)
+                
+            if len(response) > 0:
+                return jsonify({"SL_MESSAGE": "Opérations réalisée avec succès !!!", "SL_RESULTAT": 'TRUE'}, response)
+            else:
+                return jsonify({"SL_MESSAGE": "pas d'élement", "SL_RESULTAT": 'FALSE'})
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connexion.close() 
+            
+            
+            
+@api_bp.route('/date_systeme_serveur', methods=['POST'])
+def pvgGetDateSystemeServeur():
+    request_data = request.json
+    
+    if request_data:
+        user_info = {}
+
+        # Validation et récupération des données pour la suppression
+       
+        vpp_critere = ()
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = table_libelle_date_systeme_serveur(db_connexion, *vpp_critere)
+                
+            if len(response) > 0:
+                return jsonify({"SL_MESSAGE": "Opérations réalisée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": "pas d'élement", "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connexion.close()
+            
+                     
+            
+@api_bp.route('/ajouter_journee_travail', methods=['POST'])
+def pvgInsertJourneeTravail():
+        # Récupérer les données du corps de la requête
+        request_data = request.json
+        journeetravail_infos = []
+        if 'Objet' not in request_data:
+            return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+        
+        for row in request_data['Objet']:
+            journeetravail_info = {}
+
+            try:
+                # Validation des données
+                journeetravail_info['AG_CODEAGENCE'] = int(row.get('AG_CODEAGENCE', 0))
+                journeetravail_info['JT_DATEJOURNEETRAVAIL'] = parse_datetime(row.get('JT_DATEJOURNEETRAVAIL'))
+                journeetravail_info['OP_CODEOPERATEUR'] = int(row.get('OP_CODEOPERATEUR', ''))
+                journeetravail_info['JT_STATUT'] = str(row.get('JT_STATUT', ''))
+                journeetravail_infos.append(journeetravail_info)
+            except ValueError as e:
+                # Retourner un message d'erreur en cas de problème de type de données
+                return jsonify({"SL_MESSAGE": f"Erreur de type de données : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
+            except Exception as e:
+                # Retourner un message d'erreur en cas d'exception générale
+                return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
+            
+            # Vérification que toutes les données obligatoires sont présentes
+            if not all([journeetravail_info['AG_CODEAGENCE'], journeetravail_info['JT_DATEJOURNEETRAVAIL'], 
+                        journeetravail_info['OP_CODEOPERATEUR'], journeetravail_info['JT_STATUT'], 
+                        ]):
+                return jsonify({"SL_MESSAGE": "Données manquantes ou incorrectes.code erreur (301)", "SL_RESULTAT": 'FALSE'}), 200
+            
+        # Connexion à la base de données
+        db_connexion = connect_database()
+        db_connexion = db_connexion.cursor()
+        db_connexion.execute("BEGIN TRANSACTION")
+        
+        #try:
+        
+        for journeetravail_info in journeetravail_infos:
+            # Appeler la fonction d'insertion dans la base de données
+            insert_journee_travail(db_connexion, journeetravail_info)
+
+        # Valider la transaction
+        get_commit(db_connexion,journeetravail_infos)
+                
+        return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE'})
+
+
+
+@api_bp.route('/liste_journee_de_travail', methods=['POST'])
+def pvgGetJourneeDeTravail():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        user_info = {}
+
+        # Validation et récupération des données pour la suppression
+        AG_CODEAGENCE = None
+        JT_DATEJOURNEETRAVAIL = None
+        JT_STATUT = None
+        if row.get('AG_CODEAGENCE', ''):
+           AG_CODEAGENCE = str(row.get('AG_CODEAGENCE', '')) 
+        if row.get('JT_DATEJOURNEETRAVAIL', ''):
+           JT_DATEJOURNEETRAVAIL = parse_datetime(row.get('JT_DATEJOURNEETRAVAIL', '')) 
+        if row.get('JT_STATUT', ''):
+           JT_STATUT  = str(row.get('JT_STATUT', '')) 
+
+        # Préparer les paramètres pour la fonction
+        if AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL and JT_STATUT:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL,JT_STATUT)
+        elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+        elif AG_CODEAGENCE:
+            vpp_critere = (AG_CODEAGENCE,)
+        else:
+            vpp_critere = ()
+        
+        # Connexion à la base de données
+        db_connection = connect_database()
+
+        try:
+            with db_connection.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = liste_journee_travail(db_connection, *vpp_critere)
+                
+            if len(response) > 0:
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
             db_connection.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         finally:
-            db_connection.close()                      
-################################################################
-#                   FIN GESTION COMBOS                         #
-################################################################
+            db_connection.close()
+
+
+
+@api_bp.route('/update_journee_travail', methods=['POST'])
+def pvgUpdateJourneeTravail():
+    request_data = request.json
+    user_info = {}
+    for row in request_data['Objet']:
+        
+
+        # Validation et récupération des données pour la suppression
+        AG_CODEAGENCE = str(row.get('AG_CODEAGENCE', '')) 
+        JT_DATEJOURNEETRAVAIL = parse_datetime(row.get('JT_DATEJOURNEETRAVAIL', '')) 
+        JT_STATUT  = str(row.get('JT_STATUT', '')) 
+        
+        
+        # Connexion à la base de données
+        db_connection = connect_database()
+
+        try:
+            with db_connection.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                update_journee_travail_statut(db_connection, AG_CODEAGENCE,JT_DATEJOURNEETRAVAIL,JT_STATUT)
+                user_infos = [{
+                    'AG_CODEAGENCE':"1000",
+                    'JT_STATUT':"O",
+                }]
+                get_commit(db_connection,user_infos)
+               
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'})
+            
+        
+        except Exception as e:
+            db_connection.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la mise a jour : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        finally:
+            db_connection.close()
+            
+# ################################################################
+#                                                       GESTION DES JOURNEES DE TRAVAIL                                                         #
+#################################################################
+
+
+
+# ################################################################
+#                                                              GESTION DE LA COMPTABILITE                                                              #
+#################################################################
+
+@api_bp.route('/reedition', methods=['POST'])
+def pvgReedition():
+    # Récupérer les données du corps de la requête
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes. Code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+
+    for row in request_data['Objet']:
+        objet_reedition = {}
+        objet_reedition['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', ''))
+        objet_reedition['MC_DATEPIECE'] = str(row.get('MC_DATEPIECE', ''))
+        objet_reedition['NUMEROBORDEREAU'] = str(row.get('NUMEROBORDEREAU', ''))
+        objet_reedition['TYPEOPERATION'] = str(row.get('TYPEOPERATION', ''))
+  
+    # Connexion à la base de données
+    db_connexion = connect_database()
+    
+    try:
+        cursor = db_connexion.cursor()
+        cursor.execute("BEGIN TRANSACTION")
+
+        try:
+            # Appeler la fonction d'insertion dans la base de données
+            response = get_info_comptabilisation(db_connexion, objet_reedition)
+            
+            # Retourner la réponse au client
+            if len(response) > 0:
+                #db_connexion.close()
+                return jsonify({"SL_MESSAGE":"Opération éffectuée avec success !", "SL_RESULTAT": 'TRUE'}, response) 
+            else:
+                #db_connexion.close()
+                return jsonify({"SL_MESSAGE": "Aucun élément trouvé !" ,"SL_RESULTAT": 'FALSE'})
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 500
+
+    except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+    """ finally:
+        db_connexion.close() """
+
+# ################################################################
+#                                                              GESTION DE LA COMPTABILITE                                                              #
+#################################################################
 
 
 def parse_numeric(value):
@@ -1139,19 +1906,19 @@ def generer_numero_compte_morale():
     
     return numero_compte_morale
     
-def get_commit(connection,clsBilletages):
+def get_commit(connexion,clsBilletages):
     try:
        for row in clsBilletages: 
-        cursor = connection
+        cursor = connexion
         params = {
             'AG_CODEAGENCE3': '1000',
             'MC_DATEPIECE3': '01/01/1900'
         }
         try:
-            connection.commit()
+            connexion.commit()
             cursor.execute("EXECUTE [PC_COMMIT]  ?, ?", list(params.values()))
             #instruction pour valider la commande de mise à jour
-            connection.commit()
+            connexion.commit()
         except Exception as e:
             # En cas d'erreur, annuler la transaction
             cursor.execute("ROLLBACK")

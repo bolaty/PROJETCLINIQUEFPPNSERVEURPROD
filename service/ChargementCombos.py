@@ -630,4 +630,80 @@ def pvgPeriodiciteDateDebutFin(connection, EX_EXERCICE,MO_CODEMOIS,PE_CODEPERIOD
         raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
 
     finally:
-        cursor.close()               
+        cursor.close()
+        
+        
+        
+def liste_des_familles_operations(connexion):
+    
+    params = {}
+    #return clsSmsouts
+    params = {
+        'CODECRYPTAGE': CODECRYPTAGE
+    }
+   
+    try:
+        cursor = connexion.cursor()
+        
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("SELECT * FROM dbo.FT_FAMILLEOPERATION(?)", list(params.values()))
+                       
+        rows = cursor.fetchall()
+        results = []
+        for row in rows:
+            result = {}
+
+            result['FO_CODEFAMILLEOPERATION'] = row.FO_CODEFAMILLEOPERATION
+            result['FO_LIBELLE'] = row.FO_LIBELLE
+            result['FO_STATUT'] = row.FO_STATUT
+            result['FO_NUMORDRE'] = row.FO_NUMORDRE
+ 
+            # Ajouter le dictionnaire à la liste des résultats
+            results.append(result)
+        
+        return results
+    except Exception as e:
+        # En cas d'erreur, lever une exception avec un message approprié
+        raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
+    
+    
+    
+def liste_des_operations(connexion):
+    
+    params = {}
+    #return clsSmsouts
+    params = {
+        'CODECRYPTAGE': CODECRYPTAGE
+    }
+   
+    try:
+        cursor = connexion.cursor()
+        
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("SELECT * FROM dbo.FT_FAMILLEOPERATION(?)", list(params.values()))
+                       
+        rows = cursor.fetchall()
+        results = []
+        for row in rows:
+            result = {}
+
+            result['OP_CODEOPERATION'] = row.OP_CODEOPERATION
+            result['OP_LIBELLE'] = row.OP_LIBELLE
+            result['FO_CODEFAMILLEOPERATION'] = row.FO_CODEFAMILLEOPERATION
+            result['OP_STATUT'] = row.OP_STATUT
+            result['OP_NUMORDRE'] = row.OP_NUMORDRE
+            result['TS_CODETYPESCHEMACOMPTABLE'] = row.TS_CODETYPESCHEMACOMPTABLE
+            result['JO_CODEJOURNAL'] = row.JO_CODEJOURNAL
+            result['PL_CODENUMCOMPTE'] = row.PL_CODENUMCOMPTE
+            result['OP_SENS'] = row.OP_SENS
+            result['OP_MONTANT'] = row.OP_MONTANT
+            result['OP_MODIFICATIONMONTANT'] = row.OP_MODIFICATIONMONTANT
+            result['PL_CODENUMCOMPTECONTREPARTIE'] = row.PL_CODENUMCOMPTECONTREPARTIE
+ 
+            # Ajouter le dictionnaire à la liste des résultats
+            results.append(result)
+        
+        return results
+    except Exception as e:
+        # En cas d'erreur, lever une exception avec un message approprié
+        raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")

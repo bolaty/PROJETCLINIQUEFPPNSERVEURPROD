@@ -24,8 +24,6 @@ def insert_patient(connexion, patient_info):
     params = {
         'PT_IDPATIENT': patient_info.get('PT_IDPATIENT') or None,
         'PT_CODEPATIENT': patient_info.get('PT_CODEPATIENT') or None,
-        # 'PT_IDPATIENT': patient_info['PT_IDPATIENT'] if 'PT_IDPATIENT' in patient_info and patient_info['PT_IDPATIENT'] else None,
-        # 'PT_CODEPATIENT': patient_info['PT_CODEPATIENT'] if 'PT_CODEPATIENT' in patient_info and patient_info['PT_CODEPATIENT'] else None,
         'PT_MATRICULE': patient_info['PT_MATRICULE'],
         'AG_CODEAGENCE': patient_info['AG_CODEAGENCE'],
         'PT_NOMPRENOMS': patient_info['PT_NOMPRENOMS'],
@@ -35,13 +33,10 @@ def insert_patient(connexion, patient_info):
         'PT_DATESAISIE': datetime.strptime(patient_info['PT_DATESAISIE'], "%d/%m/%Y"),
         'PT_LIEUHABITATION': patient_info['PT_LIEUHABITATION'],
         'PF_CODEPROFESSION': patient_info.get('PF_CODEPROFESSION') or None,
-        # 'PF_CODEPROFESSION': patient_info['PF_CODEPROFESSION'] if 'PF_CODEPROFESSION' in patient_info and patient_info['PF_CODEPROFESSION'] else None,
         'SX_CODESEXE': patient_info['SX_CODESEXE'],
         'STAT_CODESTATUT': patient_info.get('STAT_CODESTATUT') or None,
-        # 'STAT_CODESTATUT': patient_info['STAT_CODESTATUT'] if 'STAT_CODESTATUT' in patient_info and patient_info['STAT_CODESTATUT'] else None,
         'OP_CODEOPERATEUR': patient_info['OP_CODEOPERATEUR'],
         'PL_CODENUMCOMPTE': patient_info.get('PL_CODENUMCOMPTE') or None,
-        # 'PL_CODENUMCOMPTE': patient_info['PL_CODENUMCOMPTE'] if 'PL_CODENUMCOMPTE' in patient_info and patient_info['PL_CODENUMCOMPTE'] else None,
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': patient_info['TYPEOPERATION'],  # 0
     }
@@ -307,6 +302,75 @@ def list_facture(connexion, clsListeFacture):
         raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
  
 
+
+def get_info_comptabilisation(connexion, reedition_info):
+    # Préparation des paramètres
+    params = {
+        'AG_CODEAGENCE': reedition_info['AG_CODEAGENCE'] ,
+        'NUMEROBORDEREAU': reedition_info['NUMEROBORDEREAU'],
+        'DATEJOURNEE': datetime.strptime(reedition_info['MC_DATEPIECE'], "%d/%m/%Y"),
+        'TYPEOPERATION': reedition_info['TYPEOPERATION'],  # 0
+        'CODECRYPTAGE': CODECRYPTAGE
+    }
+    
+    try:
+        cursor = connexion.cursor()
+        
+        try:
+            cursor = connexion.cursor()
+            cursor.execute("EXEC dbo.PS_REEDITION ?, ?, ?, ?, ?", list(params.values()))
+            
+            rows = cursor.fetchall()
+            results = []
+            for row in rows:
+                result = {}
+                result['AG_CODEAGENCE'] = row.AG_CODEAGENCE
+                result['MC_DATEPIECE'] = row.MC_DATEPIECE.strftime("%d/%m/%Y")
+                result['MC_NUMPIECE'] = row.MC_NUMPIECE
+                result['MC_NUMSEQUENCE'] = row.MC_NUMSEQUENCE
+                result['MR_CODEMODEREGLEMENT'] = row.MR_CODEMODEREGLEMENT
+                result['PT_IDPATIENT'] = row.PT_IDPATIENT
+                result['FT_CODEFACTURE'] = row.FT_CODEFACTURE
+                result['OP_CODEOPERATEUR'] = row.OP_CODEOPERATEUR
+                result['MC_MONTANTDEBIT'] = row.MC_MONTANTDEBIT
+                result['MC_MONTANTCREDIT'] = row.MC_MONTANTCREDIT
+                result['MC_DATESAISIE'] = row.MC_DATESAISIE.strftime("%d/%m/%Y")
+                result['MC_ANNULATION'] = row.MC_ANNULATION
+                result['JO_CODEJOURNAL'] = row.JO_CODEJOURNAL
+                result['MC_REFERENCEPIECE'] = row.MC_REFERENCEPIECE
+                result['MC_LIBELLEOPERATION'] = row.MC_LIBELLEOPERATION
+                result['PL_CODENUMCOMPTE'] = row.PL_CODENUMCOMPTE
+                result['MC_NOMTIERS'] = row.MC_NOMTIERS
+                result['MC_CONTACTTIERS'] = row.MC_CONTACTTIERS
+                result['MC_EMAILTIERS'] = row.MC_EMAILTIERS
+                result['MC_NUMPIECETIERS'] = row.MC_NUMPIECETIERS
+                result['MC_TERMINAL'] = row.MC_TERMINAL
+                result['MC_AUTRE'] = row.MC_AUTRE
+                result['MC_AUTRE1'] = row.MC_AUTRE1
+                result['MC_AUTRE2'] = row.MC_AUTRE2
+                result['MC_AUTRE3'] = row.MC_AUTRE3
+                result['TS_CODETYPESCHEMACOMPTABLE'] = row.TS_CODETYPESCHEMACOMPTABLE
+                result['MC_SENSBILLETAGE'] = row.MC_SENSBILLETAGE
+                result['MC_LIBELLEBANQUE'] = row.MC_LIBELLEBANQUE
+                result['MC_NUMBORDEREAU'] = row.MC_NUMBORDEREAU
+                result['OP_NOMPRENOM'] = row.OP_NOMPRENOM
+                
+                # Ajouter le dictionnaire à la liste des résultats
+                results.append(result)
+            
+            return results
+        except Exception as e:
+            connexion.rollback()
+            raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
+    except Exception as e:
+        connexion.rollback()
+        # Gérer et formater l'exception correctement
+        if len(e.args) == 1:
+            raise Exception(f"{e.args[0]}")
+        else:
+            raise Exception(f"Erreur lors de l'insertion: {e.args[1]}")
+        
+        
 
 def get_commit(connexion,clsBilletages):
     try:
