@@ -62,6 +62,120 @@ class clsParams:
         self.CodeAgence = ""
         
           
+
+
+def envoi_sms_reedition(connexion, objet_envoi, resultat):
+    try:
+        LIENDAPISMS = LIENAPISMS + "Service/wsApisms.svc/SendMessage"
+
+        if not IsValidateIP(LIENDAPISMS):
+            Objet={}
+        else:
+            Objet={}
+            headers = {'Content-Type': 'application/json'}
+            
+            Objet={
+                    "Objet": [
+                        { 
+                            "CO_CODECOMPTE": "",
+                            "CodeAgence": objet_envoi['AG_CODEAGENCE'],
+                            "RECIPIENTPHONE": objet_envoi['CONTACT_DESTI'],
+                            "SM_RAISONNONENVOISMS": "xxx",
+                            "SM_DATEPIECE": objet_envoi['MC_DATEPIECE'],
+                            "LO_LOGICIEL": "01",
+                            "OB_NOMOBJET": "test",
+                            "SMSTEXT": "",
+                            "INDICATIF": "225",
+                            "SM_NUMSEQUENCE": "1",
+                            "SM_STATUT": "E"
+                        }
+                    ]
+            }
+            
+            # Construction du message
+            Objet['Objet'][0]['SMSTEXT'] = f"""
+Bonjour,
+De la clinique du FPPN.\n
+Ref. pièce: {resultat[0]['MC_REFERENCEPIECE']}
+Nom du bénéficiaire ou l'assuré: {resultat[0]['MC_NOMTIERS']}
+Nom du tireur: {resultat[0]['OP_NOMPRENOM']}
+            """
+            
+            total_facture = 0
+            for operation in resultat:
+                if operation['MR_CODEMODEREGLEMENT'] != '008':
+                    montant_int = int(operation['MC_MONTANTCREDIT'])
+                    Objet['Objet'][0]['SMSTEXT'] += f"\tMode de règlement: {operation['MR_LIBELLE']} | Libellé de l'opération: {operation['MC_LIBELLEOPERATION']} | Montant: {montant_int}\n"
+                    total_facture += int(operation['MC_MONTANTCREDIT'])
+
+            Objet['Objet'][0]['SMSTEXT'] += f"""
+Total facture:  {total_facture} F CFA\n
+            """
+            
+            Objet['Objet'][0]['SMSTEXT'] += """
+Cordialement,
+L'équipe
+            """
+            
+            response = requests.request("post", LIENDAPISMS, json=Objet, headers=headers)
+            if response.status_code == 200:
+                    objList = response.json()
+            connexion.close()
+    except Exception as e:
+        connexion.close() 
+        print("Erreur lors du traitement asynchrone:", e)
+        
+        
+        
+def envoi_email_reedition(connexion, objet_envoi, resultat):
+    try:
+        smtpServeur = "smtp.gmail.com"
+        portSmtp = 587
+        adresseEmail = resultat[0]['AG_EMAIL']
+        motDePasse = resultat[0]['AG_EMAILMOTDEPASSE']
+        destinataire = objet_envoi['EMAIL_DESTI']
+        sujet = "Reçu de caisse"
+        corpsMessage = ""
+        message = MIMEMultipart()
+        message['From'] = adresseEmail
+        message['To'] = destinataire
+        message['Subject'] = sujet
+        
+        # Construction du message
+        corpsMessage = f"""
+            Bonjour,
+            De la clinique du FPPN. \n
+            Ref. pièce: {resultat[0]['MC_REFERENCEPIECE']}
+            Nom du bénéficiaire ou l'assuré: {resultat[0]['MC_NOMTIERS']}
+            Nom du tireur: {resultat[0]['OP_NOMPRENOM']}
+        """
+        
+        total_facture = 0
+        for operation in resultat:
+            if operation['MR_CODEMODEREGLEMENT'] != '008':
+                montant_int = int(operation['MC_MONTANTCREDIT'])
+                corpsMessage += f"    Mode de règlement: {operation['MR_LIBELLE']} | Libellé de l'opération: {operation['MC_LIBELLEOPERATION']} | Montant: {montant_int}\n"
+                total_facture += int(operation['MC_MONTANTCREDIT'])
+            
+        corpsMessage += f"""
+            Total facture:  {total_facture} F CFA\n
+        """
+        corpsMessage += """
+            Cordialement,
+            L'équipe
+        """
+
+        message.attach(MIMEText(corpsMessage, 'plain'))
+        with smtplib.SMTP(smtpServeur, portSmtp) as server:
+            server.starttls()
+            server.login(adresseEmail, motDePasse)
+            server.sendmail(adresseEmail, destinataire, message.as_string())
+        connexion.close() 
+    except Exception as e:
+        connexion.close() 
+        print("Erreur lors du traitement asynchrone:", e)
+        
+
         
 def traitement_asynchrone(connexion, clsMouvementcomptable, listOperation):
     try:
@@ -121,7 +235,6 @@ def traitement_asynchrone(connexion, clsMouvementcomptable, listOperation):
                     "N",
                     "0",
                     clsParametreAppelApi['SL_LIBELLE1']
-                    
                 )
 
                 clsParametreAppelApis[0]['SL_RESULTATAPI'] = clsParams['SL_RESULTAT']

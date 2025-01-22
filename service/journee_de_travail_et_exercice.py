@@ -55,7 +55,7 @@ def valeur_scalaire_requete_count(connexion, *vpp_critere):
     elif len(vpp_critere) == 1:
         vap_critere = " WHERE AG_CODEAGENCE=?"
         vap_valeur_parametre = [vpp_critere[0]]
-    elif len(vpp_critere) == 2 and vpp_critere[1] == 'O':
+    elif len(vpp_critere) == 2 and (vpp_critere[1] == 'O' or vpp_critere[1] == 'F'):
         vap_critere = " WHERE AG_CODEAGENCE=? AND JT_STATUT=?"
         vap_valeur_parametre = [vpp_critere[0], vpp_critere[1]]
     elif len(vpp_critere) == 2:
@@ -164,16 +164,23 @@ def liste_journee_travail(connexion, *vppCritere):
         vap_critere = " WHERE AG_CODEAGENCE=?"
         vap_nom_parametre = ["AG_CODEAGENCE"]
         vap_valeur_parametre = [vppCritere[0]]
-    elif len(vppCritere) == 2:
+    elif len(vppCritere) == 2 and (vppCritere[1] != 'O' and vppCritere[1] != 'F'):
         annee = vppCritere[1].year   # Extraction des 4 premiers caractères
-        vap_critere = " WHERE AG_CODEAGENCE=? AND YEAR(JT_DATEJOURNEETRAVAIL)=?"
+        # vap_critere = " WHERE AG_CODEAGENCE=? AND YEAR(JT_DATEJOURNEETRAVAIL)=?"
+        vap_critere = " WHERE AG_CODEAGENCE=? AND JT_DATEJOURNEETRAVAIL=?"
         vap_nom_parametre = ["AG_CODEAGENCE", "JT_DATEJOURNEETRAVAIL"]
+        vap_valeur_parametre = [vppCritere[0], vppCritere[1]]
+    elif len(vppCritere) == 2 and (vppCritere[1] == "O" or vppCritere[1] == "F"):
+        vap_critere = " WHERE AG_CODEAGENCE=? AND JT_STATUT=?"
+        vap_nom_parametre = ["AG_CODEAGENCE", "JT_STATUT"]
         vap_valeur_parametre = [vppCritere[0], vppCritere[1]]
     elif len(vppCritere) == 3:
         annee = vppCritere[1].year
-        vap_critere = " WHERE AG_CODEAGENCE=? AND YEAR(JT_DATEJOURNEETRAVAIL)=? AND JT_STATUT LIKE '%' + ? + '%'"
+        # vap_critere = " WHERE AG_CODEAGENCE=? AND YEAR(JT_DATEJOURNEETRAVAIL)=? AND JT_STATUT LIKE '%' + ? + '%'"
+        vap_critere = " WHERE AG_CODEAGENCE=? AND JT_DATEJOURNEETRAVAIL=? AND JT_STATUT LIKE '%' + ? + '%'"
         vap_nom_parametre = ["AG_CODEAGENCE", "JT_DATEJOURNEETRAVAIL", "JT_STATUT"]
-        vap_valeur_parametre = [vppCritere[0], annee, vppCritere[2]]
+        # vap_valeur_parametre = [vppCritere[0], annee, vppCritere[2]]
+        vap_valeur_parametre = [vppCritere[0], vppCritere[1], vppCritere[2]]
     else:
         raise ValueError("Case non pris en charge")
 

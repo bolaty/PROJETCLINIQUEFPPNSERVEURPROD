@@ -15,6 +15,7 @@ import sys
 sys.path.append("../")
 from config import MYSQL_REPONSE,LIENAPISMS,CODECRYPTAGE
 import threading
+from tools.toolEnvoiSmsEmail import envoi_sms_reedition, envoi_email_reedition
 
 
 
@@ -329,6 +330,7 @@ def get_info_comptabilisation(connexion, reedition_info):
                 result['MC_NUMPIECE'] = row.MC_NUMPIECE
                 result['MC_NUMSEQUENCE'] = row.MC_NUMSEQUENCE
                 result['MR_CODEMODEREGLEMENT'] = row.MR_CODEMODEREGLEMENT
+                result['MR_LIBELLE'] = row.MR_LIBELLE
                 result['PT_IDPATIENT'] = row.PT_IDPATIENT
                 result['FT_CODEFACTURE'] = row.FT_CODEFACTURE
                 result['OP_CODEOPERATEUR'] = row.OP_CODEOPERATEUR
@@ -354,11 +356,30 @@ def get_info_comptabilisation(connexion, reedition_info):
                 result['MC_LIBELLEBANQUE'] = row.MC_LIBELLEBANQUE
                 result['MC_NUMBORDEREAU'] = row.MC_NUMBORDEREAU
                 result['OP_NOMPRENOM'] = row.OP_NOMPRENOM
+                result['AG_RAISONSOCIAL'] = row.AG_RAISONSOCIAL
+                result['AG_EMAIL'] = row.AG_EMAIL
+                result['AG_EMAILMOTDEPASSE'] = row.AG_EMAILMOTDEPASSE
                 
                 # Ajouter le dictionnaire à la liste des résultats
                 results.append(result)
             
-            return results
+            if reedition_info['TYPEOPERATION'] == '0':
+                return results
+            elif reedition_info['TYPEOPERATION'] == '1':
+                # cas d'envoi par sms
+                thread_traitement = threading.Thread(target=envoi_sms_reedition, args=(connexion, reedition_info, results))
+                thread_traitement.daemon = True
+                thread_traitement.start()
+                results = [{'MESSAGE': 'Sms envoyé avec succès !'}]
+                return results
+            else:
+                # cas d'envoi par email
+                thread_traitement = threading.Thread(target=envoi_email_reedition, args=(connexion, reedition_info, results))
+                thread_traitement.daemon = True
+                thread_traitement.start()
+                results = [{'MESSAGE': 'Email envoyé avec succès !'}]
+                return results
+
         except Exception as e:
             connexion.rollback()
             raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")

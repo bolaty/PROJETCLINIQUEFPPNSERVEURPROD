@@ -668,11 +668,12 @@ def liste_des_familles_operations(connexion):
     
     
     
-def liste_des_operations(connexion):
+def liste_des_operations(connexion, clsOperation):
     
     params = {}
     #return clsSmsouts
     params = {
+        'FO_CODEFAMILLEOPERATION': clsOperation['FO_CODEFAMILLEOPERATION'],
         'CODECRYPTAGE': CODECRYPTAGE
     }
    
@@ -680,7 +681,7 @@ def liste_des_operations(connexion):
         cursor = connexion.cursor()
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("SELECT * FROM dbo.FT_FAMILLEOPERATION(?)", list(params.values()))
+        cursor.execute("SELECT * FROM dbo.FT_OPERATION(?,?)", list(params.values()))
                        
         rows = cursor.fetchall()
         results = []
