@@ -117,8 +117,8 @@ def pvgCreationFacture():
                 objet_mode_reglement['PT_IDPATIENT'] = str(objet_facture['PT_IDPATIENT'])
                 objet_mode_reglement['FT_CODEFACTURE'] = str(objet_facture['FT_CODEFACTURE'])
                 objet_mode_reglement['OP_CODEOPERATEUR'] = str(objet_facture['OP_CODEOPERATEUR'])
-                objet_mode_reglement['MC_MONTANTDEBIT'] = str(row.get('MC_MONTANTDEBIT', ''))
-                objet_mode_reglement['MC_MONTANTCREDIT'] = str(row.get('MC_MONTANTCREDIT', ''))
+                objet_mode_reglement['MC_MONTANTDEBIT'] = row.get('MC_MONTANTDEBIT', '')
+                objet_mode_reglement['MC_MONTANTCREDIT'] = row.get('MC_MONTANTCREDIT', '')
                 objet_mode_reglement['MC_DATESAISIE'] = str(objet_facture['PT_DATESAISIE'])
                 objet_mode_reglement['MC_ANNULATION'] = str(row.get('MC_ANNULATION', ''))
                 objet_mode_reglement['JO_CODEJOURNAL'] = str(row.get('JO_CODEJOURNAL', ''))
@@ -137,7 +137,7 @@ def pvgCreationFacture():
                 objet_mode_reglement['TS_CODETYPESCHEMACOMPTABLE'] = str(row.get('TS_CODETYPESCHEMACOMPTABLE', ''))
                 objet_mode_reglement['MC_SENSBILLETAGE'] = str(row.get('MC_SENSBILLETAGE', ''))
                 objet_mode_reglement['MC_LIBELLEBANQUE'] = str(row.get('MC_LIBELLEBANQUE', ''))
-                objet_mode_reglement['MC_MONTANT_FACTURE'] = str(row.get('MC_MONTANT_FACTURE', ''))
+                objet_mode_reglement['MC_MONTANT_FACTURE'] = row.get('MC_MONTANT_FACTURE', '')
                 objet_mode_reglement['ACT_CODEACTE'] = str(objet_facture['ACT_CODEACTE'])
                 clsmouvement_infos.append(objet_mode_reglement) 
             except ValueError as e:
@@ -213,6 +213,7 @@ def pvgGetFactureParType():
         clsListeFacture = {}
         # Validation et récupération des données pour la suppression
    
+        clsListeFacture['AG_CODEAGENCE'] = row.get('AG_CODEAGENCE')
         clsListeFacture['FT_CODEFACTURE'] = row.get('FT_CODEFACTURE')
         clsListeFacture['PT_IDPATIENT'] = row.get('PT_IDPATIENT')
         clsListeFacture['ACT_CODEACTE'] = row.get('ACT_CODEACTE')

@@ -284,8 +284,8 @@ def pvg_constatation_facture(connexion, cls_mouvement_comptable):
         'PT_IDPATIENT': cls_mouvement_comptable.get('PT_IDPATIENT') or None,
         'FT_CODEFACTURE': cls_mouvement_comptable.get('FT_CODEFACTURE') or None,
         'OP_CODEOPERATEUR': cls_mouvement_comptable['OP_CODEOPERATEUR'],
-        'MC_MONTANTDEBIT': cls_mouvement_comptable['MC_MONTANTDEBIT'],
-        'MC_MONTANTCREDIT': cls_mouvement_comptable['MC_MONTANTCREDIT'],
+        'MC_MONTANTDEBIT': cls_mouvement_comptable['MC_MONTANTDEBIT'] if 'MC_MONTANTDEBIT' in cls_mouvement_comptable and cls_mouvement_comptable['MC_MONTANTDEBIT'] else 0,
+        'MC_MONTANTCREDIT': cls_mouvement_comptable['MC_MONTANTCREDIT'] if 'MC_MONTANTCREDIT' in cls_mouvement_comptable and cls_mouvement_comptable['MC_MONTANTCREDIT'] else 0,
         'MC_DATESAISIE': parse_datetime(cls_mouvement_comptable['MC_DATESAISIE']),
         'MC_ANNULATION': cls_mouvement_comptable['MC_ANNULATION'],
         'JO_CODEJOURNAL': cls_mouvement_comptable['JO_CODEJOURNAL'] if 'JO_CODEJOURNAL' in cls_mouvement_comptable and cls_mouvement_comptable['JO_CODEJOURNAL'] else None,
@@ -306,7 +306,7 @@ def pvg_constatation_facture(connexion, cls_mouvement_comptable):
         'MC_LIBELLEBANQUE': cls_mouvement_comptable['MC_LIBELLEBANQUE'],
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': '',
-        'MONTANT': cls_mouvement_comptable['MC_MONTANT_FACTURE'],
+        'MONTANT': cls_mouvement_comptable['MC_MONTANT_FACTURE'] if 'MC_MONTANT_FACTURE' in cls_mouvement_comptable and cls_mouvement_comptable['MC_MONTANT_FACTURE'] else 0,
         'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None,
         'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or None
     }

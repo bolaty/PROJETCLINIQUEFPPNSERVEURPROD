@@ -173,7 +173,7 @@ def journal_edition(connexion, journal_info):
      # Préparation des paramètres
     params = {
         'AG_CODEAGENCE': journal_info['AG_CODEAGENCE'],
-        'OP_CODEOPERATEUR': journal_info['OP_CODEOPERATEUR'],
+        'OP_CODEOPERATEUR': journal_info['OP_CODEOPERATEUR'] or None,
         'DATEDEBUT': datetime.strptime(journal_info['DATEDEBUT'], "%d/%m/%Y"),
         'DATEFIN': datetime.strptime(journal_info['DATEFIN'], "%d/%m/%Y"),
         'CODECRYPTAGE': CODECRYPTAGE,
@@ -232,7 +232,7 @@ def gd_livre_edition(connexion, gd_livre_info):
      # Préparation des paramètres
     params = {
         'AG_CODEAGENCE': gd_livre_info['AG_CODEAGENCE'],
-        'OP_CODEOPERATEUR': gd_livre_info['OP_CODEOPERATEUR'],
+        'OP_CODEOPERATEUR': gd_livre_info['OP_CODEOPERATEUR'] or None, 
         'DATEDEBUT': datetime.strptime(gd_livre_info['DATEDEBUT'], "%d/%m/%Y"),
         'DATEFIN': datetime.strptime(gd_livre_info['DATEFIN'], "%d/%m/%Y"),
         'CODECRYPTAGE': CODECRYPTAGE,
@@ -351,8 +351,8 @@ def balance_edition(connexion, balance_info):
             result['TOTALMOUVEMENTPERIODEDEBIT'] = int(row.TOTALMOUVEMENTPERIODEDEBIT)
             result['TOTALMOUVEMENTPERIODECREDIT'] = int(row.TOTALMOUVEMENTPERIODECREDIT)
 
-        # Ajouter le dictionnaire à la liste des résultats
-        results.append(result)
+            # Ajouter le dictionnaire à la liste des résultats
+            results.append(result)
         
         return results
     except Exception as e:

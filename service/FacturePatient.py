@@ -254,6 +254,7 @@ def list_facture(connexion, clsListeFacture):
     params = {}
     #return clsSmsouts
     params = {
+        'AG_CODEAGENCE': clsListeFacture['AG_CODEAGENCE'],
         'FT_CODEFACTURE': clsListeFacture['FT_CODEFACTURE'],
         'PT_IDPATIENT': clsListeFacture['PT_IDPATIENT'],
         'ACT_CODEACTE': clsListeFacture['ACT_CODEACTE'],
@@ -267,13 +268,14 @@ def list_facture(connexion, clsListeFacture):
         cursor = connexion.cursor()
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("SELECT * FROM dbo.FT_FACTUREPATIENTPARTYPE(?,?,?,?,?,?,?)", list(params.values()))
+        cursor.execute("SELECT * FROM dbo.FT_FACTUREPATIENTPARTYPE(?,?,?,?,?,?,?,?)", list(params.values()))
                        
         rows = cursor.fetchall()
         results = []
         for row in rows:
             result = {}
 	
+            result['AG_CODEAGENCE'] = row.AG_CODEAGENCE
             result['FT_CODEFACTURE'] = row.FT_CODEFACTURE
             result['PT_IDPATIENT'] = row.PT_IDPATIENT
             result['ACT_CODEACTE'] = row.ACT_CODEACTE
