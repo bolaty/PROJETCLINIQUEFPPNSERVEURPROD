@@ -302,7 +302,7 @@ def balance_edition(connexion, balance_info):
      # Préparation des paramètres
     params = {
         'AG_CODEAGENCE': balance_info['AG_CODEAGENCE'],
-        'OP_CODEOPERATEUR': balance_info['OP_CODEOPERATEUR'],
+        'OP_CODEOPERATEUR': balance_info['OP_CODEOPERATEUR'] if 'OP_CODEOPERATEUR' in balance_info else None,
         'DATEDEBUT': datetime.strptime(balance_info['DATEDEBUT'], "%d/%m/%Y"),
         'DATEFIN': datetime.strptime(balance_info['DATEFIN'], "%d/%m/%Y"),
         'CODECRYPTAGE': CODECRYPTAGE,

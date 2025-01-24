@@ -92,6 +92,7 @@ def connexion_utilisateur(connexion, clsInfoUsersconnect):
             clsUserConnect['PO_LIBELLEPROFIL'] = row.PO_LIBELLEPROFIL
             clsUserConnect['PO_CODEPROFIL'] = row.PO_CODEPROFIL
             clsUserConnect['SO_CODESOCIETE'] = row.SO_CODESOCIETE
+            clsUserConnect['AG_BOITEPOSTAL'] = row.AG_BOITEPOSTAL
             RetourUserConnect.append(clsUserConnect)
         # Faites ce que vous voulez avec les données récupérées
         return RetourUserConnect
