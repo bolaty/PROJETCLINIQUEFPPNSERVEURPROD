@@ -1,14 +1,13 @@
 from flask import Blueprint,request, jsonify,current_app,current_app as app,send_file
 from service.dashboard import dashboard
 from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture, get_code_facture, get_info_comptabilisation
-from service.parametres import liste_operateur, liste_des_agences, liste_des_profils, liste_des_services, liste_des_parametres
+from service.parametres import liste_operateur, liste_des_agences, liste_des_profils, liste_des_services, liste_des_parametres, modifier_des_agences
 from service.comptabilisationOperation import pvgComptabilisationOperations, pvgComptabilisationOperationsCaisse
 from service.edition import recu_edition, brouillard_caisse_edition, journal_edition, gd_livre_edition, balance_edition
 from service.auth import connexion_utilisateur
 from service.journee_de_travail_et_exercice import valeur_scalaire_requete_max, valeur_scalaire_requete_count, insert_journee_travail, table_libelle_date_systeme_serveur, liste_journee_travail, update_journee_travail_statut
-from service.ChargementCombos import pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations
+from service.ChargementCombos import pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille
 from service.auth import connexion_utilisateur,pvgUserChangePasswordfist,pvgUserDemandePassword
-from service.ChargementCombos import pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession
 from service.Utilisateurs import creation_profil,update_profil,delete_profil,update_compte_utilisateur,insert_operateur,delete_compte_utilisateur,Activation_DesActivation_utilisateur
 from models.models import clsObjetEnvoi
 from datetime import datetime
@@ -153,10 +152,10 @@ def pvgCreationFacture():
                         
             # Retourner la réponse au client
             if response['SL_RESULTAT'] == "TRUE":
-                #db_connexion.close()
+                ##db_connexion.close()
                 return jsonify({"NUMEROBORDEREAUREGLEMENT":str(response['NUMEROBORDEREAU']),"SL_MESSAGE":"Comptabilisation éffectuée avec success !" + response['MESSAGEAPI'] ,"SL_RESULTAT": 'TRUE'}) 
             else:
-                #db_connexion.close()
+                ##db_connexion.close()
                 return jsonify({"SL_MESSAGE":response['SL_MESSAGE'] ,"SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
@@ -165,8 +164,8 @@ def pvgCreationFacture():
     except Exception as e:
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
-    """ finally:
-        db_connexion.close() """
+    """ #finally:
+        #db_connexion.close() """
 
 
 
@@ -197,8 +196,8 @@ def pvgget_facture():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
             
             
 
@@ -240,8 +239,8 @@ def pvgGetFactureParType():
                 # Appeler la fonction de suppression ou récupération
                 response = list_facture(db_connexion, clsListeFacture)
                 
-                if response:
-                    cursor.execute("COMMIT")
+                if len(response) > 0:
+                    #cursor.execute("COMMIT")
                     return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'}, response)
                 else:
                     result = {}
@@ -250,16 +249,16 @@ def pvgGetFactureParType():
                     result['SL_RESULTAT'] = "FALSE"
                     # Ajouter le dictionnaire à la liste des résultats
                     response.append(result)
-            
-                    cursor.execute("ROLLBACK")
                     return jsonify(response)
+                    #cursor.execute("ROLLBACK")
+                    
         
         except Exception as e:
             db_connexion.rollback()
-            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+            return jsonify([{"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'}])
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
             
 ################################################################
 #                           GESTION DES FACTURES                                                                  #
@@ -306,8 +305,8 @@ def pvgRecuEdition():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
 
 
 
@@ -327,6 +326,7 @@ def pvgBrouillardCaisse():
         broui_caisse_info['DATEDEBUT'] = str(row.get('DATEDEBUT'))
         broui_caisse_info['DATEFIN'] = str(row.get('DATEFIN'))
         broui_caisse_info['TYPEETAT'] = str(row.get('TYPEETAT'))
+        broui_caisse_info['TS_CODETYPESCHEMACOMPTABLE'] = str(row.get('TS_CODETYPESCHEMACOMPTABLE'))
         broui_caisse_info['OP_CODEOPERATEUREDITION'] = str(row.get('OP_CODEOPERATEUREDITION'))
 
         # Connexion à la base de données
@@ -348,8 +348,8 @@ def pvgBrouillardCaisse():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
 
 
 
@@ -397,8 +397,8 @@ def pvgJournal():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
   
   
   
@@ -442,8 +442,8 @@ def pvgGrandLivre():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
 
 
 
@@ -486,8 +486,8 @@ def pvgBalance():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
             
 ################################################################
 #                   GESTION DES EDITIONS                                                                  #
@@ -535,8 +535,8 @@ def pvgDashboard():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
             
 ################################################################
 #                      GESTION DASHBOARD                                                                  #
@@ -583,8 +583,8 @@ def pvgUserLogin():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la connexion : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()                    
+        #finally:
+            #db_connexion.close()                    
 
 
 @api_bp.route('/pvgUserChangePasswordfist', methods=['POST'])
@@ -633,7 +633,7 @@ def UserChangePasswordfist():
             db_connection.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la modification des accès : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
+        #finally:
             db_connection.close()  
             
 @api_bp.route('/pvgUserDemandePassword', methods=['POST'])
@@ -672,7 +672,7 @@ def UserDemandePassword():
             db_connection.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la modification des accès : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
+        #finally:
             db_connection.close() 
 
 
@@ -947,7 +947,7 @@ def pvgupdate_compte_utilisateur():
             db_connection.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
-        finally:
+        #finally:
             db_connection.close()
             
             
@@ -993,7 +993,7 @@ def pvgdelete_compte_utilisateur():
             db_connection.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
-        finally:
+        #finally:
             db_connection.close()            
             
 
@@ -1038,8 +1038,8 @@ def ComboTableLabelAgence():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()            
+        #finally:
+            #db_connexion.close()            
 
 @api_bp.route('/pvgComboExercice', methods=['POST'])
 def ComboExercice():
@@ -1081,8 +1081,8 @@ def ComboExercice():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()  
+        #finally:
+            #db_connexion.close()  
             
             
 @api_bp.route('/pvgComboPeriodicite', methods=['POST'])
@@ -1115,8 +1115,8 @@ def ComboPeriodicite():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()                        
+        #finally:
+            #db_connexion.close()                        
  
  
 @api_bp.route('/pvgComboperiode', methods=['POST'])
@@ -1156,8 +1156,8 @@ def Comboperiode():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()   
+        #finally:
+            #db_connexion.close()   
  
  
  
@@ -1208,8 +1208,8 @@ def ComboPeriodiciteDateDebutFin():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()  
+        #finally:
+            #db_connexion.close()  
  
 @api_bp.route('/pvgComboOperateur', methods=['POST'])
 def ComboOperateur():
@@ -1256,8 +1256,8 @@ def ComboOperateur():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()            
+        #finally:
+            #db_connexion.close()            
             
 @api_bp.route('/pvgComboModeReglement', methods=['POST'])
 def ComboModeReglement():
@@ -1289,8 +1289,8 @@ def ComboModeReglement():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()  
+        #finally:
+            #db_connexion.close()  
             
 @api_bp.route('/pvgComboActe', methods=['POST'])
 def ComboActe():
@@ -1320,8 +1320,8 @@ def ComboActe():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()   
+        #finally:
+            #db_connexion.close()   
             
             
             
@@ -1351,8 +1351,8 @@ def ComboSexe():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
             
             
             
@@ -1382,8 +1382,8 @@ def ComboProfession():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
 
 
 
@@ -1415,8 +1415,8 @@ def ComboAssurance():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
 @api_bp.route('/pvgComboAssure', methods=['POST'])
 def ComboAssure():
     request_data = request.json
@@ -1445,8 +1445,8 @@ def ComboAssure():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()       
+        #finally:
+            #db_connexion.close()       
  
 @api_bp.route('/pvgComboTypeshemacomptable', methods=['POST'])
 def ComboTypeshemacomptable():
@@ -1475,8 +1475,8 @@ def ComboTypeshemacomptable():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()     
+        #finally:
+            #db_connexion.close()     
    
 
 @api_bp.route('/pvgComboCompte', methods=['POST'])
@@ -1530,8 +1530,8 @@ def ComboCompte():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()                      
+        #finally:
+            #db_connexion.close()                      
 ################################################################
 #                   FIN GESTION COMBOS                         #
 ################################################################
@@ -1597,8 +1597,8 @@ def pvgGetOperateurParType():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
             
             
             
@@ -1639,10 +1639,56 @@ def pvgGetAgence():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
+        #finally:
+            #db_connexion.close()
+
+
+
+@api_bp.route('/modifier_agence', methods=['POST'])
+def modificationAgence():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+
+    for row in request_data['Objet']:
+        clsAgence = {}
+        clsAgence['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', ''))
+        clsAgence['SO_CODESOCIETE'] = str(row.get('SO_CODESOCIETE', ''))
+        clsAgence['AG_RAISONSOCIAL'] = str(row.get('AG_RAISONSOCIAL', ''))
+        clsAgence['AG_DATECREATION'] = str(row.get('AG_DATECREATION', ''))
+        clsAgence['AG_NUMEROAGREMENT'] = str(row.get('AG_NUMEROAGREMENT', ''))
+        clsAgence['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR', ''))
+        clsAgence['AG_BOITEPOSTAL'] = str(row.get('AG_BOITEPOSTAL', ''))
+        clsAgence['VL_CODEVILLE'] = str(row.get('VL_CODEVILLE', ''))
+        clsAgence['AG_ADRESSEGEOGRAPHIQUE'] = str(row.get('AG_ADRESSEGEOGRAPHIQUE', ''))
+        clsAgence['AG_TELEPHONE'] = str(row.get('AG_TELEPHONE', ''))
+        clsAgence['AG_EMAIL'] = str(row.get('AG_EMAIL', ''))
+        clsAgence['AG_EMAILMOTDEPASSE'] = str(row.get('AG_EMAILMOTDEPASSE', ''))
+        clsAgence['TYPEOPERATION'] = str(row.get('TYPEOPERATION', ''))
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression ou récupération
+                modifier_des_agences(db_connexion, clsAgence, request_data['Objet'][0]['AG_EMAIL_DESTI'], request_data['Objet'][0]['AG_TELEPHONE_DESTI'])
+                
+                cursor.execute("COMMIT")
+                return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'})
+             
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
         finally:
             db_connexion.close()
-
-
+            
+            
 
 @api_bp.route('/liste_profil', methods=['POST'])
 def pvgGetProfil():
@@ -1681,8 +1727,8 @@ def pvgGetProfil():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
 
 
 
@@ -1723,8 +1769,8 @@ def pvgGetService():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
             
             
 
@@ -1765,8 +1811,8 @@ def pvgGetParametre():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
             
 ################################################################
 #                                                             GESTION DES PARAMETRES                                                                  #
@@ -1815,8 +1861,8 @@ def pvgGetFamilleOperation():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
             
             
             
@@ -1859,8 +1905,8 @@ def pvgGetOperation():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
             
 ################################################################
 #                                                GESTION DES OPERATIONS DE CAISSES                                                        #
@@ -1920,8 +1966,8 @@ def pvgValeurScalaireRequeteMax():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
 
 
 
@@ -1972,8 +2018,8 @@ def pvgValeurScalaireRequeteCount():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close() 
+        #finally:
+            #db_connexion.close() 
             
             
             
@@ -2007,8 +2053,8 @@ def pvgGetDateSystemeServeur():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        #finally:
+            #db_connexion.close()
             
                      
             
@@ -2110,7 +2156,7 @@ def pvgGetJourneeDeTravail():
             db_connection.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
+        #finally:
             db_connection.close()
 
 
@@ -2150,7 +2196,7 @@ def pvgUpdateJourneeTravail():
             db_connection.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la mise a jour : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
+        #finally:
             db_connection.close()
             
 # ################################################################
@@ -2193,10 +2239,10 @@ def pvgReedition():
             
             # Retourner la réponse au client
             if len(response) > 0:
-                #db_connexion.close()
+                ##db_connexion.close()
                 return jsonify({"SL_MESSAGE":"Opération éffectuée avec success !", "SL_RESULTAT": 'TRUE'}, response) 
             else:
-                #db_connexion.close()
+                ##db_connexion.close()
                 return jsonify({"SL_MESSAGE": "Aucun élément trouvé !" ,"SL_RESULTAT": 'FALSE'})
         except Exception as e:
             db_connexion.rollback()
@@ -2205,8 +2251,8 @@ def pvgReedition():
     except Exception as e:
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
-    """ finally:
-        db_connexion.close() """
+    """ #finally:
+        #db_connexion.close() """
 
 
 
@@ -2279,10 +2325,10 @@ def pvgOperationCaisse():
                         
             # Retourner la réponse au client
             if response['SL_RESULTAT'] == "TRUE":
-                #db_connexion.close()
+                ##db_connexion.close()
                 return jsonify({"NUMEROBORDEREAUREGLEMENT":str(response['NUMEROBORDEREAU']),"SL_MESSAGE":"Comptabilisation éffectuée avec success !" + response['MESSAGEAPI'] ,"SL_RESULTAT": 'TRUE'}) 
             else:
-                #db_connexion.close()
+                ##db_connexion.close()
                 return jsonify({"SL_MESSAGE":response['SL_MESSAGE'] ,"SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
@@ -2291,8 +2337,8 @@ def pvgOperationCaisse():
     except Exception as e:
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
-    """ finally:
-        db_connexion.close() """
+    """ #finally:
+        #db_connexion.close() """
         
 # ################################################################
 #                                                              GESTION DE LA COMPTABILITE                                                              #

@@ -290,6 +290,81 @@ def pvgComboModeReglement(connection):
 
     finally:
         cursor.close()
+        
+        
+        
+def pvgComboPays(connexion):
+    
+    params = {}
+    #return clsSmsouts
+    params = {
+        'CODECRYPTAGE': CODECRYPTAGE
+    }
+   
+    try:
+        cursor = connexion.cursor()
+        
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("SELECT * FROM dbo.FT_PAYS(?)", list(params.values()))
+                       
+        rows = cursor.fetchall()
+        results = []
+        for row in rows:
+            result = {}
+
+            result['PY_CODEPAYS'] = row.PY_CODEPAYS
+            result['PY_CODEPOSTALE'] = row.PY_CODEPOSTALE
+            result['PY_LIBELLE'] = row.PY_LIBELLE
+            result['PY_LIBELLENATIONALITE'] = row.PY_LIBELLENATIONALITE
+            result['PY_NUMEROORDRE'] = row.PY_NUMEROORDRE
+            result['PY_REFERENCE'] = row.PY_REFERENCE
+            result['PY_ABREVIATION'] = row.PY_ABREVIATION
+ 
+            # Ajouter le dictionnaire à la liste des résultats
+            results.append(result)
+        
+        return results
+    except Exception as e:
+        # En cas d'erreur, lever une exception avec un message approprié
+        raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
+
+
+
+def pvgComboVille(connexion, ville_info):
+    
+    params = {}
+    #return clsSmsouts
+    params = {
+        'PY_CODEPAYS': ville_info['PY_CODEPAYS'],
+        'CODECRYPTAGE': CODECRYPTAGE
+    }
+   
+    try:
+        cursor = connexion.cursor()
+        
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("SELECT * FROM dbo.FT_VILLE(?,?)", list(params.values()))
+                       
+        rows = cursor.fetchall()
+        results = []
+        for row in rows:
+            result = {}
+
+            result['VL_CODEVILLE'] = row.VL_CODEVILLE
+            result['VL_LIBELLE'] = row.VL_LIBELLE
+            result['VL_REFERENCE'] = row.VL_REFERENCE
+            result['VL_DESCRIPTION'] = row.VL_DESCRIPTION
+            result['PY_CODEPAYS'] = row.PY_CODEPAYS
+ 
+            # Ajouter le dictionnaire à la liste des résultats
+            results.append(result)
+        
+        return results
+    except Exception as e:
+        # En cas d'erreur, lever une exception avec un message approprié
+        raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
+
+
 
 def pvgComboAssure(connection):
     """
@@ -368,6 +443,7 @@ def pvgComboTypeshemacomptable(connection):
 
     finally:
         cursor.close()       
+
 def pvgComboAssurance(connection):
     """
     Récupère les opérateurs en fonction des critères fournis.

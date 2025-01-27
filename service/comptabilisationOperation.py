@@ -619,7 +619,7 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
 
         # Convertir la chaîne de caractères en entier
         montant_debit_int = cls_mouvement_comptable['MC_MONTANT_FACTURE']#int(montant_debit_str)
-        resultat = recup_info_num_bordereau(connexion, cls_mouvement_comptable['AG_CODEAGENCE'], cls_mouvement_comptable['MC_DATEPIECE'], '00002', cls_mouvement_comptable['FT_CODEFACTURE'], cls_mouvement_comptable['OP_CODEOPERATEUR'],  montant_debit_int, CODECRYPTAGE)
+        resultat = recup_info_num_bordereau(connexion, cls_mouvement_comptable['AG_CODEAGENCE'], cls_mouvement_comptable['MC_DATEPIECE'], '00003', None, cls_mouvement_comptable['OP_CODEOPERATEUR'],  montant_debit_int, CODECRYPTAGE)
         """
         if resultat:
            result= recup_info_apisms_clientpiece(connexion,cls_mouvement_comptable['OP_CODEOPERATEUR'])
@@ -676,7 +676,8 @@ def pvpGenererMouchard(connexion,clsObjetEnvoiOE_A, clsObjetEnvoiOE_Y, vppAction
     clsMouchard['OP_CODEOPERATEUR'] = clsObjetEnvoiOE_Y
     
     if vppTypeAction == "A":
-        clsMouchard['MO_ACTION'] = "MOUVEMENTCOMPTABLE " + MC_LIBELLEOPERATION[0] + ' : ' + vppAction
+        # clsMouchard['MO_ACTION'] = "MOUVEMENTCOMPTABLE " + MC_LIBELLEOPERATION[0] + ' : ' + vppAction
+        clsMouchard['MO_ACTION'] = "MOUVEMENTCOMPTABLE " + MC_LIBELLEOPERATION + ' : ' + vppAction
     elif vppTypeAction == "M":
         clsMouchard['MO_ACTION'] = "MOUVEMENTCOMPTABLE (Modification) : " + vppAction
     elif vppTypeAction == "S":

@@ -95,6 +95,16 @@ def liste_des_agences(connexion):
             result['AG_TELEPHONE'] = row.AG_TELEPHONE
             result['AG_EMAIL'] = row.AG_EMAIL
             result['AG_EMAILMOTDEPASSE'] = row.AG_EMAILMOTDEPASSE
+            result['AG_EMAILDESTI1'] = row.AG_EMAILDESTI1
+            result['AG_EMAILDESTI2'] = row.AG_EMAILDESTI2
+            result['AG_EMAILDESTI3'] = row.AG_EMAILDESTI3
+            result['AG_EMAILDESTI4'] = row.AG_EMAILDESTI4
+            result['AG_EMAILDESTI5'] = row.AG_EMAILDESTI5
+            result['AG_TELEPHONEDESTI1'] = row.AG_TELEPHONEDESTI1
+            result['AG_TELEPHONEDESTI2'] = row.AG_TELEPHONEDESTI2
+            result['AG_TELEPHONEDESTI3'] = row.AG_TELEPHONEDESTI3
+            result['AG_TELEPHONEDESTI4'] = row.AG_TELEPHONEDESTI4
+            result['AG_TELEPHONEDESTI5'] = row.AG_TELEPHONEDESTI5
  
             # Ajouter le dictionnaire à la liste des résultats
             results.append(result)
@@ -103,6 +113,89 @@ def liste_des_agences(connexion):
     except Exception as e:
         # En cas d'erreur, lever une exception avec un message approprié
         raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
+    
+    
+    
+def modifier_des_agences(connexion, clsAgence, tab_email, tab_contact):
+    params = {
+        'AG_CODEAGENCE': clsAgence['AG_CODEAGENCE'],
+        'SO_CODESOCIETE': clsAgence['SO_CODESOCIETE'],
+        'AG_RAISONSOCIAL': clsAgence['AG_RAISONSOCIAL'],
+        'AG_DATECREATION': datetime.strptime(clsAgence['AG_DATECREATION'], "%d/%m/%Y"),
+        'AG_NUMEROAGREMENT': clsAgence['AG_NUMEROAGREMENT'],
+        'OP_CODEOPERATEUR': int(clsAgence['OP_CODEOPERATEUR']),
+        'AG_BOITEPOSTAL': clsAgence['AG_BOITEPOSTAL'],
+        'VL_CODEVILLE': clsAgence['VL_CODEVILLE'],
+        'AG_ADRESSEGEOGRAPHIQUE': clsAgence['AG_ADRESSEGEOGRAPHIQUE'],
+        'AG_TELEPHONE': clsAgence['AG_TELEPHONE'],
+        'AG_EMAIL': clsAgence['AG_EMAIL'],
+        'AG_EMAILMOTDEPASSE': clsAgence['AG_EMAILMOTDEPASSE'],
+        'CODECRYPTAGE': CODECRYPTAGE,
+        'TYPEOPERATION': int(clsAgence['TYPEOPERATION']),
+        'AG_EMAILDESTI1': '',
+        'AG_EMAILDESTI2': '',
+        'AG_EMAILDESTI3': '',
+        'AG_EMAILDESTI4': '',
+        'AG_EMAILDESTI5': '',
+        'AG_TELEPHONEDESTI1': '',
+        'AG_TELEPHONEDESTI2': '',
+        'AG_TELEPHONEDESTI3': '',
+        'AG_TELEPHONEDESTI4': '',
+        'AG_TELEPHONEDESTI5': ''
+    }
+    
+    if tab_email:
+        if len(tab_email) == 1:
+            params['AG_EMAILDESTI1'] = tab_email[0]
+        elif len(tab_email) == 2:
+            params['AG_EMAILDESTI1'] = tab_email[0]
+            params['AG_EMAILDESTI2'] = tab_email[1]
+        elif len(tab_email) == 3:
+            params['AG_EMAILDESTI1'] = tab_email[0]
+            params['AG_EMAILDESTI2'] = tab_email[1]
+            params['AG_EMAILDESTI3'] = tab_email[2]
+        elif len(tab_email) == 4:
+            params['AG_EMAILDESTI1'] = tab_email[0]
+            params['AG_EMAILDESTI2'] = tab_email[1]
+            params['AG_EMAILDESTI3'] = tab_email[2]
+            params['AG_EMAILDESTI4'] = tab_email[3]
+        else:
+            params['AG_EMAILDESTI1'] = tab_email[0]
+            params['AG_EMAILDESTI2'] = tab_email[1]
+            params['AG_EMAILDESTI3'] = tab_email[2]
+            params['AG_EMAILDESTI4'] = tab_email[3]
+            params['AG_EMAILDESTI5'] = tab_email[4]
+    
+    if tab_contact:
+        if len(tab_contact) == 1:
+            params['AG_TELEPHONEDESTI1'] = tab_contact[0]
+        elif len(tab_contact) == 2:
+            params['AG_TELEPHONEDESTI1'] = tab_contact[0]
+            params['AG_TELEPHONEDESTI2'] = tab_contact[1]
+        elif len(tab_contact) == 3:
+            params['AG_TELEPHONEDESTI1'] = tab_contact[0]
+            params['AG_TELEPHONEDESTI2'] = tab_contact[1]
+            params['AG_TELEPHONEDESTI3'] = tab_contact[2]
+        elif len(tab_contact) == 4:
+            params['AG_TELEPHONEDESTI1'] = tab_contact[0]
+            params['AG_TELEPHONEDESTI2'] = tab_contact[1]
+            params['AG_TELEPHONEDESTI3'] = tab_contact[2]
+            params['AG_TELEPHONEDESTI4'] = tab_contact[3]
+        else:
+            params['AG_TELEPHONEDESTI1'] = tab_contact[0]
+            params['AG_TELEPHONEDESTI2'] = tab_contact[1]
+            params['AG_TELEPHONEDESTI3'] = tab_contact[2]
+            params['AG_TELEPHONEDESTI4'] = tab_contact[3]
+            params['AG_TELEPHONEDESTI5'] = tab_contact[4]
+        
+    try:
+        cursor = connexion.cursor()
+        
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("EXEC dbo.PC_AGENCE ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?", list(params.values()))
+    except Exception as e:
+        connexion.rollback()
+        raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
     
     
     
