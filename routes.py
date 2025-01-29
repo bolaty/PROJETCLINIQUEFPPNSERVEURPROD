@@ -3,7 +3,7 @@ from service.dashboard import dashboard
 from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture, get_code_facture, get_info_comptabilisation
 from service.parametres import liste_operateur, liste_des_agences, liste_des_profils, liste_des_services, liste_des_parametres, modifier_des_agences
 from service.comptabilisationOperation import pvgComptabilisationOperations, pvgComptabilisationOperationsCaisse
-from service.edition import recu_edition, brouillard_caisse_edition, journal_edition, gd_livre_edition, balance_edition
+from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition, journal_edition, gd_livre_edition, balance_edition
 from service.auth import connexion_utilisateur
 from service.journee_de_travail_et_exercice import valeur_scalaire_requete_max, valeur_scalaire_requete_count, insert_journee_travail, table_libelle_date_systeme_serveur, liste_journee_travail, update_journee_travail_statut
 from service.ChargementCombos import pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille
@@ -152,8 +152,8 @@ def pvgCreationFacture():
                         
             # Retourner la réponse au client
             if response['SL_RESULTAT'] == "TRUE":
-                ##db_connexion.close()
-                return jsonify({"NUMEROBORDEREAUREGLEMENT":str(response['NUMEROBORDEREAU']),"SL_MESSAGE":"Comptabilisation éffectuée avec success !" + response['MESSAGEAPI'] ,"SL_RESULTAT": 'TRUE'}) 
+                #db_connexion.close()
+                return jsonify({"NUMEROBORDEREAUREGLEMENT":str(response['NUMEROBORDEREAU']),"MC_LIBELLEOPERATION":str(response['MC_LIBELLEOPERATION']),"SL_MESSAGE":"Comptabilisation éffectuée avec success !" + response['MESSAGEAPI'] ,"SL_RESULTAT": 'TRUE'}) 
             else:
                 ##db_connexion.close()
                 return jsonify({"SL_MESSAGE":response['SL_MESSAGE'] ,"SL_RESULTAT": 'FALSE'})
@@ -270,6 +270,112 @@ def pvgGetFactureParType():
 ################################################################
 #                            GESTION DES EDITIONS                                                                  #
 ################################################################
+
+@api_bp.route('/ExtourneOperation', methods=['POST'])
+def pvgExtourneOperation():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+    
+    for row in request_data['Objet']:
+        contrat_info = {}
+
+        # Validation et récupération des données pour la suppression
+        contrat_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', ''))
+        contrat_info['MV_DATEPIECECOMPTABILISATION'] = str(row.get('MV_DATEPIECECOMPTABILISATION'))
+        contrat_info['MV_DATEPIECE'] = str(row.get('MV_DATEPIECE', ''))
+        contrat_info['MV_NUMPIECE1'] = str(row.get('MV_NUMPIECE1', ''))
+        contrat_info['MV_NUMPIECE3'] = str(row.get('MV_NUMPIECE3'))
+        contrat_info['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR', ''))
+        contrat_info['TYPEOPERATION'] = str(row.get('TYPEOPERATION', ''))
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                ExtourneOperation(db_connexion, str(row.get('AG_CODEAGENCE', '')), str(row.get('MV_DATEPIECECOMPTABILISATION')),str(row.get('MV_DATEPIECE', '')),
+                                             str(row.get('MV_NUMPIECE1', '')), str(row.get('MV_NUMPIECE3')),str(row.get('OP_CODEOPERATEUR', '')),str(row.get('TYPEOPERATION', '')))
+                user_infos = [
+                {
+                    'AG_CODEAGENCE':"1000",
+                    'JT_STATUT':"O",
+                },
+                 {
+                    'AG_CODEAGENCE':"1000",
+                    'JT_STATUT':"O",
+                }
+                ]
+                get_commit(db_connexion,user_infos)
+            
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'})
+            
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()
+
+@api_bp.route('/ExtourneFacture', methods=['POST'])
+def pvgExtourneFacture():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+    
+    for row in request_data['Objet']:
+        contrat_info = {}
+
+        # Validation et récupération des données pour la suppression
+        contrat_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', ''))
+        contrat_info['MV_DATEPIECECOMPTABILISATION'] = str(row.get('MV_DATEPIECECOMPTABILISATION'))
+        contrat_info['MC_DATESAISIE'] = str(row.get('MC_DATESAISIE', ''))
+        contrat_info['FT_CODEFACTURE'] = str(row.get('FT_CODEFACTURE', ''))
+        contrat_info['MV_NUMPIECE3'] = str(row.get('MV_NUMPIECE3'))
+        contrat_info['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR', ''))
+        contrat_info['TYPEOPERATION'] = str(row.get('TYPEOPERATION', ''))
+        
+        # Vérification que toutes les données obligatoires sont présentes
+        if not all([contrat_info['FT_CODEFACTURE'] 
+                    ]):
+            return jsonify({"SL_MESSAGE": "Données manquantes ou incorrectes.code erreur (301) FT_CODEFACTURE", "SL_RESULTAT": 'FALSE'}), 200    
+        
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                ExtourneFacture(db_connexion, str(row.get('AG_CODEAGENCE', '')), str(row.get('MV_DATEPIECECOMPTABILISATION')),str(row.get('FT_CODEFACTURE', '')),str(row.get('MC_DATESAISIE', '')),
+                                              str(row.get('MV_NUMPIECE3')),str(row.get('OP_CODEOPERATEUR', '')),str(row.get('TYPEOPERATION', '')))
+                user_infos = [
+                {
+                    'AG_CODEAGENCE':"1000",
+                    'JT_STATUT':"O",
+                },
+                {
+                    'AG_CODEAGENCE':"1000",
+                    'JT_STATUT':"O",
+                }
+                ]
+                get_commit(db_connexion,user_infos)
+            
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'})
+            
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE":  str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()
+
 
 @api_bp.route('/recu_edition', methods=['POST'])
 def pvgRecuEdition():
@@ -2157,7 +2263,7 @@ def pvgGetJourneeDeTravail():
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            db_connection.close()
+            #db_connection.close()
 
 
 
@@ -2197,7 +2303,7 @@ def pvgUpdateJourneeTravail():
             return jsonify({"SL_MESSAGE": "Erreur lors de la mise a jour : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            db_connection.close()
+            #db_connection.close()
             
 # ################################################################
 #                                                       GESTION DES JOURNEES DE TRAVAIL                                                         #
@@ -2289,8 +2395,8 @@ def pvgOperationCaisse():
                 objet_mode_reglement['MC_NUMPIECE'] = str(row.get('MC_NUMPIECE', ''))
                 objet_mode_reglement['MC_NUMSEQUENCE'] = str(row.get('MC_NUMSEQUENCE', ''))
                 objet_mode_reglement['OP_CODEOPERATEUR'] = str(objet_facture['OP_CODEOPERATEUR'])
-                objet_mode_reglement['MC_MONTANTDEBIT'] = str(row.get('MC_MONTANTDEBIT', ''))
-                objet_mode_reglement['MC_MONTANTCREDIT'] = str(row.get('MC_MONTANTCREDIT', ''))
+                objet_mode_reglement['MC_MONTANTDEBIT'] = row.get('MC_MONTANTDEBIT', '')
+                objet_mode_reglement['MC_MONTANTCREDIT'] = row.get('MC_MONTANTCREDIT', '')
                 objet_mode_reglement['MC_DATESAISIE'] = str(objet_facture['PT_DATESAISIE'])
                 objet_mode_reglement['MC_ANNULATION'] = str(row.get('MC_ANNULATION', ''))
                 objet_mode_reglement['JO_CODEJOURNAL'] = str(row.get('JO_CODEJOURNAL', ''))
@@ -2308,7 +2414,7 @@ def pvgOperationCaisse():
                 objet_mode_reglement['TS_CODETYPESCHEMACOMPTABLE'] = str(row.get('TS_CODETYPESCHEMACOMPTABLE', ''))
                 objet_mode_reglement['MC_SENSBILLETAGE'] = str(row.get('MC_SENSBILLETAGE', ''))
                 objet_mode_reglement['MC_LIBELLEBANQUE'] = str(row.get('MC_LIBELLEBANQUE', ''))
-                objet_mode_reglement['MC_MONTANT_FACTURE'] = str(row.get('MC_MONTANT_FACTURE', ''))
+                objet_mode_reglement['MC_MONTANT_FACTURE'] = row.get('MC_MONTANT_FACTURE', '')
                 objet_mode_reglement['OP_CODEOPERATION'] = str(objet_facture['OP_CODEOPERATION'])
 
                 clsmouvement_infos.append(objet_mode_reglement) 
@@ -2326,7 +2432,7 @@ def pvgOperationCaisse():
             # Retourner la réponse au client
             if response['SL_RESULTAT'] == "TRUE":
                 ##db_connexion.close()
-                return jsonify({"NUMEROBORDEREAUREGLEMENT":str(response['NUMEROBORDEREAU']),"SL_MESSAGE":"Comptabilisation éffectuée avec success !" + response['MESSAGEAPI'] ,"SL_RESULTAT": 'TRUE'}) 
+                return jsonify({"NUMEROBORDEREAUREGLEMENT":str(response['NUMEROBORDEREAU']),"MC_LIBELLEOPERATION":str(response['MC_LIBELLEOPERATION']),"SL_MESSAGE":"Comptabilisation éffectuée avec success !" + response['MESSAGEAPI'] ,"SL_RESULTAT": 'TRUE'}) 
             else:
                 ##db_connexion.close()
                 return jsonify({"SL_MESSAGE":response['SL_MESSAGE'] ,"SL_RESULTAT": 'FALSE'})

@@ -74,6 +74,7 @@ def pvgComptabilisationOperations(connexion, clsMouvementcomptables):
                         clsMouvementcomptable['NUMEROBORDEREAU'] = clsMouvementcomptable['NUMEROBORDEREAU'] #+ "/" + clsParametreAppelApis[0]['SL_MESSAGEAPI']
                         Retour = {}
                         Retour['NUMEROBORDEREAU'] = clsMouvementcomptable['NUMEROBORDEREAU']
+                        Retour['MC_LIBELLEOPERATION'] = clsMouvementcomptable['MC_LIBELLEOPERATION']
                         Retour['MESSAGEAPI'] = ""#clsParametreAppelApis[0]['SL_MESSAGEAPI']
                         if not IsValidateIP(LIENDAPISMS):
                             Retour['MESSAGEAPI']  = "L'API SMS doit être configurée !!!"
@@ -155,6 +156,7 @@ def pvgComptabilisationOperationsCaisse(connexion, clsMouvementcomptables):
                     clsMouvementcomptable['NUMEROBORDEREAU'] = clsMouvementcomptable['NUMEROBORDEREAU'] #+ "/" + clsParametreAppelApis[0]['SL_MESSAGEAPI']
                     Retour = {}
                     Retour['NUMEROBORDEREAU'] = clsMouvementcomptable['NUMEROBORDEREAU']
+                    Retour['MC_LIBELLEOPERATION'] = clsMouvementcomptable['MC_LIBELLEOPERATION']
                     Retour['MESSAGEAPI'] = ""#clsParametreAppelApis[0]['SL_MESSAGEAPI']
                     if not IsValidateIP(LIENDAPISMS):
                         Retour['MESSAGEAPI']  = "L'API SMS doit être configurée !!!"
@@ -498,8 +500,8 @@ def pvg_comptabilisation_operation_caisse1(connexion, cls_mouvement_comptable):
         'PT_IDPATIENT': cls_mouvement_comptable.get('PT_IDPATIENT') or None,
         'FT_CODEFACTURE': cls_mouvement_comptable.get('FT_CODEFACTURE') or None,
         'OP_CODEOPERATEUR': cls_mouvement_comptable['OP_CODEOPERATEUR'],
-        'MC_MONTANTDEBIT': cls_mouvement_comptable['MC_MONTANTDEBIT'],
-        'MC_MONTANTCREDIT': cls_mouvement_comptable['MC_MONTANTCREDIT'],
+        'MC_MONTANTDEBIT': cls_mouvement_comptable.get('MC_MONTANTDEBIT') or 0,
+        'MC_MONTANTCREDIT': cls_mouvement_comptable.get('MC_MONTANTCREDIT') or 0,
         'MC_DATESAISIE': parse_datetime(cls_mouvement_comptable['MC_DATESAISIE']),
         'MC_ANNULATION': cls_mouvement_comptable['MC_ANNULATION'],
         'JO_CODEJOURNAL': cls_mouvement_comptable['JO_CODEJOURNAL'] if 'JO_CODEJOURNAL' in cls_mouvement_comptable and cls_mouvement_comptable['JO_CODEJOURNAL'] else None,
@@ -520,7 +522,7 @@ def pvg_comptabilisation_operation_caisse1(connexion, cls_mouvement_comptable):
         'MC_LIBELLEBANQUE': cls_mouvement_comptable['MC_LIBELLEBANQUE'],
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': '',
-        'MONTANT': cls_mouvement_comptable['MC_MONTANT_FACTURE'],
+        'MONTANT': cls_mouvement_comptable.get('MC_MONTANT_FACTURE') or 0,
         'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None,
         'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or None
     }
@@ -560,8 +562,8 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
         'PT_IDPATIENT': cls_mouvement_comptable.get('PT_IDPATIENT') or None,
         'FT_CODEFACTURE': cls_mouvement_comptable.get('FT_CODEFACTURE') or None,
         'OP_CODEOPERATEUR': cls_mouvement_comptable['OP_CODEOPERATEUR'],
-        'MC_MONTANTDEBIT': cls_mouvement_comptable['MC_MONTANTDEBIT'],
-        'MC_MONTANTCREDIT': cls_mouvement_comptable['MC_MONTANTCREDIT'],
+        'MC_MONTANTDEBIT': cls_mouvement_comptable.get('MC_MONTANTDEBIT') or 0,
+        'MC_MONTANTCREDIT': cls_mouvement_comptable.get('MC_MONTANTCREDIT') or 0,
         'MC_DATESAISIE': parse_datetime(cls_mouvement_comptable['MC_DATESAISIE']),
         'MC_ANNULATION': cls_mouvement_comptable['MC_ANNULATION'],
         'JO_CODEJOURNAL': cls_mouvement_comptable['JO_CODEJOURNAL'] if 'JO_CODEJOURNAL' in cls_mouvement_comptable and cls_mouvement_comptable['JO_CODEJOURNAL'] else None,
@@ -582,7 +584,7 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
         'MC_LIBELLEBANQUE': cls_mouvement_comptable['MC_LIBELLEBANQUE'],
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': '',
-        'MONTANT': cls_mouvement_comptable['MC_MONTANT_FACTURE'],
+        'MONTANT': cls_mouvement_comptable.get('MC_MONTANT_FACTURE') or 0,
         'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None,
         'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or None
     }
@@ -661,6 +663,7 @@ def recup_info_num_bordereau(connexion, AG_CODEAGENCE,MC_DATEPIECE,TS_CODETYPESC
             borderau['AG_EMAILMOTDEPASSE'] = row.AG_EMAILMOTDEPASSE
             borderau['SL_MESSAGEOBJET'] = row.SL_MESSAGEOBJET
             borderau['EJ_EMAILCLIENT'] = row.EJ_EMAILCLIENT
+            borderau['MC_LIBELLEOPERATION'] = row.MC_LIBELLEOPERATION
             # Faites ce que vous voulez avec les données récupérées
             return borderau
     except Exception as e:

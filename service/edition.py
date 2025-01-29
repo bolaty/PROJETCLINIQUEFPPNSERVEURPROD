@@ -5,6 +5,58 @@ import datetime
 from datetime import datetime
 from tools.toolDate import parse_datetime
 
+#Extourne 
+def ExtourneOperation(connexion,AG_CODEAGENCE,MV_DATEPIECECOMPTABILISATION,MV_DATEPIECE,MV_NUMPIECE1,MV_NUMPIECE3,
+                      OP_CODEOPERATEUR,TYPEOPERATION):
+    """
+    Récupère les données de la fonction SQL [PS_EDITION_RECU] avec le code de cryptage fourni.
+    @AG_CODEAGENCE as varchar(50),
+    @CODECRYPTAGE as varchar(50)
+    :param connexion: Connexion à la base de données SQL Server
+    :param codecryptage: Le code de cryptage utilisé pour décrypter les données
+    :return: Liste de dictionnaires représentant les enregistrements de la table intermédiaire
+    """
+    
+    try:
+        cursor = connexion.cursor()
+        vlpNumPiece = pvgNumeroPiece(connexion, AG_CODEAGENCE, datetime.strptime(MV_DATEPIECE, "%d/%m/%Y"),OP_CODEOPERATEUR)
+        MV_NUMPIECE3 = vlpNumPiece[0]['MC_NUMPIECE']
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("EXEC PS_EXTOURNEOPERATION ?,?,?,?,?,?,?,?",(AG_CODEAGENCE,datetime.strptime(MV_DATEPIECECOMPTABILISATION, "%d/%m/%Y"),datetime.strptime(MV_DATEPIECE, "%d/%m/%Y"),MV_NUMPIECE1,
+                                                                      MV_NUMPIECE3,OP_CODEOPERATEUR,TYPEOPERATION,CODECRYPTAGE))
+        
+    except Exception as e:
+        # En cas d'erreur, lever une exception avec un message approprié
+        raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
+
+
+#Extourne Facture
+def ExtourneFacture(connexion,AG_CODEAGENCE,MV_DATEPIECECOMPTABILISATION,FT_CODEFACTURE,MC_DATESAISIE,MV_NUMPIECE3,
+                      OP_CODEOPERATEUR,TYPEOPERATION):
+    """
+    Récupère les données de la fonction SQL [PS_EDITION_RECU] avec le code de cryptage fourni.
+    @AG_CODEAGENCE as varchar(50),
+    @CODECRYPTAGE as varchar(50)
+    :param connexion: Connexion à la base de données SQL Server
+    :param codecryptage: Le code de cryptage utilisé pour décrypter les données
+    :return: Liste de dictionnaires représentant les enregistrements de la table intermédiaire
+    """
+    
+    try:
+        cursor = connexion.cursor()
+        vlpNumPiece = pvgNumeroPiece(connexion, AG_CODEAGENCE, datetime.strptime(MC_DATESAISIE, "%d/%m/%Y"),OP_CODEOPERATEUR)
+        MV_NUMPIECE3 = vlpNumPiece[0]['MC_NUMPIECE']
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("EXEC PS_EXTOURNEFACTURE ?,?,?,?,?,?,?,?",(AG_CODEAGENCE,datetime.strptime(MV_DATEPIECECOMPTABILISATION, "%d/%m/%Y"),float(FT_CODEFACTURE),datetime.strptime(MC_DATESAISIE, "%d/%m/%Y"),
+                                                                      MV_NUMPIECE3,OP_CODEOPERATEUR,TYPEOPERATION,CODECRYPTAGE))
+        
+    except Exception as e:
+        # En cas d'erreur, lever une exception avec un message approprié
+        MYSQL_REPONSE = e.args[1]
+        if "varchar" in MYSQL_REPONSE:
+               MYSQL_REPONSE = MYSQL_REPONSE.split("varchar", 1)[1].split("en type de donn", 1)[0]
+        raise Exception(f" {MYSQL_REPONSE}")
+
 
 
 # recu de caisse
@@ -102,6 +154,7 @@ def brouillard_caisse_edition(connection, broui_caisse_info):
     
         # Exécuter la procédure stockée avec le bon schéma (assure-toi que 'dbo' est le bon schéma)
         cursor.execute("EXEC dbo.PS_ETATBROUILLARDCAISSE ?,?,?,?,?,?,?,?", list(params.values()))
+        # cursor.execute("EXEC dbo.PS_ETATBROUILLARDCAISSE ?,?,?,?,?,?,?", list(params.values()))
         
         # Passer aux résultats (au cas où la procédure exécute plusieurs commandes)
         #cursor.nextset()
@@ -122,7 +175,7 @@ def brouillard_caisse_edition(connection, broui_caisse_info):
             total_debit += row.MC_MONTANTDEBIT if row.MC_MONTANTDEBIT is not None else 0
             total_credit += row.MC_MONTANTCREDIT if row.MC_MONTANTCREDIT is not None else 0
             
-            solde += int(row.MC_MONTANTDEBIT) - int(row.MC_MONTANTCREDIT)
+            # solde += int(row.MC_MONTANTDEBIT) - int(row.MC_MONTANTCREDIT)
             
             result = {
                 'AG_CODEAGENCE': row.AG_CODEAGENCE,
@@ -154,10 +207,16 @@ def brouillard_caisse_edition(connection, broui_caisse_info):
                 'MONTANT_TOTAL_WAVE': int(row.MONTANT_TOTAL_WAVE),
                 'MONTANT_TOTAL_CHEQUE': int(row.MONTANT_TOTAL_CHEQUE),
                 'MONTANT_TOTAL_VIREMENT': int(row.MONTANT_TOTAL_VIREMENT),
-                'CU_SOLDE': int(solde),
+                # 'CU_SOLDE': int(solde),
                 'SOLDEPRECEDENTOPERATION':  int(row.SOLDEPRECEDENTOPERATION) if row.SOLDEPRECEDENTOPERATION is not None else 0,
-                
-               
+                'SOLDEPRECEDENTCAISSE': int(row.SOLDEPRECEDENTCAISSE),
+                'SOLDEPRECEDENTMTN': int(row.SOLDEPRECEDENTMTN),
+                'SOLDEPRECEDENTWAVE': int(row.SOLDEPRECEDENTWAVE),
+                'SOLDEPRECEDENTORANGE': int(row.SOLDEPRECEDENTORANGE),
+                'SOLDEPRECEDENTMOOV': int(row.SOLDEPRECEDENTMOOV),
+                'SOLDEPRECEDENTCHEQUE': int(row.SOLDEPRECEDENTCHEQUE),
+                'SOLDEPRECEDENTVIREMENT': int(row.SOLDEPRECEDENTVIREMENT),
+                'SOLDE': int(row.SOLDE)
             }
             
             results.append(result)
@@ -174,7 +233,7 @@ def journal_edition(connexion, journal_info):
      # Préparation des paramètres
     params = {
         'AG_CODEAGENCE': journal_info['AG_CODEAGENCE'],
-        'OP_CODEOPERATEUR': journal_info['OP_CODEOPERATEUR'] or None,
+        'OP_CODEOPERATEUR': journal_info['OP_CODEOPERATEUR'] or '',
         'DATEDEBUT': datetime.strptime(journal_info['DATEDEBUT'], "%d/%m/%Y"),
         'DATEFIN': datetime.strptime(journal_info['DATEFIN'], "%d/%m/%Y"),
         'CODECRYPTAGE': CODECRYPTAGE,
@@ -217,6 +276,7 @@ def journal_edition(connexion, journal_info):
             result['PT_CODEPATIENT'] = row.PT_CODEPATIENT
             result['MC_NUMPIECE'] = row.MC_NUMPIECE
             result['MC_NUMSEQUENCE'] = row.MC_NUMSEQUENCE
+            result['MR_LIBELLE'] = row.MR_LIBELLE
   
             # Ajouter le dictionnaire à la liste des résultats
             results.append(result)
@@ -256,7 +316,7 @@ def gd_livre_edition(connexion, gd_livre_info):
         total_credit = 0  # Initialisation du total des crédits
         solde = 0
         if len(rows) > 0  :
-            solde = rows[0].SOLEPRECEDENT  # Initialisation du total des crédits
+            solde = rows[0].SOLDEPRECEDENT  # Initialisation du total des crédits
             solde = solde if solde is not None else 0
             solde = parse_numeric(solde)  # Initialisation du total des crédits
         for row in rows:
@@ -285,7 +345,8 @@ def gd_livre_edition(connexion, gd_livre_info):
             'MC_NUMPIECE': row.MC_NUMPIECE,
             'MC_NUMSEQUENCE': row.MC_NUMSEQUENCE,
             'SOLDE': solde,
-            'SOLEPRECEDENT': row.SOLEPRECEDENT
+            'SOLDEPRECEDENT': row.SOLDEPRECEDENT,
+            'MR_LIBELLE': row.MR_LIBELLE
             }
             # Ajouter le dictionnaire à la liste des résultats
             results.append(result)
@@ -362,6 +423,69 @@ def balance_edition(connexion, balance_info):
 
 
 
+def pvgNumeroPiece(connexion, _AG_CODEAGENCE, _MC_DATEPIECE, _OP_CODEOPERATEUR):
+    params = {
+        'AG_CODEAGENCE': _AG_CODEAGENCE,
+        'MC_DATEPIECE': _MC_DATEPIECE,
+        'OP_CODEOPERATEUR': _OP_CODEOPERATEUR
+    }
+
+    # Exécution de la procédure stockée
+    try:
+        cursor = connexion
+    except Exception as e:
+        cursor.close()
+         # En cas d'erreur, annuler la transaction
+        cursor.execute("ROLLBACK")
+        MYSQL_REPONSE = f'Impossible de récupérer le curseur de la base de données : {str(e.args[1])}'
+        raise Exception(MYSQL_REPONSE)
+
+    # Exécution de la procédure stockée
+    try:
+        cursor.execute("EXEC PS_INCREMENTNEW ?, ?, ?", list(params.values()))
+    except Exception as e:
+        cursor.close()
+        # En cas d'erreur, annuler la transaction
+        cursor.execute("ROLLBACK")
+        MYSQL_REPONSE = str(e.args[1])
+        raise Exception(MYSQL_REPONSE)
+      
+    # Récupération des résultats
+    try:
+        resultatIncrement = recup_info_increment_piece_op(connexion, _OP_CODEOPERATEUR)
+         
+        return resultatIncrement    
+    except Exception as e:
+         # En cas d'erreur, annuler la transaction
+        cursor.execute("ROLLBACK")
+        MYSQL_REPONSE = f'Impossible de récupérer les résultats de la procédure stockée : {str(e.args[1])}'
+        raise Exception(MYSQL_REPONSE)
+    
+
+
+def recup_info_increment_piece_op(connexion, _OP_CODEOPERATEUR):
+    try:
+        cursor = connexion.cursor()
+        query = "SELECT * FROM dbo.TEMPINCREMENTRESULTAT{}".format(_OP_CODEOPERATEUR)
+        # Exécution de la fonction SQL
+        cursor.execute(query)
+
+        # Récupération des résultats
+        rows = cursor.fetchall()
+        RetourNumResultat = []
+        # Création d'un dictionnaire pour stocker les données récupérées
+        # Traitement des résultats
+        for row in rows:
+            clsSms = {}
+            clsSms['MC_NUMPIECE'] = row.MC_NUMPIECE
+            clsSms['MC_REFERENCEPIECE'] = row.MC_REFERENCEPIECE
+            RetourNumResultat.append(clsSms)
+        # Faites ce que vous voulez avec les données récupérées
+        return RetourNumResultat
+    except Exception as e:
+        MYSQL_REPONSE = str(e.args[1])
+        raise Exception(MYSQL_REPONSE)
+    
 
 
 
