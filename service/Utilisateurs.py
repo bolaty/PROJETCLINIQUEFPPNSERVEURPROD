@@ -399,10 +399,11 @@ def traitement_asynchrone(connection, clsAgence, resultatUserCreation):
                         "Cordialement,\n"
                         "L'équipe de support"
                     )
-        excecuteServiceWeb(resultatUserCreation, "post", LIENDAPISMS,corpsMessagesms)
+        reponse = excecuteServiceWeb(resultatUserCreation, "post", LIENDAPISMS,corpsMessagesms)
         
-        connection.close() 
-        pass
+        if reponse or len(reponse) == 0:
+           connection.close() 
+           pass
 
     except Exception as e:
         connection.close() 

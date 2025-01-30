@@ -27,7 +27,10 @@ def ExtourneOperation(connexion,AG_CODEAGENCE,MV_DATEPIECECOMPTABILISATION,MV_DA
         
     except Exception as e:
         # En cas d'erreur, lever une exception avec un message approprié
-        raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
+        MYSQL_REPONSE = e.args[1]
+        if "varchar" in MYSQL_REPONSE:
+               MYSQL_REPONSE = MYSQL_REPONSE.split("varchar", 1)[1].split("en type de donn", 1)[0]
+        raise Exception(f" {MYSQL_REPONSE}")
 
 
 #Extourne Facture
@@ -371,14 +374,16 @@ def balance_edition(connexion, balance_info):
         'TYPEETAT': balance_info['TYPEETAT'],
         'OP_CODEOPERATEUREDITION': balance_info['OP_CODEOPERATEUREDITION'],
 		
-        'PL_OPTION': balance_info['PL_OPTION']
+        'PL_OPTION': balance_info['PL_OPTION'],
+        'NUMCOMPTEDEBUT': balance_info['NUMCOMPTEDEBUT'],
+        'NUMCOMPTEFIN': balance_info['NUMCOMPTEFIN']
     }
     
     try:
         cursor = connexion.cursor()
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("EXEC PS_ETATBALANCE ?,?,?,?,?,?,?,?", list(params.values()))
+        cursor.execute("EXEC PS_ETATBALANCE ?,?,?,?,?,?,?,?,?,?", list(params.values()))
 
         rows = cursor.fetchall()
         results = []
@@ -392,26 +397,26 @@ def balance_edition(connexion, balance_info):
             result['PL_LIBELLE'] = row.PL_LIBELLE
             result['PL_COMPTECOLLECTIF'] = row.PL_COMPTECOLLECTIF
 		
-            result['MOUVEMENTPRECEDENTDEBIT'] = int(row.MOUVEMENTPRECEDENTDEBIT)
-            result['MOUVEMENTPRECEDENTCREDIT'] = int(row.MOUVEMENTPRECEDENTCREDIT)
-            result['MOUVEMENTPERIODEDEBIT'] = int(row.MOUVEMENTPERIODEDEBIT)
-            result['MOUVEMENTPERIODECREDIT'] = int(row.MOUVEMENTPERIODECREDIT)
-            result['SOLDEPERIODEDEBIT'] = int(row.SOLDEPERIODEDEBIT)
-            result['SOLDEPERIODECREDIT'] = int(row.SOLDEPERIODECREDIT)
+            result['MOUVEMENTPRECEDENTDEBIT'] = int(row.MOUVEMENTPRECEDENTDEBIT or 0)
+            result['MOUVEMENTPRECEDENTCREDIT'] = int(row.MOUVEMENTPRECEDENTCREDIT or 0)
+            result['MOUVEMENTPERIODEDEBIT'] = int(row.MOUVEMENTPERIODEDEBIT or 0)
+            result['MOUVEMENTPERIODECREDIT'] = int(row.MOUVEMENTPERIODECREDIT or 0)
+            result['SOLDEPERIODEDEBIT'] = int(row.SOLDEPERIODEDEBIT or 0)
+            result['SOLDEPERIODECREDIT'] = int(row.SOLDEPERIODECREDIT or 0)
 		
-            result['TOTALCHARGEPRECEDENT'] = int(row.TOTALCHARGEPRECEDENT)
-            result['TOTALCHARGEENCOURS'] = int(row.TOTALCHARGEENCOURS)
-            result['TOTALCHARGEFINAL'] = int(row.TOTALCHARGEFINAL)
-            result['TOTALPRODUITPRECEDENT'] = int(row.TOTALPRODUITPRECEDENT)
-            result['TOTALPRODUITENCOURS'] = int(row.TOTALPRODUITENCOURS)
-            result['TOTALPRODUITFINAL'] = int(row.TOTALPRODUITFINAL)
+            result['TOTALCHARGEPRECEDENT'] =  int(row.TOTALCHARGEPRECEDENT or 0)
+            result['TOTALCHARGEENCOURS'] = int(row.TOTALCHARGEENCOURS or 0)
+            result['TOTALCHARGEFINAL'] = int(row.TOTALCHARGEFINAL or 0)
+            result['TOTALPRODUITPRECEDENT'] = int(row.TOTALPRODUITPRECEDENT or 0)
+            result['TOTALPRODUITENCOURS'] = int(row.TOTALPRODUITENCOURS or 0)
+            result['TOTALPRODUITFINAL'] = int(row.TOTALPRODUITFINAL or 0)
 		
-            result['TOTALSOLDEPERIODEDEBIT'] = int(row.TOTALSOLDEPERIODEDEBIT)
-            result['TOTALSOLDEPERIODECREDIT'] = int(row.TOTALSOLDEPERIODECREDIT)
-            result['TOTALMOUVEMENTPRECEDENTDEBIT'] = int(row.TOTALMOUVEMENTPRECEDENTDEBIT)
-            result['TOTALMOUVEMENTPRECEDENTCREDIT'] = int(row.TOTALMOUVEMENTPRECEDENTCREDIT)
-            result['TOTALMOUVEMENTPERIODEDEBIT'] = int(row.TOTALMOUVEMENTPERIODEDEBIT)
-            result['TOTALMOUVEMENTPERIODECREDIT'] = int(row.TOTALMOUVEMENTPERIODECREDIT)
+            result['TOTALSOLDEPERIODEDEBIT'] = int(row.TOTALSOLDEPERIODEDEBIT or 0)
+            result['TOTALSOLDEPERIODECREDIT'] = int(row.TOTALSOLDEPERIODECREDIT or 0)
+            result['TOTALMOUVEMENTPRECEDENTDEBIT'] = int(row.TOTALMOUVEMENTPRECEDENTDEBIT or 0)
+            result['TOTALMOUVEMENTPRECEDENTCREDIT'] = int(row.TOTALMOUVEMENTPRECEDENTCREDIT or 0)
+            result['TOTALMOUVEMENTPERIODEDEBIT'] = int(row.TOTALMOUVEMENTPERIODEDEBIT or 0)
+            result['TOTALMOUVEMENTPERIODECREDIT'] = int(row.TOTALMOUVEMENTPERIODECREDIT or 0)
 
             # Ajouter le dictionnaire à la liste des résultats
             results.append(result)

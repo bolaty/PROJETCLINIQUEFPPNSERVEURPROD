@@ -261,7 +261,7 @@ def list_facture(connexion, clsListeFacture):
         'AS_CODEASSURANCE': clsListeFacture['AS_CODEASSURANCE'],
         'MC_DATESAISIE': datetime.strptime(clsListeFacture['MC_DATESAISIE'], "%d/%m/%Y"),
         'CODECRYPTAGE': CODECRYPTAGE,
-        'TYPEOPERATION': 0
+        'TYPEOPERATION': int(clsListeFacture['TYPEOPERATION'])
     }
    
     try:

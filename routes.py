@@ -315,7 +315,7 @@ def pvgExtourneOperation():
             
         except Exception as e:
             db_connexion.rollback()
-            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+            return jsonify({"SL_MESSAGE":  str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
             #db_connexion.close()
@@ -572,7 +572,8 @@ def pvgBalance():
         balance_info['OP_CODEOPERATEUREDITION'] = str(row.get('OP_CODEOPERATEUREDITION'))
 		
         balance_info['PL_OPTION'] = str(row.get('PL_OPTION'))
-
+        balance_info['NUMCOMPTEDEBUT'] = str(row.get('NUMCOMPTEDEBUT'))
+        balance_info['NUMCOMPTEFIN'] = str(row.get('NUMCOMPTEFIN'))
         # Connexion à la base de données
         db_connexion = connect_database()
 
@@ -1236,7 +1237,7 @@ def Comboperiode():
        
         PE_CODEPERIODICITE = str(row.get('PE_CODEPERIODICITE', '')) 
         if PE_CODEPERIODICITE is None or PE_CODEPERIODICITE == '':
-           return jsonify({"SL_MESSAGE": "Données manquantes. voir PE_CODEPERIODICITE", "SL_RESULTAT": 'FALSE'})
+           return jsonify([{"SL_MESSAGE": "Données manquantes. voir PE_CODEPERIODICITE", "SL_RESULTAT": 'FALSE'}])
 
 
        
@@ -1637,7 +1638,63 @@ def ComboCompte():
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            #db_connexion.close()                      
+            #db_connexion.close()          
+            
+            
+            
+@api_bp.route('/pays', methods=['POST'])
+def ComboPays():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = pvgComboPays(db_connexion)
+                
+            if len(response) > 0 :
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+            
+            
+            
+@api_bp.route('/ville', methods=['POST'])
+def ComboVille():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        ville_info = {}
+        ville_info['PY_CODEPAYS'] = str(row.get('PY_CODEPAYS', '')) 
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = pvgComboVille(db_connexion, ville_info)
+                
+            if len(response) > 0 :
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+                        
 ################################################################
 #                   FIN GESTION COMBOS                         #
 ################################################################
@@ -1791,8 +1848,8 @@ def modificationAgence():
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
-        finally:
-            db_connexion.close()
+        # finally:
+            # db_connexion.close()
             
             
 
@@ -2263,7 +2320,7 @@ def pvgGetJourneeDeTravail():
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            #db_connection.close()
+            db_connection.close()
 
 
 
@@ -2303,7 +2360,7 @@ def pvgUpdateJourneeTravail():
             return jsonify({"SL_MESSAGE": "Erreur lors de la mise a jour : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            #db_connection.close()
+            db_connection.close()
             
 # ################################################################
 #                                                       GESTION DES JOURNEES DE TRAVAIL                                                         #
