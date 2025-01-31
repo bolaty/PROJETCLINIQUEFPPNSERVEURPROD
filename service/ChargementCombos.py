@@ -36,6 +36,35 @@ class clsAgence:
         self.OP_CODEOPERATEUR = ''
 #Liste ...
 
+
+def get_solde_mouvement_comptable(connection, ag_codeagence, ft_codefacture):
+    cursor = connection.cursor()
+
+    # Définition des paramètres de la requête
+    vapRequete = """
+        SELECT SUM(MC_MONTANTDEBIT - MC_MONTANTCREDIT) 
+        FROM MOUVEMENTCOMPTABLE 
+        WHERE AG_CODEAGENCE = ? 
+        AND FT_CODEFACTURE = ? 
+        AND TS_CODETYPESCHEMACOMPTABLE <> '00001' 
+        AND PT_IDPATIENT IS NULL;
+    """
+    try:
+        # Exécution de la requête avec les paramètres
+        cursor.execute(vapRequete, (int(ag_codeagence), int(ft_codefacture)))
+        row = cursor.fetchone()
+
+        # Vérification du résultat
+        result = row[0] if row and row[0] is not None else 0
+        return int(result)
+    
+    except Exception as e:
+        cursor.close()
+        connection.rollback()
+        MYSQL_REPONSE = f"Erreur lors de l'exécution de la requête : {str(e)}"
+        raise Exception(MYSQL_REPONSE)
+
+
 def pvgComboTableLabelAgence(connection, *vppCritere):
     cursor = connection.cursor()
 

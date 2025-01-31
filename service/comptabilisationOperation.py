@@ -102,7 +102,73 @@ def pvgComptabilisationOperations(connexion, clsMouvementcomptables):
             Retour['SL_RESULTAT'] = "FALSE"
             return Retour
         
-        
+def pvgComptabilisationOperationsFacture(connexion, clsMouvementcomptables):
+        try:
+            listOperation = []
+            statutinternet = IsNetworkConnected()
+            if statutinternet != 400:
+                vlpNumPiece = pvgNumeroPiece(connexion, clsMouvementcomptables[0]['AG_CODEAGENCE'], clsMouvementcomptables[0]['MC_DATEPIECE'],clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
+                clsMouvementcomptables[0]['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
+                clsMouvementcomptables[0]['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
+                
+                for i, clsMouvementcomptable in enumerate(clsMouvementcomptables):
+                    
+                        # Dernière itération
+                        clsMouvementcomptable['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
+                        clsMouvementcomptable['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
+                        
+                        ip_address = get_ip_address()
+                        public_ip_address = get_public_ip_address()
+                        mac_address = get_mac_address()
+                        LIBELLEACTION = clsMouvementcomptable['MC_LIBELLEOPERATION']
+                        # Mettre ensemble les informations de l'ordinateur et les séparer par des @
+                        sticker_code1 = ip_address + "@" + public_ip_address + "@" + mac_address
+                        # 1- Exécution de la fonction pvg_comptabilisation_operation pour la comptabilisation
+                        DataSet = pvg_comptabilisation_operation2(connexion, clsMouvementcomptable)
+                        
+                        # Vérifier si la première instruction s'est terminée avec succès
+                        if DataSet:
+                            listOperation.append(DataSet)
+                            # 2- Exécution de la fonction pvgDecisionEnvoiSMS pour l'envoi ou non du sms
+                            # 3- Exécution de la fonction pvpGenererMouchard pour l'insertion dans le mouchard DataSet["MC_NUMPIECE"]
+                            pvpGenererMouchard(connexion, clsMouvementcomptable['AG_CODEAGENCE'], clsMouvementcomptable['OP_CODEOPERATEUR'], vlpNumPiece[0]['MC_NUMPIECE'], "A", sticker_code1, LIBELLEACTION)
+
+                            # 4- Exécution de la fonction pvgBordereau pour obtenir les informations du mouvement comptable
+                            clsMouvementcomptable = DataSet
+                            
+                        # 3- Ajout du numéro de bordereau à SL_MESSAGEAPI
+                        # Test du lien de l'API SMS
+                        LIENDAPISMS = LIENAPISMS + "Service/wsApisms.svc/SendMessage"
+                        clsMouvementcomptable['NUMEROBORDEREAU'] = clsMouvementcomptable['NUMEROBORDEREAU'] #+ "/" + clsParametreAppelApis[0]['SL_MESSAGEAPI']
+                        Retour = {}
+                        Retour['NUMEROBORDEREAU'] = clsMouvementcomptable['NUMEROBORDEREAU']
+                        Retour['MC_LIBELLEOPERATION'] = clsMouvementcomptable['MC_LIBELLEOPERATION']
+                        Retour['MESSAGEAPI'] = ""#clsParametreAppelApis[0]['SL_MESSAGEAPI']
+                        if not IsValidateIP(LIENDAPISMS):
+                            Retour['MESSAGEAPI']  = "L'API SMS doit être configurée !!!"
+                        Retour['SL_RESULTAT'] = "TRUE"
+                        
+                        # Démarrer le traitement asynchrone dans un thread
+                        if listOperation is not None and Retour['SL_RESULTAT'] == "TRUE":
+                            get_commit(connexion, clsMouvementcomptables)
+                            thread_traitement = threading.Thread(target=traitement_asynchrone, args=(connexion, clsMouvementcomptables[0], listOperation))
+                            thread_traitement.daemon = True  # Définir le thread comme démon
+                            thread_traitement.start()
+                
+                # 4- Retourner le numéro de bordereau
+                return Retour #clsMouvementcomptable['NUMEROBORDEREAU']
+            else:
+                Retour = {}
+                Retour['SL_MESSAGE'] = 'Opération impossible veuillez revoir la connexion internet'
+                Retour['SL_RESULTAT'] = "FALSE"
+                return Retour
+        except Exception as e:
+            #connexion.execute("ROLLBACK")
+            #connexion.close()
+            Retour = {}
+            Retour['SL_MESSAGE'] = str(e.args[0])
+            Retour['SL_RESULTAT'] = "FALSE"
+            return Retour        
         
 def pvgComptabilisationOperationsCaisse(connexion, clsMouvementcomptables):
     try:
@@ -308,7 +374,7 @@ def pvg_constatation_facture(connexion, cls_mouvement_comptable):
         'MC_LIBELLEBANQUE': cls_mouvement_comptable['MC_LIBELLEBANQUE'],
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': '',
-        'MONTANT': cls_mouvement_comptable['MC_MONTANT_FACTURE'] if 'MC_MONTANT_FACTURE' in cls_mouvement_comptable and cls_mouvement_comptable['MC_MONTANT_FACTURE'] else 0,
+        'MONTANT': cls_mouvement_comptable['MC_MONTANT_CONSTATIONFACTURE'] if 'MC_MONTANT_CONSTATIONFACTURE' in cls_mouvement_comptable and cls_mouvement_comptable['MC_MONTANT_CONSTATIONFACTURE'] else 0,
         'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None,
         'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or None
     }
@@ -517,7 +583,7 @@ def pvg_comptabilisation_operation_caisse1(connexion, cls_mouvement_comptable):
         'MC_AUTRE1': cls_mouvement_comptable['MC_AUTRE1'],
         'MC_AUTRE2': cls_mouvement_comptable['MC_AUTRE2'],
         'MC_AUTRE3': cls_mouvement_comptable['MC_AUTRE3'],
-        'TS_CODETYPESCHEMACOMPTABLE': '00003', # operation de caisse --cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'],
+        'TS_CODETYPESCHEMACOMPTABLE': cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'],# '00003', # operation de caisse --cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'],
         'MC_SENSBILLETAGE': cls_mouvement_comptable['MC_SENSBILLETAGE'],
         'MC_LIBELLEBANQUE': cls_mouvement_comptable['MC_LIBELLEBANQUE'],
         'CODECRYPTAGE': CODECRYPTAGE,
@@ -579,7 +645,7 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
         'MC_AUTRE1': cls_mouvement_comptable['MC_AUTRE1'],
         'MC_AUTRE2': cls_mouvement_comptable['MC_AUTRE2'],
         'MC_AUTRE3': cls_mouvement_comptable['MC_AUTRE3'],
-        'TS_CODETYPESCHEMACOMPTABLE': '00003', # operation de caisse --cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'],
+        'TS_CODETYPESCHEMACOMPTABLE': cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'],#'00003', # operation de caisse --cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'],
         'MC_SENSBILLETAGE': cls_mouvement_comptable['MC_SENSBILLETAGE'],
         'MC_LIBELLEBANQUE': cls_mouvement_comptable['MC_LIBELLEBANQUE'],
         'CODECRYPTAGE': CODECRYPTAGE,

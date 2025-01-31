@@ -200,7 +200,9 @@ def traitement_asynchrone(connexion, clsMouvementcomptable, listOperation):
                     server.sendmail(adresseEmail, destinataire, message.as_string())
         
         for idx in range(len(listOperation)):
-            vlpEnvoyerSms = pvgDecisionEnvoiSMS(connexion, clsMouvementcomptable['AG_CODEAGENCE'])
+            """
+            AG_CODEAGENCE = clsMouvementcomptable['AG_CODEAGENCE']
+            vlpEnvoyerSms = pvgDecisionEnvoiSMS(connexion, AG_CODEAGENCE)
             if vlpEnvoyerSms:
                 clsParametreAppelApi = {}
                 clsParametreAppelApi['AG_CODEAGENCE'] = clsMouvementcomptable['AG_CODEAGENCE']
@@ -243,15 +245,61 @@ def traitement_asynchrone(connexion, clsMouvementcomptable, listOperation):
                     clsParametreAppelApis[0]['SL_MESSAGE'] = clsParametreAppelApis[0]['SL_MESSAGE'] + " " + clsParametreAppelApis[0]['SL_MESSAGEAPI']
                 if clsParams['SL_RESULTAT'] == "TRUE":
                     clsParametreAppelApis[0]['SL_MESSAGEAPI'] = ""
-        
-        connexion.close() 
-        pass
+            """
+            # Préparation de l'appel à l'API SMS et mise à jour du SMS
+            LIENDAPISMS = LIENAPISMS + "Service/wsApisms.svc/SendMessage"
+            Objet ={}
+                # Appel de l'API SMS
+            if not IsValidateIP(LIENDAPISMS):
+                    Objet["SL_RESULTAT"] = "FALSE"
+                    Objet["SL_MESSAGE"] = "L'API SMS doit être configurée !!!"
+                    
+                    return Objet
+            
+            reponse = excecuteServiceWebNew(listOperation[idx], "post", LIENDAPISMS,listOperation[idx]["SL_MESSAGECLIENT"])
+            
+        if reponse or len(reponse) == 0:
+            
+            pass
+        #connexion.close() 
+        #pass
 
     except Exception as e:
-        connexion.close() 
+        #connexion.close() 
         print("Erreur lors du traitement asynchrone:", e)
 
-
+def excecuteServiceWebNew(Objetenv, method, url,corpsMessagesms):
+    objList = []
+    Objet={}
+    headers = {'Content-Type': 'application/json'}
+    try:
+        Objet={
+            "Objet": [
+                { 
+                    "CO_CODECOMPTE": "",
+                    "CodeAgence": Objetenv['AG_CODEAGENCE'],
+                    "RECIPIENTPHONE": Objetenv['EJ_TELEPHONE'],
+                    "SM_RAISONNONENVOISMS": "xxx",
+                    "SM_DATEPIECE": "14-01-2025",
+                    "LO_LOGICIEL": "01",
+                    "OB_NOMOBJET": "test",
+                    "SMSTEXT": corpsMessagesms,
+                    "INDICATIF": "225",
+                    "SM_NUMSEQUENCE": "1",
+                    "SM_STATUT": "E"
+                }
+            ]
+        }
+        response = requests.request(method, url, json=Objet, headers=headers)
+        if response.status_code == 200:
+            objList = response.json()
+    except requests.exceptions.RequestException as e:
+        # Log.Error("Testing log4net error logging - Impossible d'atteindre le service Web")
+        pass
+    except Exception as ex:
+        # Log.Error("Testing log4net error logging - " + str(ex))
+        pass
+    return objList
 
 def pvgDecisionEnvoiSMS(connexion, *vppCritere):
     # Appeler la fonction pvgTableLabel avec le paramètre AG_CODEAGENCE et récupérer la réponse dans l'objet clsAgence

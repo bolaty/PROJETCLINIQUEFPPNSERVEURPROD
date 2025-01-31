@@ -2,11 +2,11 @@ from flask import Blueprint,request, jsonify,current_app,current_app as app,send
 from service.dashboard import dashboard
 from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture, get_code_facture, get_info_comptabilisation
 from service.parametres import liste_operateur, liste_des_agences, liste_des_profils, liste_des_services, liste_des_parametres, modifier_des_agences
-from service.comptabilisationOperation import pvgComptabilisationOperations, pvgComptabilisationOperationsCaisse
+from service.comptabilisationOperation import pvgComptabilisationOperationsFacture, pvgComptabilisationOperations, pvgComptabilisationOperationsCaisse
 from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition, journal_edition, gd_livre_edition, balance_edition
 from service.auth import connexion_utilisateur
 from service.journee_de_travail_et_exercice import valeur_scalaire_requete_max, valeur_scalaire_requete_count, insert_journee_travail, table_libelle_date_systeme_serveur, liste_journee_travail, update_journee_travail_statut
-from service.ChargementCombos import pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille
+from service.ChargementCombos import get_solde_mouvement_comptable,pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille
 from service.auth import connexion_utilisateur,pvgUserChangePasswordfist,pvgUserDemandePassword
 from service.Utilisateurs import creation_profil,update_profil,delete_profil,update_compte_utilisateur,insert_operateur,delete_compte_utilisateur,Activation_DesActivation_utilisateur
 from models.models import clsObjetEnvoi
@@ -137,6 +137,7 @@ def pvgCreationFacture():
                 objet_mode_reglement['MC_SENSBILLETAGE'] = str(row.get('MC_SENSBILLETAGE', ''))
                 objet_mode_reglement['MC_LIBELLEBANQUE'] = str(row.get('MC_LIBELLEBANQUE', ''))
                 objet_mode_reglement['MC_MONTANT_FACTURE'] = row.get('MC_MONTANT_FACTURE', '')
+                objet_mode_reglement['MC_MONTANT_CONSTATIONFACTURE'] = row.get('MC_MONTANT_CONSTATIONFACTURE', '')
                 objet_mode_reglement['ACT_CODEACTE'] = str(objet_facture['ACT_CODEACTE'])
                 clsmouvement_infos.append(objet_mode_reglement) 
             except ValueError as e:
@@ -144,7 +145,7 @@ def pvgCreationFacture():
                 return jsonify({"SL_MESSAGE": f"Erreur de type de données : {str(e)}", "SL_RESULTAT": 'FALSE'}), 400
             except Exception as e:
                 # Retourner un message d'erreur en cas d'exception générale
-                return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 500
+                return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         try:
             # Appeler la fonction d'insertion dans la base de données
@@ -160,7 +161,87 @@ def pvgCreationFacture():
         
         except Exception as e:
             db_connexion.rollback()
-            return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 500
+            return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
+    except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+    """ #finally:
+        #db_connexion.close() """
+
+@api_bp.route('/ReglementFacture', methods=['POST'])
+def pvgReglementFacture():
+    # Récupérer les données du corps de la requête
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes. Code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+
+    # Connexion à la base de données
+    db_connexion = connect_database()
+    
+    try:
+        # with db_connexion.cursor() as cursor:
+        cursor = db_connexion.cursor()
+        cursor.execute("BEGIN TRANSACTION")
+
+        # Consigner les mouvements
+        clsmouvement_infos = []
+        for row in request_data['Objet']:
+            objet_mode_reglement = {}
+            try:
+                objet_mode_reglement['MR_CODEMODEREGLEMENT'] = str(row.get('MR_CODEMODEREGLEMENT', ''))
+                objet_mode_reglement['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', ''))
+                objet_mode_reglement['MC_DATEPIECE'] = str(row.get('PT_DATESAISIE', ''))
+                objet_mode_reglement['MC_NUMPIECE'] = str(row.get('MC_NUMPIECE', ''))
+                objet_mode_reglement['MC_NUMSEQUENCE'] = str(row.get('MC_NUMSEQUENCE', ''))
+                objet_mode_reglement['PT_IDPATIENT'] = str(row.get('PT_IDPATIENT', '')) 
+                objet_mode_reglement['FT_CODEFACTURE'] = str(row.get('FT_CODEFACTURE', '')) 
+                objet_mode_reglement['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR', '')) 
+                objet_mode_reglement['MC_MONTANTDEBIT'] = row.get('MC_MONTANTDEBIT', '')
+                objet_mode_reglement['MC_MONTANTCREDIT'] = row.get('MC_MONTANTCREDIT', '')
+                objet_mode_reglement['MC_DATESAISIE'] = str(row.get('PT_DATESAISIE', ''))  
+                objet_mode_reglement['MC_ANNULATION'] = str(row.get('MC_ANNULATION', ''))
+                objet_mode_reglement['JO_CODEJOURNAL'] = str(row.get('JO_CODEJOURNAL', ''))
+                objet_mode_reglement['MC_REFERENCEPIECE'] = str(row.get('MC_REFERENCEPIECE', ''))
+                objet_mode_reglement['MC_LIBELLEOPERATION'] = str(row.get('MC_LIBELLEOPERATION', ''))
+                objet_mode_reglement['PL_CODENUMCOMPTE'] = str(row.get('PL_CODENUMCOMPTE', '')) 
+                objet_mode_reglement['MC_NOMTIERS'] = str(row.get('MC_NOMTIERS', ''))
+                objet_mode_reglement['MC_CONTACTTIERS'] = str(row.get('MC_CONTACTTIERS', ''))
+                objet_mode_reglement['MC_EMAILTIERS'] = str(row.get('MC_EMAILTIERS', ''))
+                objet_mode_reglement['MC_NUMPIECETIERS'] = str(row.get('MC_NUMPIECETIERS', ''))
+                objet_mode_reglement['MC_TERMINAL'] = str(row.get('MC_TERMINAL', ''))
+                objet_mode_reglement['MC_AUTRE'] = str(row.get('MC_AUTRE', ''))
+                objet_mode_reglement['MC_AUTRE1'] = str(row.get('MC_AUTRE1', ''))
+                objet_mode_reglement['MC_AUTRE2'] = str(row.get('MC_AUTRE2', ''))
+                objet_mode_reglement['MC_AUTRE3'] = str(row.get('MC_AUTRE3', ''))
+                objet_mode_reglement['TS_CODETYPESCHEMACOMPTABLE'] = str(row.get('TS_CODETYPESCHEMACOMPTABLE', ''))
+                objet_mode_reglement['MC_SENSBILLETAGE'] = str(row.get('MC_SENSBILLETAGE', ''))
+                objet_mode_reglement['MC_LIBELLEBANQUE'] = str(row.get('MC_LIBELLEBANQUE', ''))
+                objet_mode_reglement['MC_MONTANT_FACTURE'] = row.get('MC_MONTANT_FACTURE', '')
+                objet_mode_reglement['ACT_CODEACTE'] = str(row.get('ACT_CODEACTE', '')) 
+                clsmouvement_infos.append(objet_mode_reglement) 
+            except ValueError as e:
+                # Retourner un message d'erreur en cas de problème de type de données
+                return jsonify({"SL_MESSAGE": f"Erreur de type de données : {str(e)}", "SL_RESULTAT": 'FALSE'}), 400
+            except Exception as e:
+                # Retourner un message d'erreur en cas d'exception générale
+                return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
+
+        try:
+            # Appeler la fonction d'insertion dans la base de données
+            response = pvgComptabilisationOperationsFacture(db_connexion, clsmouvement_infos)
+                        
+            # Retourner la réponse au client
+            if response['SL_RESULTAT'] == "TRUE":
+                #db_connexion.close()
+                return jsonify({"NUMEROBORDEREAUREGLEMENT":str(response['NUMEROBORDEREAU']),"MC_LIBELLEOPERATION":str(response['MC_LIBELLEOPERATION']),"SL_MESSAGE":"Comptabilisation éffectuée avec success !" + response['MESSAGEAPI'] ,"SL_RESULTAT": 'TRUE'}) 
+            else:
+                ##db_connexion.close()
+                return jsonify({"SL_MESSAGE":response['SL_MESSAGE'] ,"SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
     except Exception as e:
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
@@ -1112,6 +1193,38 @@ def pvgdelete_compte_utilisateur():
 ################################################################
 #                           GESTION COMBOS                                                                    #
 ################################################################
+@api_bp.route('/get_solde_mouvement_comptable', methods=['POST'])
+def pvgget_solde_mouvement_comptable():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        user_info = {}
+
+        # Validation et récupération des données pour la suppression
+        user_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', '')) 
+        user_info['FT_CODEFACTURE'] = str(row.get('FT_CODEFACTURE', '')) 
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                if user_info['AG_CODEAGENCE']:  # Si une valeur est fournie
+                    response = get_solde_mouvement_comptable(db_connexion, str(row.get('AG_CODEAGENCE', '')), str(row.get('FT_CODEFACTURE', '')))
+                
+                
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE' , "MONTANTAREGLER": + response})
+            
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()    
+
+
 @api_bp.route('/ComboTableLabelAgence', methods=['POST'])
 def ComboTableLabelAgence():
     request_data = request.json
@@ -2409,7 +2522,7 @@ def pvgReedition():
                 return jsonify({"SL_MESSAGE": "Aucun élément trouvé !" ,"SL_RESULTAT": 'FALSE'})
         except Exception as e:
             db_connexion.rollback()
-            return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 500
+            return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
     except Exception as e:
             db_connexion.rollback()
@@ -2480,7 +2593,7 @@ def pvgOperationCaisse():
                 return jsonify({"SL_MESSAGE": f"Erreur de type de données : {str(e)}", "SL_RESULTAT": 'FALSE'}), 400
             except Exception as e:
                 # Retourner un message d'erreur en cas d'exception générale
-                return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 500
+                return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         try:
             # Appeler la fonction d'insertion dans la base de données
@@ -2496,7 +2609,7 @@ def pvgOperationCaisse():
         
         except Exception as e:
             db_connexion.rollback()
-            return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 500
+            return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
     except Exception as e:
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})

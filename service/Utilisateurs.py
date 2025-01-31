@@ -460,9 +460,9 @@ def excecuteServiceWeb(Objetenv, method, url,corpsMessagesms):
                 { 
                     "CO_CODECOMPTE": "",
                     "CodeAgence": Objetenv[0]['AG_CODEAGENCE'],
-                    "RECIPIENTPHONE": Objetenv[0]['CU_CONTACT'],
+                    "RECIPIENTPHONE": Objetenv[0]['OP_TELEPHONE'],
                     "SM_RAISONNONENVOISMS": "xxx",
-                    "SM_DATEPIECE": "12-05-2022",
+                    "SM_DATEPIECE": "14-01-2025",
                     "LO_LOGICIEL": "01",
                     "OB_NOMOBJET": "test",
                     "SMSTEXT": corpsMessagesms,
