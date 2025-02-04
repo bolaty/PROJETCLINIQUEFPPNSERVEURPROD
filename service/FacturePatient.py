@@ -30,7 +30,7 @@ def insert_patient(connexion, patient_info):
         'PT_NOMPRENOMS': patient_info['PT_NOMPRENOMS'],
         'PT_CONTACT': patient_info['PT_CONTACT'],
         'PT_EMAIL': patient_info['PT_EMAIL'],
-        'PT_DATENAISSANCE': datetime.strptime(patient_info['PT_DATENAISSANCE'], "%d/%m/%Y"),
+        'PT_DATENAISSANCE': datetime.strptime(patient_info.get('PT_DATENAISSANCE') or '01/01/1900', "%d/%m/%Y"),
         'PT_DATESAISIE': datetime.strptime(patient_info['PT_DATESAISIE'], "%d/%m/%Y"),
         'PT_LIEUHABITATION': patient_info['PT_LIEUHABITATION'],
         'PF_CODEPROFESSION': patient_info.get('PF_CODEPROFESSION') or None,
@@ -258,8 +258,13 @@ def list_facture(connexion, clsListeFacture):
         'FT_CODEFACTURE': clsListeFacture['FT_CODEFACTURE'],
         'PT_IDPATIENT': clsListeFacture['PT_IDPATIENT'],
         'ACT_CODEACTE': clsListeFacture['ACT_CODEACTE'],
+        'PT_NOMPRENOMS': clsListeFacture['PT_NOMPRENOMS'],
+        'PT_CONTACT': clsListeFacture['PT_CONTACT'],
+        'PT_MATRICULE': clsListeFacture['PT_MATRICULE'],
+        'PT_CODEPATIENT': clsListeFacture['PT_CODEPATIENT'],
         'AS_CODEASSURANCE': clsListeFacture['AS_CODEASSURANCE'],
-        'MC_DATESAISIE': datetime.strptime(clsListeFacture['MC_DATESAISIE'], "%d/%m/%Y"),
+        'MC_DATESAISIE1': datetime.strptime(clsListeFacture['MC_DATESAISIE1'], "%d/%m/%Y"),
+        'MC_DATESAISIE2': datetime.strptime(clsListeFacture['MC_DATESAISIE2'], "%d/%m/%Y"),
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': int(clsListeFacture['TYPEOPERATION'])
     }
@@ -268,7 +273,7 @@ def list_facture(connexion, clsListeFacture):
         cursor = connexion.cursor()
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("SELECT * FROM dbo.FT_FACTUREPATIENTPARTYPE(?,?,?,?,?,?,?,?)", list(params.values()))
+        cursor.execute("SELECT * FROM dbo.FT_FACTUREPATIENTPARTYPE(?,?,?,?,?,?,?,?,?,?,?,?,?)", list(params.values()))
                        
         rows = cursor.fetchall()
         results = []
@@ -296,6 +301,7 @@ def list_facture(connexion, clsListeFacture):
             result['PF_CODEPROFESSION'] = row.PF_CODEPROFESSION
             result['PT_MATRICULE'] = row.PT_MATRICULE
             result['STAT_CODESTATUT'] = row.STAT_CODESTATUT
+            result['NUMEROBORDEREAU'] = row.NUMEROBORDEREAU
             # Ajouter le dictionnaire à la liste des résultats
             results.append(result)
         

@@ -687,7 +687,7 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
 
         # Convertir la chaîne de caractères en entier
         montant_debit_int = cls_mouvement_comptable['MC_MONTANT_FACTURE']#int(montant_debit_str)
-        resultat = recup_info_num_bordereau(connexion, cls_mouvement_comptable['AG_CODEAGENCE'], cls_mouvement_comptable['MC_DATEPIECE'], '00003', None, cls_mouvement_comptable['OP_CODEOPERATEUR'],  montant_debit_int, CODECRYPTAGE)
+        resultat = recup_info_num_bordereau(connexion, cls_mouvement_comptable['AG_CODEAGENCE'], cls_mouvement_comptable['MC_DATEPIECE'], cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'], None, cls_mouvement_comptable['OP_CODEOPERATEUR'],  montant_debit_int, CODECRYPTAGE)
         """
         if resultat:
            result= recup_info_apisms_clientpiece(connexion,cls_mouvement_comptable['OP_CODEOPERATEUR'])

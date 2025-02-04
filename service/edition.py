@@ -288,7 +288,59 @@ def journal_edition(connexion, journal_info):
     except Exception as e:
         # En cas d'erreur, lever une exception avec un message approprié
         raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
+
+
+# Liste des Patients
+def editionPatient(connexion, editionPatient_info):
     
+     # Préparation des paramètres
+    params = {
+        'AG_CODEAGENCE': editionPatient_info['AG_CODEAGENCE'],
+        'OP_CODEOPERATEUR': editionPatient_info['OP_CODEOPERATEUR'] or '',
+        'DATEDEBUT': datetime.strptime(editionPatient_info['DATEDEBUT'], "%d/%m/%Y"),
+        'DATEFIN': datetime.strptime(editionPatient_info['DATEFIN'], "%d/%m/%Y"),
+        'CODECRYPTAGE': CODECRYPTAGE,
+        'TYPEETAT': editionPatient_info['TYPEETAT'],
+        'OP_CODEOPERATEUREDITION': editionPatient_info['OP_CODEOPERATEUREDITION'],
+        'STAT_CODESTATUT': editionPatient_info['STAT_CODESTATUT'],
+        'AS_CODEASSURANCE': editionPatient_info['AS_CODEASSURANCE']
+    }
+    
+    try:
+        cursor = connexion.cursor()
+        
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("EXEC PS_ETATLISTEDESPATIENTS ?,?,?,?,?,?,?,?,?", list(params.values()))
+        
+        rows = cursor.fetchall()
+        results = []
+        for row in rows:
+            result = {}
+            
+            result['AG_CODEAGENCE'] = row.AG_CODEAGENCE
+            result['AG_RAISONSOCIAL'] = row.AG_RAISONSOCIAL
+            result['PT_DATESAISIE'] = row.PT_DATESAISIE.strftime("%d/%m/%Y")  # Formatage de la date
+            result['PT_NOMPRENOMS'] = row.PT_NOMPRENOMS
+            result['STAT_CODESTATUT'] = row.STAT_CODESTATUT
+            result['STAT_LIBELLE'] = row.STAT_LIBELLE
+            result['OP_CODEOPERATEUR'] = row.OP_CODEOPERATEUR
+            result['OP_NOMPRENOM'] = row.OP_NOMPRENOM
+            result['PT_MATRICULE'] = row.PT_MATRICULE
+            result['SX_CODESEXE'] = row.SX_CODESEXE
+            result['SX_LIBELLE'] = row.SX_LIBELLE
+            result['PT_CONTACT'] = row.PT_CONTACT
+            result['PT_EMAIL'] = row.PT_EMAIL
+            result['PT_LIEUHABITATION'] = row.PT_LIEUHABITATION
+            result['PF_CODEPROFESSION'] = row.PF_CODEPROFESSION
+            result['PF_LIBELLE'] = row.PF_LIBELLE
+  
+            # Ajouter le dictionnaire à la liste des résultats
+            results.append(result)
+        
+        return results
+    except Exception as e:
+        # En cas d'erreur, lever une exception avec un message approprié
+        raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")    
     
 # grand livre
 def gd_livre_edition(connexion, gd_livre_info):
@@ -356,8 +408,10 @@ def gd_livre_edition(connexion, gd_livre_info):
         
         return results
     except Exception as e:
-        # En cas d'erreur, lever une exception avec un message approprié
-        raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
+        if len(e.args) == 1:
+            raise Exception(f"{e.args[0]}")
+        else:
+            raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
 
 
 

@@ -3,12 +3,13 @@ from service.dashboard import dashboard
 from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture, get_code_facture, get_info_comptabilisation
 from service.parametres import liste_operateur, liste_des_agences, liste_des_profils, liste_des_services, liste_des_parametres, modifier_des_agences
 from service.comptabilisationOperation import pvgComptabilisationOperationsFacture, pvgComptabilisationOperations, pvgComptabilisationOperationsCaisse
-from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition, journal_edition, gd_livre_edition, balance_edition
+from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition,editionPatient, journal_edition, gd_livre_edition, balance_edition
 from service.auth import connexion_utilisateur
 from service.journee_de_travail_et_exercice import valeur_scalaire_requete_max, valeur_scalaire_requete_count, insert_journee_travail, table_libelle_date_systeme_serveur, liste_journee_travail, update_journee_travail_statut
 from service.ChargementCombos import get_solde_mouvement_comptable,pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille
 from service.auth import connexion_utilisateur,pvgUserChangePasswordfist,pvgUserDemandePassword
 from service.Utilisateurs import creation_profil,update_profil,delete_profil,update_compte_utilisateur,insert_operateur,delete_compte_utilisateur,Activation_DesActivation_utilisateur
+from service.Patient import ListePatient,insertpatient,deletepatient
 from models.models import clsObjetEnvoi
 from datetime import datetime
 import traceback
@@ -23,6 +24,163 @@ api_bp = Blueprint('api', __name__)
 
 
 ################################################################
+#                        GESTION DES PATIENTS                  #
+################################################################
+@api_bp.route('/insert_patient', methods=['POST'])
+def pvginsert_patient():
+    # Récupérer les données du corps de la requête
+    request_data = request.json
+
+    for row in request_data['Objet']:
+        patient_info = {}
+
+        try:
+            # Validation des chaînes de caractères
+            patient_info['PT_IDPATIENT'] = str(row.get('PT_IDPATIENT', ''))
+            patient_info['PT_CODEPATIENT'] = str(row.get('PT_CODEPATIENT', ''))
+            patient_info['PT_MATRICULE'] = str(row.get('PT_MATRICULE', ''))
+            patient_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', ''))
+            patient_info['PT_NOMPRENOMS'] = str(row.get('PT_NOMPRENOMS', ''))
+            patient_info['PT_CONTACT'] = str(row.get('PT_CONTACT', ''))
+            patient_info['PT_EMAIL'] = str(row.get('PT_EMAIL', ''))
+            patient_info['PT_DATENAISSANCE'] = str(row.get('PT_DATENAISSANCE', ''))
+            patient_info['PT_DATESAISIE'] = str(row.get('PT_DATESAISIE', ''))
+            patient_info['PT_LIEUHABITATION'] = str(row.get('PT_LIEUHABITATION', ''))
+            patient_info['PF_CODEPROFESSION'] = str(row.get('PF_CODEPROFESSION', ''))
+            patient_info['SX_CODESEXE'] = str(row.get('SX_CODESEXE', ''))
+            patient_info['STAT_CODESTATUT'] = str(row.get('STAT_CODESTATUT', ''))
+            patient_info['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR', ''))
+            patient_info['PL_CODENUMCOMPTE'] = str(row.get('PL_CODENUMCOMPTE', ''))
+            patient_info['TYPEOPERATION'] = str(row.get('TYPEOPERATION', ''))
+            
+
+        except ValueError as e:
+            # Retourner un message d'erreur en cas de problème de type de données
+            return jsonify({"SL_MESSAGE": f"Erreur de type de données : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
+        
+        except Exception as e:
+            # Retourner un message d'erreur en cas d'exception générale
+            return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
+
+        # Connexion à la base de données
+        db_connection = connect_database()
+
+        try:
+            with db_connection:
+                cursor = db_connection.cursor()
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction d'insertion dans la base de données
+                reponse = insertpatient(cursor, patient_info)
+                
+                # Valider la transaction
+                db_connection.commit()
+
+            return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
+
+        except Exception as e:
+            db_connection.rollback()
+            return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
+
+        #finally:
+            db_connection.close()
+
+            
+            
+@api_bp.route('/deletepatient', methods=['POST'])
+def pvgdeletepatient():
+    # Récupérer les données du corps de la requête
+    request_data = request.json
+
+    for row in request_data['Objet']:
+        patient_info = {}
+
+        try:
+            # Validation des chaînes de caractères
+            patient_info['PT_IDPATIENT'] = str(row.get('PT_IDPATIENT', ''))
+            
+            
+
+        except ValueError as e:
+            # Retourner un message d'erreur en cas de problème de type de données
+            return jsonify({"SL_MESSAGE": f"Erreur de type de données : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
+        
+        except Exception as e:
+            # Retourner un message d'erreur en cas d'exception générale
+            return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
+
+        # Connexion à la base de données
+        db_connection = connect_database()
+
+        try:
+            with db_connection:
+                cursor = db_connection.cursor()
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction d'insertion dans la base de données
+                reponse = deletepatient(cursor, patient_info)
+                
+                # Valider la transaction
+                db_connection.commit()
+
+            return jsonify({"SL_MESSAGE": "Suppression réussie!", "SL_RESULTAT": 'TRUE'}), 200
+
+        except Exception as e:
+            db_connection.rollback()
+            return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
+
+        #finally:
+            db_connection.close()  
+
+
+
+
+@api_bp.route('/ListePatient', methods=['POST'])
+def pvgListePatient():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+    
+    for row in request_data['Objet']:
+        Patient_info = {}
+
+        # Validation et récupération des données pour la suppression
+        Patient_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE'))
+        Patient_info['PT_CODEPATIENT'] = str(row.get('PT_CODEPATIENT'))
+        Patient_info['DATEDEBUT'] = str(row.get('DATEDEBUT'))
+        Patient_info['DATEFIN'] = str(row.get('DATEFIN'))
+        Patient_info['PT_MATRICULE'] = str(row.get('PT_MATRICULE'))
+        Patient_info['PT_NOMPRENOMS'] = str(row.get('PT_NOMPRENOMS'))
+        Patient_info['STAT_CODESTATUT'] = str(row.get('STAT_CODESTATUT'))
+        Patient_info['PT_CONTACT'] = str(row.get('PT_CONTACT'))
+        
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = ListePatient(db_connexion, Patient_info)
+            
+            if len(response) > 0:
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": "Aucuns élement trouvé !!!", "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()  
+################################################################
+#                        GESTION DES PATIENTS                  #
+################################################################
+################################################################
 #                        GESTION DES FACTURES                                                                  #
 ################################################################
 
@@ -36,7 +194,7 @@ def pvgCreationFacture():
 
     for row in request_data['Objet']:
         objet_facture = {}
-        # objet_facture['PT_CODEPATIENT'] = str(row.get('PT_CODEPATIENT', ''))
+        objet_facture['PT_CODEPATIENT'] = str(row.get('PT_CODEPATIENT', ''))
         objet_facture['PT_IDPATIENT'] = str(row.get('PT_IDPATIENT', ''))
         objet_facture['PT_MATRICULE'] = str(row.get('PT_MATRICULE', ''))
         objet_facture['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', ''))
@@ -292,13 +450,17 @@ def pvgGetFactureParType():
     for row in request_data['Objet']:
         clsListeFacture = {}
         # Validation et récupération des données pour la suppression
-   
         clsListeFacture['AG_CODEAGENCE'] = row.get('AG_CODEAGENCE')
         clsListeFacture['FT_CODEFACTURE'] = row.get('FT_CODEFACTURE')
         clsListeFacture['PT_IDPATIENT'] = row.get('PT_IDPATIENT')
+        clsListeFacture['PT_NOMPRENOMS'] = row.get('PT_NOMPRENOMS')
+        clsListeFacture['PT_CONTACT'] = row.get('PT_CONTACT')
+        clsListeFacture['PT_MATRICULE'] = row.get('PT_MATRICULE')
+        clsListeFacture['PT_CODEPATIENT'] = row.get('PT_CODEPATIENT')
         clsListeFacture['ACT_CODEACTE'] = row.get('ACT_CODEACTE')
         clsListeFacture['AS_CODEASSURANCE'] = row.get('AS_CODEASSURANCE')
-        clsListeFacture['MC_DATESAISIE'] = row.get('MC_DATESAISIE')
+        clsListeFacture['MC_DATESAISIE1'] = row.get('MC_DATESAISIE1')
+        clsListeFacture['MC_DATESAISIE2'] = row.get('MC_DATESAISIE2')
         clsListeFacture['TYPEOPERATION'] = row.get('TYPEOPERATION')
         
         # required_keys = ['BI_CODEBIENS', 'BI_LIBELLEBIENS', 'TY_CODETYPENATUREBIENS', 'CODECRYPTAGE']
@@ -587,7 +749,48 @@ def pvgJournal():
         #finally:
             #db_connexion.close()
   
-  
+@api_bp.route('/editionPatient', methods=['POST'])
+def pvgeditionPatient():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+    
+    for row in request_data['Objet']:
+        editionPatient_info = {}
+
+        # Validation et récupération des données pour la suppression
+        editionPatient_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE'))
+        editionPatient_info['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR'))
+        editionPatient_info['DATEDEBUT'] = str(row.get('DATEDEBUT'))
+        editionPatient_info['DATEFIN'] = str(row.get('DATEFIN'))
+        editionPatient_info['TYPEETAT'] = str(row.get('TYPEETAT'))
+        editionPatient_info['OP_CODEOPERATEUREDITION'] = str(row.get('OP_CODEOPERATEUREDITION'))
+        editionPatient_info['STAT_CODESTATUT'] = str(row.get('STAT_CODESTATUT'))
+        editionPatient_info['AS_CODEASSURANCE'] = str(row.get('AS_CODEASSURANCE'))
+        
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = editionPatient(db_connexion, editionPatient_info)
+            
+            if len(response) > 0:
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": "Aucuns élement trouvé !!!", "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()  
   
 @api_bp.route('/grand_livre', methods=['POST'])
 def pvgGrandLivre():
