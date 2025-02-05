@@ -78,7 +78,7 @@ def insertpatient(connection, patient_info):
         'SX_CODESEXE': patient_info['SX_CODESEXE'],
         'STAT_CODESTATUT': patient_info.get('STAT_CODESTATUT') or None,
         'OP_CODEOPERATEUR': patient_info['OP_CODEOPERATEUR'],
-        'PL_CODENUMCOMPTE': patient_info.get('PL_CODENUMCOMPTE') or None,
+        'PL_CODENUMCOMPTE': patient_info.get('PL_CODENUMCOMPTE') or '',
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': int(patient_info['TYPEOPERATION']) ,  # 0
     }
@@ -86,7 +86,7 @@ def insertpatient(connection, patient_info):
 
     try:
         cursor = connection
-        cursor.execute("EXEC dbo.PC_PATIENT ?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?", list(params.values()))
+        cursor.execute("EXEC dbo.PC_PATIENTSIMPLE ?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?", list(params.values()))
         connection.commit()
         get_commit(connection,patient_info)
         #cursor.close()
@@ -119,13 +119,17 @@ def deletepatient(connection, patient_info):
 
     try:
         cursor = connection
-        cursor.execute("EXEC dbo.PC_OPERATEUR ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?", list(params.values()))
+        cursor.execute("EXEC dbo.PC_PATIENTSIMPLE ?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?", list(params.values()))
         connection.commit()
         get_commit(connection,patient_info)
         #cursor.close()
     except Exception as e:
         connection.rollback()
-        raise Exception(f"Erreur lors de la suppression: {str(e.args[1])}")        
+        MYSQL_REPONSE = e.args[1]
+        if "varchar" in MYSQL_REPONSE:
+               MYSQL_REPONSE = MYSQL_REPONSE.split("varchar", 1)[1].split("en type de donn", 1)[0]
+               
+        raise Exception(MYSQL_REPONSE)            
     
 def get_commit(connection,clsBilletages):
     try:

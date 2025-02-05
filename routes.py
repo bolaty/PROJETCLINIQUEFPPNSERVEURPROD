@@ -76,11 +76,11 @@ def pvginsert_patient():
                 # Valider la transaction
                 db_connection.commit()
 
-            return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
+            return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE'}), 200
 
         except Exception as e:
             db_connection.rollback()
-            return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
+            return jsonify({"SL_MESSAGE": f" {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         #finally:
             db_connection.close()
@@ -127,7 +127,7 @@ def pvgdeletepatient():
 
         except Exception as e:
             db_connection.rollback()
-            return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
+            return jsonify({"SL_MESSAGE": f" {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         #finally:
             db_connection.close()  
@@ -169,7 +169,7 @@ def pvgListePatient():
             if len(response) > 0:
                 return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
             else:
-                return jsonify({"SL_MESSAGE": "Aucuns élement trouvé !!!", "SL_RESULTAT": 'FALSE'})
+                return jsonify([{"SL_MESSAGE": "Aucuns élement trouvé !!!", "SL_RESULTAT": 'FALSE'}])
         
         except Exception as e:
             db_connexion.rollback()
