@@ -219,6 +219,20 @@ def brouillard_caisse_edition(connection, broui_caisse_info):
                 'SOLDEPRECEDENTMOOV': int(row.SOLDEPRECEDENTMOOV),
                 'SOLDEPRECEDENTCHEQUE': int(row.SOLDEPRECEDENTCHEQUE),
                 'SOLDEPRECEDENTVIREMENT': int(row.SOLDEPRECEDENTVIREMENT),
+                'SOLDENOUVEAUCAISSE': int(row.SOLDENOUVEAUCAISSE),
+                'SOLDENOUVEAUMTN': int(row.SOLDENOUVEAUMTN),
+                'SOLDENOUVEAUWAVE': int(row.SOLDENOUVEAUWAVE),
+                'SOLDENOUVEAUORANGE': int(row.SOLDENOUVEAUORANGE),
+                'SOLDENOUVEAUMOOV': int(row.SOLDENOUVEAUMOOV),
+                'SOLDENOUVEAUCHEQUE': int(row.SOLDENOUVEAUCHEQUE),
+                'SOLDENOUVEAUVIREMENT': int(row.SOLDENOUVEAUVIREMENT),
+                'SOLDEACTUELCAISSE': int(row.SOLDEACTUELCAISSE),
+                'SOLDEACTUELMTN': int(row.SOLDEACTUELMTN),
+                'SOLDEACTUELWAVE': int(row.SOLDEACTUELWAVE),
+                'SOLDEACTUELORANGE': int(row.SOLDEACTUELORANGE),
+                'SOLDEACTUELMOOV': int(row.SOLDEACTUELMOOV),
+                'SOLDEACTUELCHEQUE': int(row.SOLDEACTUELCHEQUE),
+                'SOLDEACTUELVIREMENT': int(row.SOLDEACTUELVIREMENT),
                 'SOLDE': int(row.SOLDE)
             }
             
