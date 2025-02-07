@@ -26,10 +26,16 @@ def pvgComptabilisationOperations(connexion, clsMouvementcomptables):
             listOperation = []
             statutinternet = IsNetworkConnected()
             if statutinternet != 400:
+                # generation du numero de piece pour la facture
                 vlpNumPiece = pvgNumeroPiece(connexion, clsMouvementcomptables[0]['AG_CODEAGENCE'], clsMouvementcomptables[0]['MC_DATEPIECE'],clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
                 clsMouvementcomptables[0]['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
                 clsMouvementcomptables[0]['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
                 pvg_constatation_facture(connexion, clsMouvementcomptables[0])
+                
+                # generation du numero de piece pour le reglement de facture
+                vlpNumPiece = pvgNumeroPiece(connexion, clsMouvementcomptables[0]['AG_CODEAGENCE'], clsMouvementcomptables[0]['MC_DATEPIECE'],clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
+                clsMouvementcomptables[0]['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
+                clsMouvementcomptables[0]['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
                 # vlpNumPiece = pvgRecupNumeroPiece(connexion, clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
                 for i, clsMouvementcomptable in enumerate(clsMouvementcomptables):
                     if i != len(clsMouvementcomptables) - 1:

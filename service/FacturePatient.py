@@ -302,6 +302,7 @@ def list_facture(connexion, clsListeFacture):
             result['PT_MATRICULE'] = row.PT_MATRICULE
             result['STAT_CODESTATUT'] = row.STAT_CODESTATUT
             result['NUMEROBORDEREAU'] = row.NUMEROBORDEREAU
+            result['PT_CODEPATIENT'] = row.PT_CODEPATIENT
             # Ajouter le dictionnaire à la liste des résultats
             results.append(result)
         
