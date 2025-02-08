@@ -347,6 +347,7 @@ def editionPatient(connexion, editionPatient_info):
             result['PT_LIEUHABITATION'] = row.PT_LIEUHABITATION
             result['PF_CODEPROFESSION'] = row.PF_CODEPROFESSION
             result['PF_LIBELLE'] = row.PF_LIBELLE
+            result['PT_CODEPATIENT'] = row.PT_CODEPATIENT
   
             # Ajouter le dictionnaire à la liste des résultats
             results.append(result)

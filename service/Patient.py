@@ -48,6 +48,7 @@ def ListePatient(connexion, Patient_info):
             result['PT_PROFESSION'] = row.PT_PROFESSION
             result['SX_CODESEXE'] = row.SX_CODESEXE
             result['STAT_CODESTATUT'] = row.STAT_CODESTATUT
+            result['STAT_LIBELLE'] = row.STAT_LIBELLE
             result['OP_CODEOPERATEUR'] = row.OP_CODEOPERATEUR
             result['PL_CODENUMCOMPTE'] = row.PL_CODENUMCOMPTE
   
