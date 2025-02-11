@@ -19,7 +19,7 @@ def ExtourneOperation(connexion,AG_CODEAGENCE,MV_DATEPIECECOMPTABILISATION,MV_DA
     
     try:
         cursor = connexion.cursor()
-        vlpNumPiece = pvgNumeroPiece(connexion, AG_CODEAGENCE, datetime.strptime(MV_DATEPIECE, "%d/%m/%Y"),OP_CODEOPERATEUR)
+        vlpNumPiece = pvgNumeroPiece(connexion, AG_CODEAGENCE, datetime.strptime(MV_DATEPIECECOMPTABILISATION, "%d/%m/%Y"),OP_CODEOPERATEUR)
         MV_NUMPIECE3 = vlpNumPiece[0]['MC_NUMPIECE']
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
         cursor.execute("EXEC PS_EXTOURNEOPERATION ?,?,?,?,?,?,?,?",(AG_CODEAGENCE,datetime.strptime(MV_DATEPIECECOMPTABILISATION, "%d/%m/%Y"),datetime.strptime(MV_DATEPIECE, "%d/%m/%Y"),MV_NUMPIECE1,

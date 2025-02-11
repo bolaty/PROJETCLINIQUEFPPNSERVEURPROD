@@ -71,7 +71,7 @@ def pvginsert_patient():
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction d'insertion dans la base de données
-                reponse = insertpatient(cursor, patient_info)
+                reponse = insertpatient(db_connection, patient_info)
                 
                 # Valider la transaction
                 db_connection.commit()

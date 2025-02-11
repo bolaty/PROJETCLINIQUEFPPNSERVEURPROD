@@ -63,7 +63,7 @@ def ListePatient(connexion, Patient_info):
     
     
 #creation / modification du patient
-def insertpatient(connection, patient_info):
+def insertpatient(connexion, patient_info):
     params = {
         'PT_IDPATIENT': patient_info.get('PT_IDPATIENT') or None,
         'PT_CODEPATIENT': patient_info.get('PT_CODEPATIENT') or None,
@@ -86,17 +86,40 @@ def insertpatient(connection, patient_info):
     
 
     try:
-        cursor = connection
-        cursor.execute("EXEC dbo.PC_PATIENTSIMPLE ?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?", list(params.values()))
-        connection.commit()
-        get_commit(connection,patient_info)
-        #cursor.close()
+        cursor = connexion.cursor()
+        
+        try:
+            # verifie si le numero de telephone et/ou lemail existe deja. si oui, lever un message d'erreur sinon creer le patient
+            cursor.execute("SELECT * FROM dbo.FT_CONTACTEMAILEXIST(?,?,?,?,?)", (params['AG_CODEAGENCE'], params['PT_CONTACT'], params['PT_EMAIL'], params['PT_CODEPATIENT'], params['CODECRYPTAGE']))
+        except Exception as e:
+                connexion.rollback()
+                raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
+            
+        # Récupération des résultats
+        result = cursor.fetchone()
+        if result:
+            raise Exception("Le numéro de téléphone ou l'email ou le n° du dossier existe déjà.")
+        else:
+            try:
+                cursor = connexion.cursor()
+                cursor.execute("EXEC dbo.PC_PATIENTSIMPLE ?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?", list(params.values()))
+                connexion.commit()
+                get_commit(connexion,patient_info)
+            except Exception as e:
+                connexion.rollback()
+                raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
     except Exception as e:
-        connection.rollback()
-        raise Exception(f" {str(e.args[1])}")
-
+        connexion.rollback()
+        # Gérer et formater l'exception correctement
+        if len(e.args) == 1:
+            raise Exception(f"{e.args[0]}")
+        else:
+            raise Exception(f"Erreur lors de l'insertion: {e.args[1]}")
+        
+        
+        
 #suppression
-def deletepatient(connection, patient_info):
+def deletepatient(connexion, patient_info):
     params = {
         
         'PT_IDPATIENT': patient_info.get('PT_IDPATIENT') or None,
@@ -119,32 +142,32 @@ def deletepatient(connection, patient_info):
     }
 
     try:
-        cursor = connection
+        cursor = connexion
         cursor.execute("EXEC dbo.PC_PATIENTSIMPLE ?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?", list(params.values()))
-        connection.commit()
-        get_commit(connection,patient_info)
+        connexion.commit()
+        get_commit(connexion,patient_info)
         #cursor.close()
     except Exception as e:
-        connection.rollback()
+        connexion.rollback()
         MYSQL_REPONSE = e.args[1]
         if "varchar" in MYSQL_REPONSE:
                MYSQL_REPONSE = MYSQL_REPONSE.split("varchar", 1)[1].split("en type de donn", 1)[0]
                
         raise Exception(MYSQL_REPONSE)            
     
-def get_commit(connection,clsBilletages):
+def get_commit(connexion,clsBilletages):
     try:
        for row in clsBilletages: 
-        cursor = connection
+        cursor = connexion
         params = {
             'AG_CODEAGENCE3': '1000',
             'MC_DATEPIECE3': '01/01/1900'
         }
         try:
-            connection.commit()
+            connexion.commit()
             cursor.execute("EXECUTE [PC_COMMIT]  ?, ?", list(params.values()))
             #instruction pour valider la commande de mise à jour
-            connection.commit()
+            connexion.commit()
         except Exception as e:
             # En cas d'erreur, annuler la transaction
             cursor.execute("ROLLBACK")

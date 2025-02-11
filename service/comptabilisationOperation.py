@@ -29,18 +29,16 @@ def pvgComptabilisationOperations(connexion, clsMouvementcomptables):
                 # generation du numero de piece pour la facture
                 vlpNumPiece = pvgNumeroPiece(connexion, clsMouvementcomptables[0]['AG_CODEAGENCE'], clsMouvementcomptables[0]['MC_DATEPIECE'],clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
                 clsMouvementcomptables[0]['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
-                clsMouvementcomptables[0]['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
                 pvg_constatation_facture(connexion, clsMouvementcomptables[0])
                 
                 # generation du numero de piece pour le reglement de facture
                 vlpNumPiece = pvgNumeroPiece(connexion, clsMouvementcomptables[0]['AG_CODEAGENCE'], clsMouvementcomptables[0]['MC_DATEPIECE'],clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
                 clsMouvementcomptables[0]['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
-                clsMouvementcomptables[0]['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
                 # vlpNumPiece = pvgRecupNumeroPiece(connexion, clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
                 for i, clsMouvementcomptable in enumerate(clsMouvementcomptables):
                     if i != len(clsMouvementcomptables) - 1:
                         clsMouvementcomptable['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
-                        clsMouvementcomptable['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
+                        clsMouvementcomptable['MC_REFERENCEPIECE'] = clsMouvementcomptables[0]['MC_REFERENCEPIECE']
                         
                         ip_address = get_ip_address()
                         public_ip_address = get_public_ip_address()
@@ -53,7 +51,7 @@ def pvgComptabilisationOperations(connexion, clsMouvementcomptables):
                     else:
                         # Dernière itération
                         clsMouvementcomptable['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
-                        clsMouvementcomptable['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
+                        clsMouvementcomptable['MC_REFERENCEPIECE'] = clsMouvementcomptables[0]['MC_REFERENCEPIECE']
                         
                         ip_address = get_ip_address()
                         public_ip_address = get_public_ip_address()
