@@ -50,7 +50,7 @@ def ExtourneFacture(connexion,AG_CODEAGENCE,MV_DATEPIECECOMPTABILISATION,FT_CODE
         vlpNumPiece = pvgNumeroPiece(connexion, AG_CODEAGENCE, datetime.strptime(MC_DATESAISIE, "%d/%m/%Y"),OP_CODEOPERATEUR)
         MV_NUMPIECE3 = vlpNumPiece[0]['MC_NUMPIECE']
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("EXEC PS_EXTOURNEFACTURE ?,?,?,?,?,?,?,?",(AG_CODEAGENCE,datetime.strptime(MV_DATEPIECECOMPTABILISATION, "%d/%m/%Y"),float(FT_CODEFACTURE),datetime.strptime(MC_DATESAISIE, "%d/%m/%Y"),
+        cursor.execute("EXEC PS_EXTOURNEFACTURE ?,?,?,?,?,?,?,?",(AG_CODEAGENCE,datetime.strptime(MV_DATEPIECECOMPTABILISATION, "%d/%m/%Y"),FT_CODEFACTURE,datetime.strptime(MC_DATESAISIE, "%d/%m/%Y"),
                                                                       MV_NUMPIECE3,OP_CODEOPERATEUR,TYPEOPERATION,CODECRYPTAGE))
         
     except Exception as e:

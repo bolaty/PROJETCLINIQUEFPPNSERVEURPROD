@@ -100,7 +100,7 @@ def insertpatient(connexion, patient_info):
             raise Exception("Le numéro de téléphone ou l'email ou le n° du dossier existe déjà.")
         else:
             try:
-                cursor = connexion.cursor()
+                # cursor = connexion.cursor()
                 cursor.execute("EXEC dbo.PC_PATIENTSIMPLE ?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?", list(params.values()))
                 connexion.commit()
                 get_commit(connexion,patient_info)

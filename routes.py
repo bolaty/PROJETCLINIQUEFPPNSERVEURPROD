@@ -1406,6 +1406,7 @@ def pvgget_solde_mouvement_comptable():
         # Validation et récupération des données pour la suppression
         user_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', '')) 
         user_info['FT_CODEFACTURE'] = str(row.get('FT_CODEFACTURE', '')) 
+        user_info['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR', ''))
         # Connexion à la base de données
         db_connexion = connect_database()
 
@@ -1415,7 +1416,7 @@ def pvgget_solde_mouvement_comptable():
                 
                 # Appeler la fonction de suppression
                 if user_info['AG_CODEAGENCE']:  # Si une valeur est fournie
-                    response = get_solde_mouvement_comptable(db_connexion, str(row.get('AG_CODEAGENCE', '')), str(row.get('FT_CODEFACTURE', '')))
+                    response = get_solde_mouvement_comptable(db_connexion, str(row.get('AG_CODEAGENCE', '')), str(row.get('FT_CODEFACTURE', '')), str(row.get('OP_CODEOPERATEUR', '')))
                 
                 
                 return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE' , "MONTANTAREGLER": + response})

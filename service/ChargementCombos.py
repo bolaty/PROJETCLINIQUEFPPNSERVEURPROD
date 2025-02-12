@@ -37,36 +37,35 @@ class clsAgence:
 #Liste ...
 
 
-def get_solde_mouvement_comptable(connection, ag_codeagence, ft_codefacture):
-    cursor = connection.cursor()
-
-    # Définition des paramètres de la requête
-    vapRequete = """
-        SELECT SUM(MC_MONTANTDEBIT - MC_MONTANTCREDIT) 
-        FROM MOUVEMENTCOMPTABLE 
-        WHERE AG_CODEAGENCE = ? 
-        AND FT_CODEFACTURE = ? 
-        AND TS_CODETYPESCHEMACOMPTABLE <> '00001' 
-        AND PT_IDPATIENT IS NULL;
-    """
+def get_solde_mouvement_comptable(connexion, ag_codeagence, ft_codefacture, op_codeoperateur):
+    
     try:
-        # Exécution de la requête avec les paramètres
-        cursor.execute(vapRequete, (int(ag_codeagence), int(ft_codefacture)))
-        row = cursor.fetchone()
+        cursor = connexion.cursor()
+        cursor.execute("EXEC PS_RECUPERATIONMONTANTDEJAPAYE ?,?,?",(ag_codeagence,ft_codefacture, op_codeoperateur))
+        
+        try:
+            cursor = connexion.cursor()
+            
+            # Requête paramétrée
+            query = "SELECT * FROM dbo.TEMPRECUPERATIONDEJAPAYERESULTAT{}".format(op_codeoperateur)
 
-        # Vérification du résultat
-        result = row[0] if row and row[0] is not None else 0
-        return int(result)
+            # Exécution de la requête
+            cursor.execute(query)
+
+            rows = cursor.fetchone()
+            return rows.MONTANTDEJAPAYE
+        except Exception as e:
+            # En cas d'erreur, lever une exception avec un message approprié
+            raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
     
     except Exception as e:
-        cursor.close()
-        connection.rollback()
-        MYSQL_REPONSE = f"Erreur lors de l'exécution de la requête : {str(e)}"
-        raise Exception(MYSQL_REPONSE)
+        connexion.rollback()
+        raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
 
 
-def pvgComboTableLabelAgence(connection, *vppCritere):
-    cursor = connection.cursor()
+
+def pvgComboTableLabelAgence(connexion, *vppCritere):
+    cursor = connexion.cursor()
 
     if len(vppCritere) >= 1:
         vapCritere = " WHERE AG_CODEAGENCE=? AND AG_ACTIF='O'"
@@ -110,13 +109,13 @@ def pvgComboTableLabelAgence(connection, *vppCritere):
         MYSQL_REPONSE = f'Impossible d\'exécuter la procédure stockée : {str(e.args[1])}'
         raise Exception(MYSQL_REPONSE)
     
-def pvgComboOperateur(connection, *vppCritere):
+def pvgComboOperateur(connexion, *vppCritere):
     """
     Récupère les opérateurs en fonction des critères fournis.
     - vppCritere[0] : Code agence (obligatoire si présent).
     - vppCritere[1] : Code opérateur (optionnel).
     """
-    cursor = connection.cursor()
+    cursor = connexion.cursor()
 
     # Préparation des critères et paramètres
     if len(vppCritere) == 0:
@@ -159,19 +158,19 @@ def pvgComboOperateur(connection, *vppCritere):
 
     except Exception as e:
         # Gestion des erreurs
-        connection.rollback()
+        connexion.rollback()
         raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
 
     finally:
         cursor.close()
 
-def pvgComboExercice(connection, *vppCritere):
+def pvgComboExercice(connexion, *vppCritere):
     """
     Récupère les opérateurs en fonction des critères fournis.
     - vppCritere[0] : Code agence (obligatoire si présent).
     - vppCritere[1] : Code opérateur (optionnel).
     """
-    cursor = connection.cursor()
+    cursor = connexion.cursor()
 
     # Préparation des critères et paramètres
     if len(vppCritere) == 0:
@@ -211,21 +210,21 @@ def pvgComboExercice(connection, *vppCritere):
 
     except Exception as e:
         # Gestion des erreurs
-        connection.rollback()
+        connexion.rollback()
         raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
 
     finally:
         cursor.close()
  
 
-def pvgComboCompte(connection, *vppCritere):
+def pvgComboCompte(connexion, *vppCritere):
     """
     Récupère les comptes en fonction des critères fournis.
     - vppCritere[0] : Code société (obligatoire si présent).
     - vppCritere[1] : Numéro de compte (optionnel).
     - vppCritere[2] : Type de compte (optionnel).
     """
-    cursor = connection.cursor()
+    cursor = connexion.cursor()
 
     # Préparation des critères et paramètres
     if len(vppCritere) == 0:
@@ -279,13 +278,13 @@ def pvgComboCompte(connection, *vppCritere):
         cursor.close()
 
 
-def pvgComboModeReglement(connection):
+def pvgComboModeReglement(connexion):
     """
     Récupère les opérateurs en fonction des critères fournis.
     - vppCritere[0] : Code agence (obligatoire si présent).
     - vppCritere[1] : Code opérateur (optionnel).
     """
-    cursor = connection.cursor()
+    cursor = connexion.cursor()
 
     
     
@@ -314,7 +313,7 @@ def pvgComboModeReglement(connection):
 
     except Exception as e:
         # Gestion des erreurs
-        connection.rollback()
+        connexion.rollback()
         raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
 
     finally:
@@ -395,13 +394,13 @@ def pvgComboVille(connexion, ville_info):
 
 
 
-def pvgComboAssure(connection):
+def pvgComboAssure(connexion):
     """
     Récupère les opérateurs en fonction des critères fournis.
     - vppCritere[0] : Code agence (obligatoire si présent).
     - vppCritere[1] : Code opérateur (optionnel).
     """
-    cursor = connection.cursor()
+    cursor = connexion.cursor()
 
 
     # Requête SQL
@@ -429,20 +428,20 @@ def pvgComboAssure(connection):
 
     except Exception as e:
         # Gestion des erreurs
-        connection.rollback()
+        connexion.rollback()
         raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
 
     finally:
         cursor.close()
  
 
-def pvgComboTypeshemacomptable(connection):
+def pvgComboTypeshemacomptable(connexion):
     """
     Récupère les opérateurs en fonction des critères fournis.
     - vppCritere[0] : Code agence (obligatoire si présent).
     - vppCritere[1] : Code opérateur (optionnel).
     """
-    cursor = connection.cursor()
+    cursor = connexion.cursor()
 
 
     # Requête SQL
@@ -467,19 +466,19 @@ def pvgComboTypeshemacomptable(connection):
 
     except Exception as e:
         # Gestion des erreurs
-        connection.rollback()
+        connexion.rollback()
         raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
 
     finally:
         cursor.close()       
 
-def pvgComboAssurance(connection):
+def pvgComboAssurance(connexion):
     """
     Récupère les opérateurs en fonction des critères fournis.
     - vppCritere[0] : Code agence (obligatoire si présent).
     - vppCritere[1] : Code opérateur (optionnel).
     """
-    cursor = connection.cursor()
+    cursor = connexion.cursor()
 
 
     # Requête SQL
@@ -507,19 +506,19 @@ def pvgComboAssurance(connection):
 
     except Exception as e:
         # Gestion des erreurs
-        connection.rollback()
+        connexion.rollback()
         raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
 
     finally:
         cursor.close()        
         
-def pvgComboActe(connection):
+def pvgComboActe(connexion):
     """
     Récupère les opérateurs en fonction des critères fournis.
     - vppCritere[0] : Code agence (obligatoire si présent).
     - vppCritere[1] : Code opérateur (optionnel).
     """
-    cursor = connection.cursor()
+    cursor = connexion.cursor()
 
 
     # Requête SQL
@@ -547,7 +546,7 @@ def pvgComboActe(connection):
 
     except Exception as e:
         # Gestion des erreurs
-        connection.rollback()
+        connexion.rollback()
         raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
 
     finally:
@@ -623,13 +622,13 @@ def pvgComboProfession(connexion):
         
         
 
-def pvgComboPeriodicite(connection):
+def pvgComboPeriodicite(connexion):
     """
     Récupère les opérateurs en fonction des critères fournis.
     - vppCritere[0] : Code agence (obligatoire si présent).
     - vppCritere[1] : Code opérateur (optionnel).
     """
-    cursor = connection.cursor()
+    cursor = connexion.cursor()
 
     # Préparation des critères et paramètres
     
@@ -663,19 +662,19 @@ def pvgComboPeriodicite(connection):
 
     except Exception as e:
         # Gestion des erreurs
-        connection.rollback()
+        connexion.rollback()
         raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
 
     finally:
         cursor.close()
         
-def pvgComboperiode(connection, PE_CODEPERIODICITE):
+def pvgComboperiode(connexion, PE_CODEPERIODICITE):
     """
     Récupère les opérateurs en fonction des critères fournis.
     - vppCritere[0] : Code agence (obligatoire si présent).
     - vppCritere[1] : Code opérateur (optionnel).
     """
-    cursor = connection.cursor()
+    cursor = connexion.cursor()
     
 
     # Requête SQL
@@ -697,19 +696,19 @@ def pvgComboperiode(connection, PE_CODEPERIODICITE):
 
     except Exception as e:
         # Gestion des erreurs
-        connection.rollback()
+        connexion.rollback()
         raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
 
     finally:
         cursor.close()  
         
-def pvgPeriodiciteDateDebutFin(connection, EX_EXERCICE,MO_CODEMOIS,PE_CODEPERIODICITE):
+def pvgPeriodiciteDateDebutFin(connexion, EX_EXERCICE,MO_CODEMOIS,PE_CODEPERIODICITE):
     """
     Récupère les opérateurs en fonction des critères fournis.
     - vppCritere[0] : Code agence (obligatoire si présent).
     - vppCritere[1] : Code opérateur (optionnel).
     """
-    cursor = connection.cursor()
+    cursor = connexion.cursor()
     
 
     # Requête SQL
@@ -731,7 +730,7 @@ def pvgPeriodiciteDateDebutFin(connection, EX_EXERCICE,MO_CODEMOIS,PE_CODEPERIOD
 
     except Exception as e:
         # Gestion des erreurs
-        connection.rollback()
+        connexion.rollback()
         raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
 
     finally:
