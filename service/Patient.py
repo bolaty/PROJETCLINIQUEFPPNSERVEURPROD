@@ -84,7 +84,6 @@ def insertpatient(connexion, patient_info):
         'TYPEOPERATION': int(patient_info['TYPEOPERATION']) ,  # 0
     }
     
-
     try:
         cursor = connexion.cursor()
         

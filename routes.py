@@ -2789,6 +2789,7 @@ def pvgOperationCaisse():
                 objet_mode_reglement['MC_LIBELLEBANQUE'] = str(row.get('MC_LIBELLEBANQUE', ''))
                 objet_mode_reglement['MC_MONTANT_FACTURE'] = row.get('MC_MONTANT_FACTURE', '')
                 objet_mode_reglement['OP_CODEOPERATION'] = str(objet_facture['OP_CODEOPERATION'])
+                objet_mode_reglement['OP_CODEOPERATEURPASSATIONFOND'] = str(row.get('OP_CODEOPERATEURPASSATIONFOND'))
 
                 clsmouvement_infos.append(objet_mode_reglement) 
             except ValueError as e:
