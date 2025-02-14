@@ -3,10 +3,10 @@ from service.dashboard import dashboard
 from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture, get_code_facture, get_info_comptabilisation
 from service.parametres import liste_operateur, liste_des_agences, liste_des_profils, liste_des_services, liste_des_parametres, modifier_des_agences
 from service.comptabilisationOperation import pvgComptabilisationOperationsFacture, pvgComptabilisationOperations, pvgComptabilisationOperationsCaisse
-from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition,editionPatient, journal_edition, gd_livre_edition, balance_edition
+from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition,editionPatient, journal_edition, gd_livre_edition, balance_edition,point_par_acte_edition,formation_edition
 from service.auth import connexion_utilisateur
 from service.journee_de_travail_et_exercice import valeur_scalaire_requete_max, valeur_scalaire_requete_count, insert_journee_travail, table_libelle_date_systeme_serveur, liste_journee_travail, update_journee_travail_statut
-from service.ChargementCombos import get_solde_mouvement_comptable,pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille
+from service.ChargementCombos import get_solde_mouvement_comptable,pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille,pvgComboOperateurCaisse
 from service.auth import connexion_utilisateur,pvgUserChangePasswordfist,pvgUserDemandePassword
 from service.Utilisateurs import creation_profil,update_profil,delete_profil,update_compte_utilisateur,insert_operateur,delete_compte_utilisateur,Activation_DesActivation_utilisateur
 from service.Patient import ListePatient,insertpatient,deletepatient
@@ -748,6 +748,92 @@ def pvgJournal():
         
         #finally:
             #db_connexion.close()
+     
+     
+     
+@api_bp.route('/edition_pointparacte', methods=['POST'])
+def pvgEditionPointParActe():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+    
+    for row in request_data['Objet']:
+        pt_par_acte_info = {}
+
+        # Validation et récupération des données pour la suppression
+        pt_par_acte_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE'))
+        pt_par_acte_info['OP_CODEOPERATEUREDITION'] = str(row.get('OP_CODEOPERATEUREDITION'))
+        pt_par_acte_info['DATEDEBUT'] = str(row.get('DATEDEBUT'))
+        pt_par_acte_info['DATEFIN'] = str(row.get('DATEFIN'))
+        pt_par_acte_info['ACT_CODEACTE'] = str(row.get('ACT_CODEACTE'))
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = point_par_acte_edition(db_connexion, pt_par_acte_info)
+            
+            if len(response) > 0:
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": "Aucuns élement trouvé !!!", "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()
+  
+  
+  
+@api_bp.route('/edition_formation', methods=['POST'])
+def pvgEditionFormation():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+    
+    for row in request_data['Objet']:
+        formation_info = {}
+
+        # Validation et récupération des données pour la suppression
+        formation_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE'))
+        formation_info['DATEDEBUT'] = str(row.get('DATEDEBUT'))
+        formation_info['DATEFIN'] = str(row.get('DATEFIN'))
+        formation_info['TYPEETAT'] = str(row.get('TYPEETAT'))
+        formation_info['OP_CODEOPERATEUREDITION'] = str(row.get('OP_CODEOPERATEUREDITION'))
+        formation_info['OPTION'] = str(row.get('OPTION'))
+        formation_info['OPTIONAFFICHAGE'] = str(row.get('OPTIONAFFICHAGE'))
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = formation_edition(db_connexion, formation_info)
+            
+            if len(response) > 0:
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": "Aucuns élement trouvé !!!", "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()
+            
+            
   
 @api_bp.route('/editionPatient', methods=['POST'])
 def pvgeditionPatient():
@@ -1682,7 +1768,58 @@ def ComboOperateur():
         
         #finally:
             #db_connexion.close()            
-            
+
+
+@api_bp.route('/pvgComboOperateurCaisse', methods=['POST'])
+def ComboOperateurCaisse():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        user_info = {}
+
+        # Validation et récupération des données pour la suppression
+       
+        AG_CODEAGENCE = None
+        OP_CODEOPERATEUR = None
+        if row.get('AG_CODEAGENCE', ''):
+           AG_CODEAGENCE = str(row.get('AG_CODEAGENCE', '')) 
+        if row.get('OP_CODEOPERATEUR', ''):
+           OP_CODEOPERATEUR  = str(row.get('OP_CODEOPERATEUR', '')) 
+
+        # Préparer les paramètres pour la fonction
+        if AG_CODEAGENCE and OP_CODEOPERATEUR:
+            vpp_critere = (AG_CODEAGENCE, OP_CODEOPERATEUR)
+        elif AG_CODEAGENCE:
+            vpp_critere = (AG_CODEAGENCE,)
+        else:
+            vpp_critere = ()
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction 
+                response = pvgComboOperateurCaisse(db_connexion, *vpp_critere)
+               
+                
+                
+            if len(response) > 0 :
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()            
+      
+      
+         
 @api_bp.route('/pvgComboModeReglement', methods=['POST'])
 def ComboModeReglement():
     request_data = request.json

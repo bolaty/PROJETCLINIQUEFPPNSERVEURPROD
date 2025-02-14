@@ -304,6 +304,91 @@ def journal_edition(connexion, journal_info):
         raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
 
 
+
+# point par acte
+def point_par_acte_edition(connexion, pt_par_acte_info):
+    
+     # Préparation des paramètres
+    params = {
+        'AG_CODEAGENCE': pt_par_acte_info['AG_CODEAGENCE'],
+        'OP_CODEOPERATEUREDITION': pt_par_acte_info['OP_CODEOPERATEUREDITION'],
+        'DATEDEBUT': datetime.strptime(pt_par_acte_info['DATEDEBUT'], "%d/%m/%Y"),
+        'DATEFIN': datetime.strptime(pt_par_acte_info['DATEFIN'], "%d/%m/%Y"),
+        'CODECRYPTAGE': CODECRYPTAGE,
+        'ACT_CODEACTE': pt_par_acte_info['ACT_CODEACTE'],
+    }
+    
+    try:
+        cursor = connexion.cursor()
+        
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("EXEC PS_ETATPOINTPARACTES ?,?,?,?,?,?", list(params.values()))
+        
+        rows = cursor.fetchall()
+        results = []
+        for row in rows:
+            result = {}
+            
+            result['ACT_CODEACTE'] = row.ACT_CODEACTE
+            result['ACT_LIBELLE'] = row.ACT_LIBELLE
+            result['MONTANT'] = row.MONTANT
+ 
+            # Ajouter le dictionnaire à la liste des résultats
+            results.append(result)
+        
+        return results
+    except Exception as e:
+        # En cas d'erreur, lever une exception avec un message approprié
+        raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
+
+
+
+# formation
+def formation_edition(connexion, formation_info):
+    
+     # Préparation des paramètres
+    params = {
+        'AG_CODEAGENCE': formation_info['AG_CODEAGENCE'],
+        'DATEDEBUT': datetime.strptime(formation_info['DATEDEBUT'], "%d/%m/%Y"),
+        'DATEFIN': datetime.strptime(formation_info['DATEFIN'], "%d/%m/%Y"),
+        'CODECRYPTAGE': CODECRYPTAGE,
+        'TYPEETAT': formation_info['TYPEETAT'],
+        'OP_CODEOPERATEUREDITION': formation_info['OP_CODEOPERATEUREDITION'],
+        'OPTION': formation_info['OPTION'],
+        'OPTIONAFFICHAGE': formation_info['OPTIONAFFICHAGE'],
+    }
+    
+    try:
+        cursor = connexion.cursor()
+        
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("EXEC PS_ETATFORMATION ?,?,?,?,?,?,?,?", list(params.values()))
+        
+        rows = cursor.fetchall()
+        results = []
+        for row in rows:
+            result = {}
+            
+            result['AG_CODEAGENCE'] = row.AG_CODEAGENCE
+            result['AG_RAISONSOCIAL'] = row.AG_RAISONSOCIAL
+            result['PL_CODENUMCOMPTE'] = row.PL_CODENUMCOMPTE
+            result['PL_NUMCOMPTE'] = row.PL_NUMCOMPTE
+            result['PL_LIBELLE'] = row.PL_LIBELLE
+            result['MC_MONTANT'] = row.MC_MONTANT
+            result['MC_MONTANTNET'] = row.MC_MONTANTNET
+            result['MC_MONTANTPROVISOIRE'] = row.MC_MONTANTPROVISOIRE
+            result['MC_MONTANTTOTAL'] = row.MC_MONTANTTOTAL
+ 
+            # Ajouter le dictionnaire à la liste des résultats
+            results.append(result)
+        
+        return results
+    except Exception as e:
+        # En cas d'erreur, lever une exception avec un message approprié
+        raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
+
+
+
 # Liste des Patients
 def editionPatient(connexion, editionPatient_info):
     

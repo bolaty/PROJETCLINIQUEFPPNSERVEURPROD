@@ -181,12 +181,12 @@ def pvgComptabilisationOperationsCaisse(connexion, clsMouvementcomptables):
         if statutinternet != 400:
             vlpNumPiece = pvgNumeroPiece(connexion, clsMouvementcomptables[0]['AG_CODEAGENCE'], clsMouvementcomptables[0]['MC_DATEPIECE'],clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
             clsMouvementcomptables[0]['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
-            clsMouvementcomptables[0]['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
+            # clsMouvementcomptables[0]['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
 
             for i, clsMouvementcomptable in enumerate(clsMouvementcomptables):
                 if i != len(clsMouvementcomptables) - 1:
                     clsMouvementcomptable['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
-                    clsMouvementcomptable['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
+                    # clsMouvementcomptable['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
                     
                     ip_address = get_ip_address()
                     public_ip_address = get_public_ip_address()
@@ -199,7 +199,7 @@ def pvgComptabilisationOperationsCaisse(connexion, clsMouvementcomptables):
                 else:
                     # Dernière itération
                     clsMouvementcomptable['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
-                    clsMouvementcomptable['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
+                    # clsMouvementcomptable['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
                     
                     ip_address = get_ip_address()
                     public_ip_address = get_public_ip_address()

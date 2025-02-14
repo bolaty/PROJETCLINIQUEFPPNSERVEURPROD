@@ -164,6 +164,62 @@ def pvgComboOperateur(connexion, *vppCritere):
     finally:
         cursor.close()
 
+
+def pvgComboOperateurCaisse(connexion, *vppCritere):
+    """
+    Récupère les opérateurs en fonction des critères fournis.
+    - vppCritere[0] : Code agence (obligatoire si présent).
+    - vppCritere[1] : Code opérateur (optionnel).
+    """
+    cursor = connexion.cursor()
+
+    # Préparation des critères et paramètres
+    if len(vppCritere) == 0:
+        vap_critere = ""
+        vap_valeur_parametre = []
+    elif len(vppCritere) == 1:
+        vap_critere = " WHERE AG_CODEAGENCE=? AND OP_ACTIF='O'"
+        vap_valeur_parametre = [vppCritere[0]]
+    elif len(vppCritere) == 2:
+        vap_critere = " WHERE AG_CODEAGENCE=? AND OP_CODEOPERATEUR=? AND OP_ACTIF='O' AND PL_CODENUMCOMPTECAISSE IS NOT NULL"
+        vap_valeur_parametre = [vppCritere[0], vppCritere[1]]
+    else:
+        raise ValueError("Nombre de critères non pris en charge.")
+
+    # Requête SQL
+    vapRequete = f"""
+        SELECT 
+            OP_CODEOPERATEUR,
+            AG_CODEAGENCE,
+            CAST(DECRYPTBYPASSPHRASE('{CODECRYPTAGE}', OP_NOMPRENOM) AS varchar(550)) AS OP_NOMPRENOM
+        FROM OPERATEUR
+        {vap_critere}
+    """
+    
+    try:
+        # Exécution de la requête
+        cursor.execute(vapRequete, vap_valeur_parametre)
+        rows = cursor.fetchall()
+
+        # Formatage des résultats
+        results = []
+        for row in rows:
+            result = {
+                'OP_CODEOPERATEUR': row[0],
+                'AG_CODEAGENCE': row[1],
+                'OP_NOMPRENOM': row[2],
+            }
+            results.append(result)
+        return results
+
+    except Exception as e:
+        # Gestion des erreurs
+        connexion.rollback()
+        raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
+
+    finally:
+        cursor.close()
+
 def pvgComboExercice(connexion, *vppCritere):
     """
     Récupère les opérateurs en fonction des critères fournis.

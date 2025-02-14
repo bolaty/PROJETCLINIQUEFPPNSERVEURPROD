@@ -47,7 +47,7 @@ def insert_patient(connexion, patient_info):
         
         try:
             # verifie si le numero de telephone et/ou lemail existe deja. si oui, lever un message d'erreur sinon creer le patient
-            cursor.execute("SELECT * FROM dbo.FT_CONTACTEMAILEXIST(?,?,?,?,?)", (params['AG_CODEAGENCE'], params['PT_CONTACT'], params['PT_EMAIL'], params['PT_CODEPATIENT'], params['CODECRYPTAGE']))
+            cursor.execute("SELECT * FROM dbo.FT_CONTACTEMAILEXIST(?,?,?,?,?,?)", (params['AG_CODEAGENCE'], params['PT_CONTACT'], params['PT_EMAIL'], params['PT_CODEPATIENT'], params['PT_MATRICULE'], params['CODECRYPTAGE']))
         except Exception as e:
                 connexion.rollback()
                 raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
