@@ -244,6 +244,60 @@ def brouillard_caisse_edition(connection, broui_caisse_info):
         # Gérer les exceptions et retourner un message d'erreur approprié
         raise Exception(f"Erreur lors de la récupération des données: {str(e)}")
 
+
+
+# brouillard de caisse
+def solde_edition(connection, solde_info):
+    try:
+        cursor = connection.cursor()
+        
+        DATEDEBUT = parse_datetime(solde_info['DATEDEBUT'])
+        DATEFIN = parse_datetime(solde_info['DATEFIN'])
+        
+        # Préparation des paramètres
+        params = {
+            'AG_CODEAGENCE': solde_info['AG_CODEAGENCE'],
+            'OP_CODEOPERATEUREDITION': solde_info['OP_CODEOPERATEUREDITION'] or None,
+            'DATEDEBUT': DATEDEBUT,
+            'DATEFIN': DATEFIN,
+            'CODECRYPTAGE': CODECRYPTAGE,
+            'PT_IDPATIENT': solde_info['PT_IDPATIENT'] or None,
+            'FT_CODEFACTURE': solde_info['FT_CODEFACTURE'] or None
+        }
+    
+        # Exécuter la procédure stockée avec le bon schéma (assure-toi que 'dbo' est le bon schéma)
+        cursor.execute("EXEC dbo.PS_ETATRELEVE ?,?,?,?,?,?,?", list(params.values()))
+        
+        rows = cursor.fetchall()
+        results = []
+        
+        for row in rows:
+            result = {
+                'MC_DATEPIECE': row.MC_DATEPIECE.strftime("%d/%m/%Y") if row.MC_DATEPIECE else None,
+                'MC_LIBELLEOPERATION': row.MC_LIBELLEOPERATION,
+                'MC_REFERENCEPIECE': row.MC_REFERENCEPIECE,
+                'MC_MONTANTDEBIT': int(row.MC_MONTANTDEBIT),
+                'MC_MONTANTCREDIT': int(row.MC_MONTANTCREDIT),
+                'PT_CODEPATIENT': row.PT_CODEPATIENT,
+                'PT_NOMPRENOMS': row.PT_NOMPRENOMS,
+                'PT_LIEUHABITATION': row.PT_LIEUHABITATION,
+                'NUMBORDEREAU': row.NUMBORDEREAU,
+                'PL_CODENUMCOMPTE': row.PL_CODENUMCOMPTE,
+                'PL_NUMCOMPTE': row.PL_NUMCOMPTE,
+                'PL_TYPECOMPTE': row.PL_TYPECOMPTE,
+                'SOLDE': int(row.SOLDE)
+            }
+            
+            results.append(result)
+            
+        return results
+    
+    except Exception as e:
+        # Gérer les exceptions et retourner un message d'erreur approprié
+        raise Exception(f"Erreur lors de la récupération des données: {str(e)}")
+    
+    
+    
 # journal
 def journal_edition(connexion, journal_info):
     
@@ -355,14 +409,14 @@ def formation_edition(connexion, formation_info):
         'TYPEETAT': formation_info['TYPEETAT'],
         'OP_CODEOPERATEUREDITION': formation_info['OP_CODEOPERATEUREDITION'],
         'OPTION': formation_info['OPTION'],
-        'OPTIONAFFICHAGE': formation_info['OPTIONAFFICHAGE'],
+        # 'OPTIONAFFICHAGE': formation_info['OPTIONAFFICHAGE'],
     }
     
     try:
         cursor = connexion.cursor()
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("EXEC PS_ETATFORMATION ?,?,?,?,?,?,?,?", list(params.values()))
+        cursor.execute("EXEC PS_ETATFORMATION ?,?,?,?,?,?,?", list(params.values()))
         
         rows = cursor.fetchall()
         results = []
@@ -402,14 +456,16 @@ def editionPatient(connexion, editionPatient_info):
         'TYPEETAT': editionPatient_info['TYPEETAT'],
         'OP_CODEOPERATEUREDITION': editionPatient_info['OP_CODEOPERATEUREDITION'],
         'STAT_CODESTATUT': editionPatient_info['STAT_CODESTATUT'],
-        'AS_CODEASSURANCE': editionPatient_info['AS_CODEASSURANCE']
+        'AS_CODEASSURANCE': editionPatient_info['AS_CODEASSURANCE'],
+        'PT_NOMPRENOMS': editionPatient_info['PT_NOMPRENOMS'],
+        'PT_CODEPATIENT': editionPatient_info['PT_CODEPATIENT']
     }
     
     try:
         cursor = connexion.cursor()
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("EXEC PS_ETATLISTEDESPATIENTS ?,?,?,?,?,?,?,?,?", list(params.values()))
+        cursor.execute("EXEC PS_ETATLISTEDESPATIENTS ?,?,?,?,?,?,?,?,?,?,?", list(params.values()))
         
         rows = cursor.fetchall()
         results = []

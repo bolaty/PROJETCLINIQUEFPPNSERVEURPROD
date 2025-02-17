@@ -3,7 +3,7 @@ from service.dashboard import dashboard
 from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture, get_code_facture, get_info_comptabilisation
 from service.parametres import liste_operateur, liste_des_agences, liste_des_profils, liste_des_services, liste_des_parametres, modifier_des_agences
 from service.comptabilisationOperation import pvgComptabilisationOperationsFacture, pvgComptabilisationOperations, pvgComptabilisationOperationsCaisse
-from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition,editionPatient, journal_edition, gd_livre_edition, balance_edition,point_par_acte_edition,formation_edition
+from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition,editionPatient, journal_edition, gd_livre_edition, balance_edition,point_par_acte_edition,formation_edition,solde_edition
 from service.auth import connexion_utilisateur
 from service.journee_de_travail_et_exercice import valeur_scalaire_requete_max, valeur_scalaire_requete_count, insert_journee_travail, table_libelle_date_systeme_serveur, liste_journee_travail, update_journee_travail_statut
 from service.ChargementCombos import get_solde_mouvement_comptable,pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille,pvgComboOperateurCaisse
@@ -659,6 +659,48 @@ def pvgRecuEdition():
 
 
 
+@api_bp.route('/edition_solde', methods=['POST'])
+def pvgSolde():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+    
+    for row in request_data['Objet']:
+        solde_info = {}
+
+        # Validation et récupération des données pour la suppression
+        solde_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', ''))
+        solde_info['OP_CODEOPERATEUREDITION'] = str(row.get('OP_CODEOPERATEUREDITION'))
+        solde_info['DATEDEBUT'] = str(row.get('DATEDEBUT', ''))
+        solde_info['DATEFIN'] = str(row.get('DATEFIN', ''))
+        solde_info['PT_IDPATIENT'] = str(row.get('PT_IDPATIENT', ''))
+        solde_info['FT_CODEFACTURE'] = str(row.get('FT_CODEFACTURE', ''))
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = solde_edition(db_connexion, solde_info)
+            
+            if len(response) > 0:
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": "Aucuns élement trouvé !!!", "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()
+
+
+
 @api_bp.route('/brouillard_de_caisse', methods=['POST'])
 def pvgBrouillardCaisse():
     request_data = request.json
@@ -809,7 +851,7 @@ def pvgEditionFormation():
         formation_info['TYPEETAT'] = str(row.get('TYPEETAT'))
         formation_info['OP_CODEOPERATEUREDITION'] = str(row.get('OP_CODEOPERATEUREDITION'))
         formation_info['OPTION'] = str(row.get('OPTION'))
-        formation_info['OPTIONAFFICHAGE'] = str(row.get('OPTIONAFFICHAGE'))
+        # formation_info['OPTIONAFFICHAGE'] = str(row.get('OPTIONAFFICHAGE'))
 
         # Connexion à la base de données
         db_connexion = connect_database()
@@ -854,6 +896,8 @@ def pvgeditionPatient():
         editionPatient_info['OP_CODEOPERATEUREDITION'] = str(row.get('OP_CODEOPERATEUREDITION'))
         editionPatient_info['STAT_CODESTATUT'] = str(row.get('STAT_CODESTATUT'))
         editionPatient_info['AS_CODEASSURANCE'] = str(row.get('AS_CODEASSURANCE'))
+        editionPatient_info['PT_NOMPRENOMS'] = str(row.get('PT_NOMPRENOMS'))
+        editionPatient_info['PT_CODEPATIENT'] = str(row.get('PT_CODEPATIENT'))
         
 
         # Connexion à la base de données

@@ -4,8 +4,23 @@ from config import CODECRYPTAGE
 import datetime
 from datetime import datetime
 from tools.toolDate import parse_datetime
-
-
+import requests
+import socket
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import uuid
+#import pyodbc
+import sys
+sys.path.append("../")
+from config import MYSQL_REPONSE,LIENAPISMS,LIENAPPLICATIONCLIENT,CODECRYPTAGE
+import threading
+class clsAgence:
+    def __init__(self):
+        self.AG_RAISONSOCIAL = ''
+        self.AG_EMAILMOTDEPASSE = ''
+        self.AG_EMAIL = ''
+        
 
 # Liste des Patients
 def ListePatient(connexion, Patient_info):
@@ -103,7 +118,28 @@ def insertpatient(connexion, patient_info):
                 # cursor = connexion.cursor()
                 cursor.execute("EXEC dbo.PC_PATIENTSIMPLE ?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?", list(params.values()))
                 connexion.commit()
-                get_commit(connexion,patient_info)
+                
+                # Définition de la variable CODECRYPTAGE
+
+                # Requête SQL avec la variable passée comme paramètre
+                cursor.execute("""
+                    SELECT MAX(PT_IDPATIENT) FROM PATIENT 
+                """)
+                resultat = cursor.fetchone()[0]
+                
+                patient_info['PT_IDPATIENT'] = str(resultat)[4:]#resultat
+                
+                clsAgence = pvgTableLabelAgence(connexion, patient_info['AG_CODEAGENCE'],CODECRYPTAGE)
+        
+                if clsAgence.AG_EMAIL is not None:
+                    # Validation de la transaction
+                    get_commit(connexion,patient_info)
+                    
+                    # Démarrage d'un traitement asynchrone dans un thread
+                    thread_traitement = threading.Thread(target=traitement_asynchrone, args=(connexion, clsAgence, patient_info))
+                    thread_traitement.daemon = True
+                    thread_traitement.start()
+                
             except Exception as e:
                 connexion.rollback()
                 raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
@@ -180,6 +216,190 @@ def get_commit(connexion,clsBilletages):
         MYSQL_REPONSE = f'Erreur lors du commit des opérations: {str(e)}'
         raise Exception(MYSQL_REPONSE)    
     
+ 
+ 
+def pvgTableLabelAgence(connection, *vppCritere):
+    cursor = connection.cursor()
+
+    if len(vppCritere) == 1:
+        vapCritere = " WHERE AG_CODEAGENCE=? AND AG_ACTIF='O'"
+        vapNomParametre = ('@AG_CODEAGENCE',)
+        vapValeurParametre = (vppCritere[0])
+    else:
+        vapCritere = ""
+        vapNomParametre = ()
+        vapValeurParametre = ()
+
+    vapRequete = f"""
+        SELECT 
+            CAST(DECRYPTBYPASSPHRASE('{vppCritere[1]}', AG_EMAIL) AS varchar(150)) AS AG_EMAIL,
+            CAST(DECRYPTBYPASSPHRASE('{vppCritere[1]}', AG_EMAILMOTDEPASSE) AS varchar(150)) AS AG_EMAILMOTDEPASSE,
+            AG_RAISONSOCIAL
+        FROM AGENCE 
+        {vapCritere}
+    """
+    try:
+        cursor.execute(vapRequete, vapValeurParametre)
+    except Exception as e:
+        cursor.close()
+        cursor.execute("ROLLBACK")
+        MYSQL_REPONSE = f'Impossible d\'exécuter la procédure stockée : {str(e.args[1])}'
+        raise Exception(MYSQL_REPONSE)
+    
+    try:
+        rows = cursor.fetchall()
+
+        clsAgenceObj = clsAgence()
+
+        for row in rows:
+            clsAgenceObj.AG_EMAIL = row[0]
+            clsAgenceObj.AG_EMAILMOTDEPASSE = row[1]
+            clsAgenceObj.AG_RAISONSOCIAL = row[2]
+
+        # Retourne l'objet
+        return clsAgenceObj
+    except Exception as e:
+        cursor.close()
+        cursor.execute("ROLLBACK")
+        MYSQL_REPONSE = f'Impossible d\'exécuter la procédure stockée : {str(e.args[1])}'
+        raise Exception(MYSQL_REPONSE)  
+    
+def traitement_asynchrone(connection, clsAgence, resultatUserCreation):
+    try:
+        # Votre traitement asynchrone ici
+        if "@" in resultatUserCreation['PT_EMAIL']:
+            if "@" in resultatUserCreation['PT_EMAIL']:
+                smtpServeur = "smtp.gmail.com"
+                portSmtp = 587
+                adresseEmail = clsAgence.AG_EMAIL
+                motDePasse = clsAgence.AG_EMAILMOTDEPASSE
+                destinataire = resultatUserCreation['PT_EMAIL']#'bolatykouassieuloge@gmail.com'LIENAPPLICATIONCLIENT
+                sujet = "Informations de Connexion"
+                corpsMessage = (
+                    "Bienvenue au C M P  \n\n"
+                    "Votre dossier vient d'être créé.\n"
+                    "Numéro dossier : " + resultatUserCreation['PT_IDPATIENT'] + "\n\n"
+                    "La clinique C M P vous souhaite un prompt rétablissement !"
+                )
+                message = MIMEMultipart()
+                message['From'] = adresseEmail
+                message['To'] = destinataire
+                message['Subject'] = sujet
+                message.attach(MIMEText(corpsMessage, 'plain'))
+                with smtplib.SMTP(smtpServeur, portSmtp) as server:
+                    server.starttls()
+                    server.login(adresseEmail, motDePasse)
+                    server.sendmail(adresseEmail, destinataire, message.as_string())
+        
+        
+        # Préparation de l'appel à l'API SMS et mise à jour du SMS
+        LIENDAPISMS = LIENAPISMS + "Service/wsApisms.svc/SendMessage"
+        Objet ={}
+            # Appel de l'API SMS
+        if not IsValidateIP(LIENDAPISMS):
+                Objet["SL_RESULTAT"] = "FALSE"
+                Objet["SL_MESSAGE"] = "L'API SMS doit être configurée !!!"
+                
+                return Objet
+        corpsMessagesms = (
+                    "Bienvenue au C M P  \n\n"
+                    "Votre dossier vient d'être créé.\n"
+                    "Numéro dossier : " + resultatUserCreation['PT_IDPATIENT'] + "\n\n"
+                    "La clinique C M P vous souhaite un prompt rétablissement !"
+                )
+        reponse = excecuteServiceWeb(resultatUserCreation, "post", LIENDAPISMS,corpsMessagesms)
+        
+        if reponse or len(reponse) == 0:
+           connection.close() 
+           pass
+
+    except Exception as e:
+        connection.close() 
+        print("Erreur lors du traitement asynchrone:", e)       
+
+
+def IsValidateIP(ipaddress):
+    ValidateIP = False
+    ipaddress = ipaddress.replace("/ZenithwebClasse.svc/", "")
+    ipaddress = ipaddress.replace("/Service/wsApisms.svc/SendMessage", "")
+
+    if not ipaddress:
+        return ValidateIP
+
+    if "http://" in ipaddress:
+        ipaddress = ipaddress.replace("http://", "")
+
+    if "https://" in ipaddress:
+        ipaddress = ipaddress.replace("https://", "")
+
+    adresse = ipaddress.split(':')
+
+    if len(adresse) != 2:
+        return ValidateIP
+
+    HostURI = adresse[0]
+    PortNumber = adresse[1].replace("/", "")
+
+    ValidateIP = PingHost(HostURI, int(PortNumber))
+    return ValidateIP
+
+def PingHost(host, port):
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1)  # Timeout de 1 seconde
+        result = sock.connect_ex((host, port))
+        if result == 0:
+            return True
+        else:
+            return False
+    except Exception as e:
+        print("Erreur lors de la tentative de ping :", e)
+        return False
+
+
+
+def excecuteServiceWeb(Objetenv, method, url,corpsMessagesms):
+    objList = []
+    Objet={}
+    headers = {'Content-Type': 'application/json'}
+    try:
+        Objet={
+            "Objet": [
+                { 
+                    "CO_CODECOMPTE": "",
+                    "CodeAgence": Objetenv['AG_CODEAGENCE'],
+                    "RECIPIENTPHONE": Objetenv['PT_CONTACT'],
+                    "SM_RAISONNONENVOISMS": "xxx",
+                    "SM_DATEPIECE": "14-01-2025",
+                    "LO_LOGICIEL": "01",
+                    "OB_NOMOBJET": "test",
+                    "SMSTEXT": corpsMessagesms,
+                    "INDICATIF": "225",
+                    "SM_NUMSEQUENCE": "1",
+                    "SM_STATUT": "E"
+                }
+            ]
+        }
+        response = requests.request(method, url, json=Objet, headers=headers)
+        if response.status_code == 200:
+            objList = response.json()
+    except requests.exceptions.RequestException as e:
+        # Log.Error("Testing log4net error logging - Impossible d'atteindre le service Web")
+        pass
+    except Exception as ex:
+        # Log.Error("Testing log4net error logging - " + str(ex))
+        pass
+    return objList
+
+
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
     
 def parse_datetime(date_str):
     """Convertit une chaîne de caractères en datetime. Renvoie None si la conversion échoue."""
