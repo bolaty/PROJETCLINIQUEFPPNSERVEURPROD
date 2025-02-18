@@ -152,11 +152,13 @@ def brouillard_caisse_edition(connection, broui_caisse_info):
             'CODECRYPTAGE': CODECRYPTAGE,
             'TYPEETAT': broui_caisse_info['TYPEETAT'],
             'OP_CODEOPERATEUREDITION': broui_caisse_info['OP_CODEOPERATEUREDITION'],
-            'TS_CODETYPESCHEMACOMPTABLE': broui_caisse_info['TS_CODETYPESCHEMACOMPTABLE']
+            'TS_CODETYPESCHEMACOMPTABLE': broui_caisse_info['TS_CODETYPESCHEMACOMPTABLE'],
+            'MR_CODEMODEREGLEMENT': broui_caisse_info['MR_CODEMODEREGLEMENT'],
+            'ACT_CODEACTE': broui_caisse_info['ACT_CODEACTE']
         }
     
         # Exécuter la procédure stockée avec le bon schéma (assure-toi que 'dbo' est le bon schéma)
-        cursor.execute("EXEC dbo.PS_ETATBROUILLARDCAISSE ?,?,?,?,?,?,?,?", list(params.values()))
+        cursor.execute("EXEC dbo.PS_ETATBROUILLARDCAISSE ?,?,?,?,?,?,?,?,?,?", list(params.values()))
         # cursor.execute("EXEC dbo.PS_ETATBROUILLARDCAISSE ?,?,?,?,?,?,?", list(params.values()))
         
         # Passer aux résultats (au cas où la procédure exécute plusieurs commandes)
@@ -370,13 +372,14 @@ def point_par_acte_edition(connexion, pt_par_acte_info):
         'DATEFIN': datetime.strptime(pt_par_acte_info['DATEFIN'], "%d/%m/%Y"),
         'CODECRYPTAGE': CODECRYPTAGE,
         'ACT_CODEACTE': pt_par_acte_info['ACT_CODEACTE'],
+        'MR_CODEMODEREGLEMENT': pt_par_acte_info['MR_CODEMODEREGLEMENT'],
     }
     
     try:
         cursor = connexion.cursor()
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("EXEC PS_ETATPOINTPARACTES ?,?,?,?,?,?", list(params.values()))
+        cursor.execute("EXEC PS_ETATPOINTPARACTES ?,?,?,?,?,?,?", list(params.values()))
         
         rows = cursor.fetchall()
         results = []
@@ -458,7 +461,7 @@ def editionPatient(connexion, editionPatient_info):
         'STAT_CODESTATUT': editionPatient_info['STAT_CODESTATUT'],
         'AS_CODEASSURANCE': editionPatient_info['AS_CODEASSURANCE'],
         'PT_NOMPRENOMS': editionPatient_info['PT_NOMPRENOMS'],
-        'PT_CODEPATIENT': editionPatient_info['PT_CODEPATIENT']
+        'SX_CODESEXE': editionPatient_info['SX_CODESEXE']
     }
     
     try:

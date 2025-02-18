@@ -19,6 +19,7 @@ import random
 import os
 from tools.toolCodeFacture import generer_code_facture
 from tools.toolDate import parse_datetime
+from tools.toolJournee import test_journee_fermee
 api_bp = Blueprint('api', __name__)
 
 
@@ -53,6 +54,26 @@ def pvginsert_patient():
             patient_info['PL_CODENUMCOMPTE'] = str(row.get('PL_CODENUMCOMPTE', ''))
             patient_info['TYPEOPERATION'] = str(row.get('TYPEOPERATION', ''))
             
+            AG_CODEAGENCE = None
+            JT_DATEJOURNEETRAVAIL = None
+            OP_CODEOPERATEUR = None
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', ''):
+                AG_CODEAGENCE = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', '')) 
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''):
+                JT_DATEJOURNEETRAVAIL  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''))
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', ''):
+                OP_CODEOPERATEUR  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', '')) 
+
+            # Préparer les paramètres pour la fonction
+            if AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL and OP_CODEOPERATEUR:
+                vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL, OP_CODEOPERATEUR)
+            elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+                vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+            elif AG_CODEAGENCE:
+                vpp_critere = (AG_CODEAGENCE,)
+            else:
+                vpp_critere = ()
+            
 
         except ValueError as e:
             # Retourner un message d'erreur en cas de problème de type de données
@@ -63,27 +84,32 @@ def pvginsert_patient():
             return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection:
-                cursor = db_connection.cursor()
+            with db_connexion:
+                cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
+                response = test_journee_fermee(db_connexion, *vpp_critere)
+
+                if response[0]['NBRE'] == 0:
+                    return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
+        
                 # Appeler la fonction d'insertion dans la base de données
-                reponse = insertpatient(db_connection, patient_info)
+                reponse = insertpatient(db_connexion, patient_info)
                 
                 # Valider la transaction
-                db_connection.commit()
+                db_connexion.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE'}), 200
 
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": f" {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         #finally:
-            db_connection.close()
+            db_connexion.close()
 
             
             
@@ -110,27 +136,27 @@ def pvgdeletepatient():
             return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection:
-                cursor = db_connection.cursor()
+            with db_connexion:
+                cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction d'insertion dans la base de données
                 reponse = deletepatient(cursor, patient_info)
                 
                 # Valider la transaction
-                db_connection.commit()
+                db_connexion.commit()
 
             return jsonify({"SL_MESSAGE": "Suppression réussie!", "SL_RESULTAT": 'TRUE'}), 200
 
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": f" {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         #finally:
-            db_connection.close()  
+            db_connexion.close()  
 
 
 
@@ -214,6 +240,26 @@ def pvgCreationFacture():
         objet_facture['FT_ANNULATION'] = str(row.get('FT_ANNULATION', ''))
         objet_facture['TYPEOPERATION'] = str(row.get('TYPEOPERATION', ''))
         objet_facture['ACT_CODEACTE'] = str(row.get('ACT_CODEACTE', ''))
+        
+        AG_CODEAGENCE = None
+        JT_DATEJOURNEETRAVAIL = None
+        OP_CODEOPERATEUR = None
+        if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', ''):
+           AG_CODEAGENCE = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', '')) 
+        if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''):
+           JT_DATEJOURNEETRAVAIL  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''))
+        if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', ''):
+           OP_CODEOPERATEUR  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', '')) 
+
+        # Préparer les paramètres pour la fonction
+        if AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL and OP_CODEOPERATEUR:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL, OP_CODEOPERATEUR)
+        elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+        elif AG_CODEAGENCE:
+            vpp_critere = (AG_CODEAGENCE,)
+        else:
+            vpp_critere = ()
   
     # Connexion à la base de données
     db_connexion = connect_database()
@@ -222,6 +268,11 @@ def pvgCreationFacture():
         # with db_connexion.cursor() as cursor:
         cursor = db_connexion.cursor()
         cursor.execute("BEGIN TRANSACTION")
+
+        response = test_journee_fermee(db_connexion, *vpp_critere)
+
+        if response[0]['NBRE'] == 0:
+            return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
 
         if objet_facture['TYPEOPERATION'] != '7':
             try:
@@ -342,6 +393,34 @@ def pvgReglementFacture():
         cursor = db_connexion.cursor()
         cursor.execute("BEGIN TRANSACTION")
 
+        for row in request_data['Objet']:
+            AG_CODEAGENCE = None
+            JT_DATEJOURNEETRAVAIL = None
+            OP_CODEOPERATEUR = None
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', ''):
+                AG_CODEAGENCE = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', '')) 
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''):
+                JT_DATEJOURNEETRAVAIL  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''))
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', ''):
+                OP_CODEOPERATEUR  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', '')) 
+
+            # Préparer les paramètres pour la fonction
+            if AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL and OP_CODEOPERATEUR:
+                vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL, OP_CODEOPERATEUR)
+            elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+                vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+            elif AG_CODEAGENCE:
+                vpp_critere = (AG_CODEAGENCE,)
+            else:
+                vpp_critere = ()
+                
+                
+            response = test_journee_fermee(db_connexion, *vpp_critere)
+
+            if response[0]['NBRE'] == 0:
+                return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
+        
+        
         # Consigner les mouvements
         clsmouvement_infos = []
         for row in request_data['Objet']:
@@ -377,6 +456,7 @@ def pvgReglementFacture():
                 objet_mode_reglement['MC_LIBELLEBANQUE'] = str(row.get('MC_LIBELLEBANQUE', ''))
                 objet_mode_reglement['MC_MONTANT_FACTURE'] = row.get('MC_MONTANT_FACTURE', '')
                 objet_mode_reglement['ACT_CODEACTE'] = str(row.get('ACT_CODEACTE', '')) 
+                
                 clsmouvement_infos.append(objet_mode_reglement) 
             except ValueError as e:
                 # Retourner un message d'erreur en cas de problème de type de données
@@ -532,6 +612,27 @@ def pvgExtourneOperation():
         contrat_info['MV_NUMPIECE3'] = str(row.get('MV_NUMPIECE3'))
         contrat_info['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR', ''))
         contrat_info['TYPEOPERATION'] = str(row.get('TYPEOPERATION', ''))
+        
+        AG_CODEAGENCE = None
+        JT_DATEJOURNEETRAVAIL = None
+        OP_CODEOPERATEUR = None
+        if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', ''):
+           AG_CODEAGENCE = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', '')) 
+        if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''):
+           JT_DATEJOURNEETRAVAIL  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''))
+        if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', ''):
+           OP_CODEOPERATEUR  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', '')) 
+
+        # Préparer les paramètres pour la fonction
+        if AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL and OP_CODEOPERATEUR:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL, OP_CODEOPERATEUR)
+        elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+        elif AG_CODEAGENCE:
+            vpp_critere = (AG_CODEAGENCE,)
+        else:
+            vpp_critere = ()
+            
         # Connexion à la base de données
         db_connexion = connect_database()
 
@@ -539,6 +640,11 @@ def pvgExtourneOperation():
             with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
+                response = test_journee_fermee(db_connexion, *vpp_critere)
+
+                if response[0]['NBRE'] == 0:
+                    return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
+        
                 # Appeler la fonction de suppression
                 ExtourneOperation(db_connexion, str(row.get('AG_CODEAGENCE', '')), str(row.get('MV_DATEPIECECOMPTABILISATION')),str(row.get('MV_DATEPIECE', '')),
                                              str(row.get('MV_NUMPIECE1', '')), str(row.get('MV_NUMPIECE3')),str(row.get('OP_CODEOPERATEUR', '')),str(row.get('TYPEOPERATION', '')))
@@ -582,6 +688,26 @@ def pvgExtourneFacture():
         contrat_info['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR', ''))
         contrat_info['TYPEOPERATION'] = str(row.get('TYPEOPERATION', ''))
         
+        AG_CODEAGENCE = None
+        JT_DATEJOURNEETRAVAIL = None
+        OP_CODEOPERATEUR = None
+        if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', ''):
+           AG_CODEAGENCE = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', '')) 
+        if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''):
+           JT_DATEJOURNEETRAVAIL  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''))
+        if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', ''):
+           OP_CODEOPERATEUR  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', '')) 
+
+        # Préparer les paramètres pour la fonction
+        if AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL and OP_CODEOPERATEUR:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL, OP_CODEOPERATEUR)
+        elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+        elif AG_CODEAGENCE:
+            vpp_critere = (AG_CODEAGENCE,)
+        else:
+            vpp_critere = ()
+        
         # Vérification que toutes les données obligatoires sont présentes
         if not all([contrat_info['FT_CODEFACTURE'] 
                     ]):
@@ -594,6 +720,11 @@ def pvgExtourneFacture():
         try:
             with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
+                
+                response = test_journee_fermee(db_connexion, *vpp_critere)
+
+                if response[0]['NBRE'] == 0:
+                    return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
                 
                 # Appeler la fonction de suppression
                 ExtourneFacture(db_connexion, str(row.get('AG_CODEAGENCE', '')), str(row.get('MV_DATEPIECECOMPTABILISATION')),str(row.get('FT_CODEFACTURE', '')),str(row.get('MC_DATESAISIE', '')),
@@ -719,6 +850,8 @@ def pvgBrouillardCaisse():
         broui_caisse_info['TYPEETAT'] = str(row.get('TYPEETAT'))
         broui_caisse_info['TS_CODETYPESCHEMACOMPTABLE'] = str(row.get('TS_CODETYPESCHEMACOMPTABLE'))
         broui_caisse_info['OP_CODEOPERATEUREDITION'] = str(row.get('OP_CODEOPERATEUREDITION'))
+        broui_caisse_info['MR_CODEMODEREGLEMENT'] = str(row.get('MR_CODEMODEREGLEMENT'))
+        broui_caisse_info['ACT_CODEACTE'] = str(row.get('ACT_CODEACTE'))
 
         # Connexion à la base de données
         db_connexion = connect_database()
@@ -809,6 +942,7 @@ def pvgEditionPointParActe():
         pt_par_acte_info['DATEDEBUT'] = str(row.get('DATEDEBUT'))
         pt_par_acte_info['DATEFIN'] = str(row.get('DATEFIN'))
         pt_par_acte_info['ACT_CODEACTE'] = str(row.get('ACT_CODEACTE'))
+        pt_par_acte_info['MR_CODEMODEREGLEMENT'] = str(row.get('MR_CODEMODEREGLEMENT'))
 
         # Connexion à la base de données
         db_connexion = connect_database()
@@ -897,7 +1031,7 @@ def pvgeditionPatient():
         editionPatient_info['STAT_CODESTATUT'] = str(row.get('STAT_CODESTATUT'))
         editionPatient_info['AS_CODEASSURANCE'] = str(row.get('AS_CODEASSURANCE'))
         editionPatient_info['PT_NOMPRENOMS'] = str(row.get('PT_NOMPRENOMS'))
-        editionPatient_info['PT_CODEPATIENT'] = str(row.get('PT_CODEPATIENT'))
+        editionPatient_info['SX_CODESEXE'] = str(row.get('SX_CODESEXE'))
         
 
         # Connexion à la base de données
@@ -1132,17 +1266,17 @@ def UserChangePasswordfist():
             return jsonify({"SL_MESSAGE": "Données manquantes ou incorrectes.code erreur (301)", "SL_RESULTAT": 'FALSE'}), 200    
         
         # Récupérer la connexion à la base de données depuis current_app
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction avec les données récupérées
                 response = pvgUserChangePasswordfist(cursor, clsUserChangePasswordfist)
                 
                 # Valider la transaction si tout s'est bien passé
-                db_connection.commit()
+                db_connexion.commit()
             
             # Retourner la réponse au client
             if response[0]['SL_RESULTAT'] == 'TRUE':
@@ -1151,11 +1285,11 @@ def UserChangePasswordfist():
                 return jsonify({"SL_MESSAGE": response['SL_MESSAGE'], "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la modification des accès : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            db_connection.close()  
+            db_connexion.close()  
             
 @api_bp.route('/pvgUserDemandePassword', methods=['POST'])
 def UserDemandePassword():
@@ -1171,17 +1305,17 @@ def UserDemandePassword():
         #clspvgUserDemandePassword['CODECRYPTAGE'] = row['CODECRYPTAGE']
         
         # Récupérer la connexion à la base de données depuis current_app
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction avec les données récupérées
                 response = pvgUserDemandePassword(cursor, clspvgUserDemandePassword)
                 
                 # Valider la transaction si tout s'est bien passé
-                db_connection.commit()
+                db_connexion.commit()
             
             # Retourner la réponse au client
             if response[0]['SL_RESULTAT'] == 'TRUE':
@@ -1190,11 +1324,11 @@ def UserDemandePassword():
                 return jsonify({"SL_MESSAGE": response[0]['SL_MESSAGE'], "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la modification des accès : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            db_connection.close() 
+            db_connexion.close() 
 
 
 
@@ -1215,6 +1349,26 @@ def pvgcreation_profil():
             # Validation des chaînes de caractères
             profil_info['PO_CODEPROFIL'] = str(row.get('PO_CODEPROFIL', ''))
             profil_info['PO_LIBELLE'] = str(row.get('PO_LIBELLE', ''))
+            
+            AG_CODEAGENCE = None
+            JT_DATEJOURNEETRAVAIL = None
+            OP_CODEOPERATEUR = None
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', ''):
+                AG_CODEAGENCE = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', '')) 
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''):
+                JT_DATEJOURNEETRAVAIL  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''))
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', ''):
+                OP_CODEOPERATEUR  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', '')) 
+
+            # Préparer les paramètres pour la fonction
+            if AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL and OP_CODEOPERATEUR:
+                vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL, OP_CODEOPERATEUR)
+            elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+                vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+            elif AG_CODEAGENCE:
+                vpp_critere = (AG_CODEAGENCE,)
+            else:
+                vpp_critere = ()
 
         except ValueError as e:
             # Retourner un message d'erreur en cas de problème de type de données
@@ -1225,23 +1379,28 @@ def pvgcreation_profil():
             return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection:
-                cursor = db_connection.cursor()
+            with db_connexion:
+                cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
+                response = test_journee_fermee(db_connexion, *vpp_critere)
+
+                if response[0]['NBRE'] == 0:
+                    return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
+
                 # Appeler la fonction d'insertion dans la base de données
                 reponse = creation_profil(cursor, profil_info)
                 
                 # Valider la transaction
-                db_connection.commit()
+                db_connexion.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
 
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
 
@@ -1257,6 +1416,26 @@ def pvgupdate_profil():
             # Validation des chaînes de caractères
             profil_info['PO_CODEPROFIL'] = str(row.get('PO_CODEPROFIL', ''))
             profil_info['PO_LIBELLE'] = str(row.get('PO_LIBELLE', ''))
+            
+            AG_CODEAGENCE = None
+            JT_DATEJOURNEETRAVAIL = None
+            OP_CODEOPERATEUR = None
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', ''):
+                AG_CODEAGENCE = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', '')) 
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''):
+                JT_DATEJOURNEETRAVAIL  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''))
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', ''):
+                OP_CODEOPERATEUR  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', '')) 
+
+            # Préparer les paramètres pour la fonction
+            if AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL and OP_CODEOPERATEUR:
+                vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL, OP_CODEOPERATEUR)
+            elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+                vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+            elif AG_CODEAGENCE:
+                vpp_critere = (AG_CODEAGENCE,)
+            else:
+                vpp_critere = ()
 
         except ValueError as e:
             # Retourner un message d'erreur en cas de problème de type de données
@@ -1267,23 +1446,28 @@ def pvgupdate_profil():
             return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection:
-                cursor = db_connection.cursor()
+            with db_connexion:
+                cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
+                response = test_journee_fermee(db_connexion, *vpp_critere)
+
+                if response[0]['NBRE'] == 0:
+                    return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
+
                 # Appeler la fonction d'insertion dans la base de données
                 reponse = update_profil(cursor, profil_info)
                 
                 # Valider la transaction
-                db_connection.commit()
+                db_connexion.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
 
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
    
 @api_bp.route('/delete_profil', methods=['POST'])
@@ -1308,23 +1492,23 @@ def pvgdelete_profil():
             return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection:
-                cursor = db_connection.cursor()
+            with db_connexion:
+                cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction d'insertion dans la base de données
                 reponse = delete_profil(cursor, profil_info)
                 
                 # Valider la transaction
-                db_connection.commit()
+                db_connexion.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
 
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": f"{str(e)}", "SL_RESULTAT": 'FALSE'}), 200
  
 
@@ -1376,6 +1560,26 @@ def pvginsert_operateur():
             operateur_info['PL_CODENUMCOMPTEVIREMENT'] = str(row.get('PL_CODENUMCOMPTEVIREMENT', ''))
             operateur_info['OP_DATESAISIE'] = parse_datetime(row.get('OP_DATESAISIE'))
             operateur_info['CODECRYPTAGE'] = ''
+            
+            AG_CODEAGENCE = None
+            JT_DATEJOURNEETRAVAIL = None
+            OP_CODEOPERATEUR = None
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', ''):
+                AG_CODEAGENCE = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', '')) 
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''):
+                JT_DATEJOURNEETRAVAIL  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''))
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', ''):
+                OP_CODEOPERATEUR  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', '')) 
+
+            # Préparer les paramètres pour la fonction
+            if AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL and OP_CODEOPERATEUR:
+                vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL, OP_CODEOPERATEUR)
+            elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+                vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+            elif AG_CODEAGENCE:
+                vpp_critere = (AG_CODEAGENCE,)
+            else:
+                vpp_critere = ()
 
         except ValueError as e:
             # Retourner un message d'erreur en cas de problème de type de données
@@ -1386,23 +1590,28 @@ def pvginsert_operateur():
             return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection:
-                cursor = db_connection.cursor()
+            with db_connexion:
+                cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
+                response = test_journee_fermee(db_connexion, *vpp_critere)
+
+                if response[0]['NBRE'] == 0:
+                    return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
+        
                 # Appeler la fonction d'insertion dans la base de données
                 reponse = insert_operateur(cursor, operateur_info)
                 
                 # Valider la transaction
-                db_connection.commit()
+                db_connexion.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
 
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         
@@ -1440,6 +1649,26 @@ def pvgupdate_compte_utilisateur():
             operateur_info['OP_DATESAISIE'] = parse_datetime(row.get('OP_DATESAISIE'))
             operateur_info['CODECRYPTAGE'] = ""
 
+            AG_CODEAGENCE = None
+            JT_DATEJOURNEETRAVAIL = None
+            OP_CODEOPERATEUR = None
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', ''):
+                AG_CODEAGENCE = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', '')) 
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''):
+                JT_DATEJOURNEETRAVAIL  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''))
+            if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', ''):
+                OP_CODEOPERATEUR  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', '')) 
+
+            # Préparer les paramètres pour la fonction
+            if AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL and OP_CODEOPERATEUR:
+                vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL, OP_CODEOPERATEUR)
+            elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+                vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+            elif AG_CODEAGENCE:
+                vpp_critere = (AG_CODEAGENCE,)
+            else:
+                vpp_critere = ()
+            
         except ValueError as e:
             # Retourner un message d'erreur en cas de problème de type de données
             return jsonify({"SL_MESSAGE": f"Erreur de type de données : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
@@ -1449,27 +1678,32 @@ def pvgupdate_compte_utilisateur():
             return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection:
-                cursor = db_connection.cursor()
+            with db_connexion:
+                cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
+                response = test_journee_fermee(db_connexion, *vpp_critere)
+
+                if response[0]['NBRE'] == 0:
+                    return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
+        
                 # Appeler la fonction d'insertion dans la base de données
                 reponse = update_compte_utilisateur(cursor, operateur_info)
                 
                 # Valider la transaction
-                db_connection.commit()
+                db_connexion.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
 
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         #finally:
-            db_connection.close()
+            db_connexion.close()
             
             
 @api_bp.route('/delete_compte_utilisateur', methods=['POST'])
@@ -1495,27 +1729,27 @@ def pvgdelete_compte_utilisateur():
             return jsonify({"SL_MESSAGE": f"Erreur inattendue : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection:
-                cursor = db_connection.cursor()
+            with db_connexion:
+                cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction d'insertion dans la base de données
                 reponse = delete_compte_utilisateur(cursor, operateur_info)
                 
                 # Valider la transaction
-                db_connection.commit()
+                db_connexion.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
 
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         #finally:
-            db_connection.close()            
+            db_connexion.close()            
             
 
 ################################################################
@@ -2799,14 +3033,14 @@ def pvgGetJourneeDeTravail():
             vpp_critere = ()
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = liste_journee_travail(db_connection, *vpp_critere)
+                response = liste_journee_travail(db_connexion, *vpp_critere)
                 
             if len(response) > 0:
                 return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
@@ -2814,11 +3048,11 @@ def pvgGetJourneeDeTravail():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            db_connection.close()
+            db_connexion.close()
 
 
 
@@ -2836,29 +3070,29 @@ def pvgUpdateJourneeTravail():
         
         
         # Connexion à la base de données
-        db_connection = connect_database()
+        db_connexion = connect_database()
 
         try:
-            with db_connection.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                update_journee_travail_statut(db_connection, AG_CODEAGENCE,JT_DATEJOURNEETRAVAIL,JT_STATUT)
+                update_journee_travail_statut(db_connexion, AG_CODEAGENCE,JT_DATEJOURNEETRAVAIL,JT_STATUT)
                 user_infos = [{
                     'AG_CODEAGENCE':"1000",
                     'JT_STATUT':"O",
                 }]
-                get_commit(db_connection,user_infos)
+                get_commit(db_connexion,user_infos)
                
                 return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'})
             
         
         except Exception as e:
-            db_connection.rollback()
+            db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la mise a jour : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            db_connection.close()
+            db_connexion.close()
             
 # ################################################################
 #                                                       GESTION DES JOURNEES DE TRAVAIL                                                         #
@@ -2932,12 +3166,37 @@ def pvgOperationCaisse():
         objet_facture['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR', ''))
         objet_facture['OP_CODEOPERATION'] = str(row.get('OP_CODEOPERATION', ''))
         
+        AG_CODEAGENCE = None
+        JT_DATEJOURNEETRAVAIL = None
+        OP_CODEOPERATEUR = None
+        if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', ''):
+           AG_CODEAGENCE = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_A', '')) 
+        if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''):
+           JT_DATEJOURNEETRAVAIL  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_J', ''))
+        if request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', ''):
+           OP_CODEOPERATEUR  = str(request_data['Objet'][0]['clsObjetEnvoi'].get('OE_Y', '')) 
+
+        # Préparer les paramètres pour la fonction
+        if AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL and OP_CODEOPERATEUR:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL, OP_CODEOPERATEUR)
+        elif AG_CODEAGENCE and JT_DATEJOURNEETRAVAIL:
+            vpp_critere = (AG_CODEAGENCE, JT_DATEJOURNEETRAVAIL)
+        elif AG_CODEAGENCE:
+            vpp_critere = (AG_CODEAGENCE,)
+        else:
+            vpp_critere = ()
+        
     # Connexion à la base de données
     db_connexion = connect_database()
     
     try:
         cursor = db_connexion.cursor()
         cursor.execute("BEGIN TRANSACTION")
+        
+        response = test_journee_fermee(db_connexion, *vpp_critere)
+
+        if response[0]['NBRE'] == 0:
+            return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
         
         # Consigner les mouvements
         clsmouvement_infos = []
