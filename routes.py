@@ -10,6 +10,7 @@ from service.ChargementCombos import get_solde_mouvement_comptable,pvgPeriodicit
 from service.auth import connexion_utilisateur,pvgUserChangePasswordfist,pvgUserDemandePassword
 from service.Utilisateurs import creation_profil,update_profil,delete_profil,update_compte_utilisateur,insert_operateur,delete_compte_utilisateur,Activation_DesActivation_utilisateur
 from service.Patient import ListePatient,insertpatient,deletepatient
+from service.Guichet import pvgComboTypeshemacomptableVersement,pvgChargerDansDataSetSC_SCHEMACOMPTABLECODE
 from models.models import clsObjetEnvoi
 from datetime import datetime
 import traceback
@@ -1030,7 +1031,6 @@ def pvgeditionPatient():
         editionPatient_info['OP_CODEOPERATEUREDITION'] = str(row.get('OP_CODEOPERATEUREDITION'))
         editionPatient_info['STAT_CODESTATUT'] = str(row.get('STAT_CODESTATUT'))
         editionPatient_info['AS_CODEASSURANCE'] = str(row.get('AS_CODEASSURANCE'))
-        editionPatient_info['PT_NOMPRENOMS'] = str(row.get('PT_NOMPRENOMS'))
         editionPatient_info['SX_CODESEXE'] = str(row.get('SX_CODESEXE'))
         
 
@@ -2316,7 +2316,81 @@ def ComboTypeshemacomptable():
         
         #finally:
             #db_connexion.close()     
-   
+  
+@api_bp.route('/pvgComboTypeshemacomptableVersement', methods=['POST'])
+def ComboTypeshemacomptableVersement():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        user_info = {}
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = pvgComboTypeshemacomptableVersement(db_connexion)
+                
+                
+            if len(response) > 0 :
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()   
+  
+@api_bp.route('/pvgChargerDansDataSetSC_SCHEMACOMPTABLECODE', methods=['POST'])
+def ChargerDansDataSetSC_SCHEMACOMPTABLECODE():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        user_info = {}
+
+        # Validation et récupération des données pour la suppression
+      
+        TS_CODETYPESCHEMACOMPTABLE = None
+        if row.get('TS_CODETYPESCHEMACOMPTABLE', ''):
+           TS_CODETYPESCHEMACOMPTABLE = str(row.get('TS_CODETYPESCHEMACOMPTABLE', '')) 
+        
+           
+        # Préparer les paramètres pour la fonction
+        
+        if TS_CODETYPESCHEMACOMPTABLE :
+            vpp_critere = (TS_CODETYPESCHEMACOMPTABLE,) 
+        else:
+            vpp_critere = ()
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = pvgChargerDansDataSetSC_SCHEMACOMPTABLECODE(db_connexion, *vpp_critere)
+                
+                
+                
+            if len(response) > 0 :
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()    
 
 @api_bp.route('/pvgComboCompte', methods=['POST'])
 def ComboCompte():

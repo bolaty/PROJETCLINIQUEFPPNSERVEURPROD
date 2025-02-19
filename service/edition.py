@@ -287,6 +287,8 @@ def solde_edition(connection, solde_info):
                 'PL_CODENUMCOMPTE': row.PL_CODENUMCOMPTE,
                 'PL_NUMCOMPTE': row.PL_NUMCOMPTE,
                 'PL_TYPECOMPTE': row.PL_TYPECOMPTE,
+                'PT_MATRICULE': row.PT_MATRICULE,
+                'MC_NUMPIECE': row.MC_NUMPIECE,
                 'SOLDE': int(row.SOLDE)
             }
             
@@ -435,6 +437,8 @@ def formation_edition(connexion, formation_info):
             result['MC_MONTANTNET'] = row.MC_MONTANTNET
             result['MC_MONTANTPROVISOIRE'] = row.MC_MONTANTPROVISOIRE
             result['MC_MONTANTTOTAL'] = row.MC_MONTANTTOTAL
+            result['PL_COMPTECOLLECTIF'] = row.PL_COMPTECOLLECTIF
+            result['PL_TYPECOMPTE'] = row.PL_TYPECOMPTE
  
             # Ajouter le dictionnaire à la liste des résultats
             results.append(result)
@@ -460,7 +464,6 @@ def editionPatient(connexion, editionPatient_info):
         'OP_CODEOPERATEUREDITION': editionPatient_info['OP_CODEOPERATEUREDITION'],
         'STAT_CODESTATUT': editionPatient_info['STAT_CODESTATUT'],
         'AS_CODEASSURANCE': editionPatient_info['AS_CODEASSURANCE'],
-        'PT_NOMPRENOMS': editionPatient_info['PT_NOMPRENOMS'],
         'SX_CODESEXE': editionPatient_info['SX_CODESEXE']
     }
     
@@ -468,7 +471,7 @@ def editionPatient(connexion, editionPatient_info):
         cursor = connexion.cursor()
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("EXEC PS_ETATLISTEDESPATIENTS ?,?,?,?,?,?,?,?,?,?,?", list(params.values()))
+        cursor.execute("EXEC PS_ETATLISTEDESPATIENTS ?,?,?,?,?,?,?,?,?,?", list(params.values()))
         
         rows = cursor.fetchall()
         results = []
