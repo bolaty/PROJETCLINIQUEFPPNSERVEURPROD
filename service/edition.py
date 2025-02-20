@@ -318,8 +318,8 @@ def journal_edition(connexion, journal_info):
         'ACT_CODEACTE': journal_info['ACT_CODEACTE'],
         'STAT_CODESTATUT': journal_info['STAT_CODESTATUT'],
         'AS_CODEASSURANCE': journal_info['AS_CODEASSURANCE'],
-        'MONTANTDEBUT': journal_info['MONTANTDEBUT'],
-        'MONTANTFIN': journal_info['MONTANTFIN'],
+        'MONTANTDEBUT': journal_info.get('MONTANTDEBUT') or 0,
+        'MONTANTFIN': journal_info.get('MONTANTFIN') or 0,
         'NUMBORDEREAU': journal_info['NUMBORDEREAU']
     }
     

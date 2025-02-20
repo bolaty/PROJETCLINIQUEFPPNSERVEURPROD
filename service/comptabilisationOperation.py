@@ -567,20 +567,20 @@ def pvg_comptabilisation_operation_caisse1(connexion, cls_mouvement_comptable):
     params = {
         'AG_CODEAGENCE': cls_mouvement_comptable['AG_CODEAGENCE'],
         'MC_DATEPIECE': parse_datetime(cls_mouvement_comptable['MC_DATEPIECE']),
-        'MC_NUMPIECE': cls_mouvement_comptable['MC_NUMPIECE'],
+        'MC_NUMPIECE': int(cls_mouvement_comptable['MC_NUMPIECE']),
         'MC_NUMSEQUENCE': cls_mouvement_comptable['MC_NUMSEQUENCE'],
-        'MR_CODEMODEREGLEMENT': cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] if 'MR_CODEMODEREGLEMENT' in cls_mouvement_comptable and cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] else None,
-        'PT_IDPATIENT': cls_mouvement_comptable.get('PT_IDPATIENT') or None,
-        'FT_CODEFACTURE': cls_mouvement_comptable.get('FT_CODEFACTURE') or None,
+        'MR_CODEMODEREGLEMENT': cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] if 'MR_CODEMODEREGLEMENT' in cls_mouvement_comptable and cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] else '',#None,
+        'PT_IDPATIENT': cls_mouvement_comptable.get('PT_IDPATIENT') or '',#None,
+        'FT_CODEFACTURE': cls_mouvement_comptable.get('FT_CODEFACTURE') or '',#None,
         'OP_CODEOPERATEUR': cls_mouvement_comptable['OP_CODEOPERATEUR'],
         'MC_MONTANTDEBIT': cls_mouvement_comptable.get('MC_MONTANTDEBIT') or 0,
         'MC_MONTANTCREDIT': cls_mouvement_comptable.get('MC_MONTANTCREDIT') or 0,
         'MC_DATESAISIE': parse_datetime(cls_mouvement_comptable['MC_DATESAISIE']),
         'MC_ANNULATION': cls_mouvement_comptable['MC_ANNULATION'],
-        'JO_CODEJOURNAL': cls_mouvement_comptable['JO_CODEJOURNAL'] if 'JO_CODEJOURNAL' in cls_mouvement_comptable and cls_mouvement_comptable['JO_CODEJOURNAL'] else None,
+        'JO_CODEJOURNAL': cls_mouvement_comptable['JO_CODEJOURNAL'] if 'JO_CODEJOURNAL' in cls_mouvement_comptable and cls_mouvement_comptable['JO_CODEJOURNAL'] else '',#None,
         'MC_REFERENCEPIECE': cls_mouvement_comptable['MC_REFERENCEPIECE'],
         'MC_LIBELLEOPERATION': cls_mouvement_comptable['MC_LIBELLEOPERATION'],
-        'PL_CODENUMCOMPTE': cls_mouvement_comptable['PL_CODENUMCOMPTE'] if 'PL_CODENUMCOMPTE' in cls_mouvement_comptable and cls_mouvement_comptable['PL_CODENUMCOMPTE'] else None,
+        'PL_CODENUMCOMPTE': cls_mouvement_comptable['PL_CODENUMCOMPTE'] if 'PL_CODENUMCOMPTE' in cls_mouvement_comptable and cls_mouvement_comptable['PL_CODENUMCOMPTE'] else '',#None,
         'MC_NOMTIERS': cls_mouvement_comptable['MC_NOMTIERS'],
         'MC_CONTACTTIERS': cls_mouvement_comptable['MC_CONTACTTIERS'],
         'MC_EMAILTIERS': cls_mouvement_comptable['MC_EMAILTIERS'],
@@ -596,14 +596,14 @@ def pvg_comptabilisation_operation_caisse1(connexion, cls_mouvement_comptable):
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': '',
         'MONTANT': cls_mouvement_comptable.get('MC_MONTANT_FACTURE') or 0,
-        'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None,
-        'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or None,
-        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or None
+        'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or '',#None,
+        'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or '',#None,
+        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or '',#None
     }
 
      # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
     try:
-        cursor = connexion
+        cursor = connexion.cursor()
     except Exception as e:
         cursor.close()
          # En cas d'erreur, annuler la transaction
@@ -630,20 +630,20 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
     params = {
         'AG_CODEAGENCE': cls_mouvement_comptable['AG_CODEAGENCE'],
         'MC_DATEPIECE': parse_datetime(cls_mouvement_comptable['MC_DATEPIECE']),
-        'MC_NUMPIECE': cls_mouvement_comptable['MC_NUMPIECE'],
+        'MC_NUMPIECE': int(cls_mouvement_comptable['MC_NUMPIECE']),
         'MC_NUMSEQUENCE': cls_mouvement_comptable['MC_NUMSEQUENCE'],
-        'MR_CODEMODEREGLEMENT': cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] if 'MR_CODEMODEREGLEMENT' in cls_mouvement_comptable and cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] else None,
-        'PT_IDPATIENT': cls_mouvement_comptable.get('PT_IDPATIENT') or None,
-        'FT_CODEFACTURE': cls_mouvement_comptable.get('FT_CODEFACTURE') or None,
+        'MR_CODEMODEREGLEMENT': cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] if 'MR_CODEMODEREGLEMENT' in cls_mouvement_comptable and cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] else '',
+        'PT_IDPATIENT': cls_mouvement_comptable.get('PT_IDPATIENT') or '',
+        'FT_CODEFACTURE': cls_mouvement_comptable.get('FT_CODEFACTURE') or '',
         'OP_CODEOPERATEUR': cls_mouvement_comptable['OP_CODEOPERATEUR'],
         'MC_MONTANTDEBIT': cls_mouvement_comptable.get('MC_MONTANTDEBIT') or 0,
         'MC_MONTANTCREDIT': cls_mouvement_comptable.get('MC_MONTANTCREDIT') or 0,
         'MC_DATESAISIE': parse_datetime(cls_mouvement_comptable['MC_DATESAISIE']),
         'MC_ANNULATION': cls_mouvement_comptable['MC_ANNULATION'],
-        'JO_CODEJOURNAL': cls_mouvement_comptable['JO_CODEJOURNAL'] if 'JO_CODEJOURNAL' in cls_mouvement_comptable and cls_mouvement_comptable['JO_CODEJOURNAL'] else None,
+        'JO_CODEJOURNAL': cls_mouvement_comptable['JO_CODEJOURNAL'] if 'JO_CODEJOURNAL' in cls_mouvement_comptable and cls_mouvement_comptable['JO_CODEJOURNAL'] else '',
         'MC_REFERENCEPIECE': cls_mouvement_comptable['MC_REFERENCEPIECE'],
         'MC_LIBELLEOPERATION': cls_mouvement_comptable['MC_LIBELLEOPERATION'],
-        'PL_CODENUMCOMPTE': cls_mouvement_comptable['PL_CODENUMCOMPTE'] if 'PL_CODENUMCOMPTE' in cls_mouvement_comptable and cls_mouvement_comptable['PL_CODENUMCOMPTE'] else None,
+        'PL_CODENUMCOMPTE': cls_mouvement_comptable['PL_CODENUMCOMPTE'] if 'PL_CODENUMCOMPTE' in cls_mouvement_comptable and cls_mouvement_comptable['PL_CODENUMCOMPTE'] else '',
         'MC_NOMTIERS': cls_mouvement_comptable['MC_NOMTIERS'],
         'MC_CONTACTTIERS': cls_mouvement_comptable['MC_CONTACTTIERS'],
         'MC_EMAILTIERS': cls_mouvement_comptable['MC_EMAILTIERS'],
@@ -659,14 +659,14 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': '',
         'MONTANT': cls_mouvement_comptable.get('MC_MONTANT_FACTURE') or 0,
-        'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None,
-        'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or None,
-        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or None
+        'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or '',
+        'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or '',
+        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or ''
     }
 
      # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
     try:
-        cursor = connexion
+        cursor = connexion.cursor()
     except Exception as e:
         cursor.close()
          # En cas d'erreur, annuler la transaction
@@ -676,6 +676,7 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
     # Exécution de la procédure stockée
     try:
         cursor.execute("EXECUTE PS_COMPTABILISATION  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?", list(params.values()))
+        cursor.nextset()
     except Exception as e:
         cursor.close()
         # En cas d'erreur, annuler la transaction
