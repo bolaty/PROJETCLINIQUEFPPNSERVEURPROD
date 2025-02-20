@@ -591,8 +591,8 @@ def balance_edition(connexion, balance_info):
         'OP_CODEOPERATEUREDITION': balance_info['OP_CODEOPERATEUREDITION'],
 		
         'PL_OPTION': balance_info['PL_OPTION'],
-        'NUMCOMPTEDEBUT': balance_info['NUMCOMPTEDEBUT'],
-        'NUMCOMPTEFIN': balance_info['NUMCOMPTEFIN']
+        'NUMCOMPTEDEBUT': balance_info.get('NUMCOMPTEDEBUT') or None,
+        'NUMCOMPTEFIN': balance_info.get('NUMCOMPTEFIN') or None
     }
     
     try:

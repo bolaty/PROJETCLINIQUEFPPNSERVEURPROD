@@ -10,7 +10,7 @@ from service.ChargementCombos import get_solde_mouvement_comptable,pvgPeriodicit
 from service.auth import connexion_utilisateur,pvgUserChangePasswordfist,pvgUserDemandePassword
 from service.Utilisateurs import creation_profil,update_profil,delete_profil,update_compte_utilisateur,insert_operateur,delete_compte_utilisateur,Activation_DesActivation_utilisateur
 from service.Patient import ListePatient,insertpatient,deletepatient
-from service.Guichet import pvgComboTypeshemacomptableVersement,pvgChargerDansDataSetSC_SCHEMACOMPTABLECODE
+from service.Guichet import pvgComboTypeshemacomptableVersement,pvgChargerDansDataSetSC_SCHEMACOMPTABLECODE,pvgComboTypespiece
 from models.models import clsObjetEnvoi
 from datetime import datetime
 import traceback
@@ -236,11 +236,11 @@ def pvgCreationFacture():
         objet_facture['STAT_CODESTATUT'] = str(row.get('STAT_CODESTATUT', ''))
         objet_facture['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR', ''))
         objet_facture['PL_CODENUMCOMPTE'] = str(row.get('PL_CODENUMCOMPTE', ''))
-        objet_facture['AS_CODEASSURANCE'] = str(row.get('AS_CODEASSURANCE', ''))
+        # objet_facture['AS_CODEASSURANCE'] = str(row.get('AS_CODEASSURANCE', ''))
         objet_facture['MC_DATESAISIE'] = str(row.get('PT_DATESAISIE', ''))
         objet_facture['FT_ANNULATION'] = str(row.get('FT_ANNULATION', ''))
         objet_facture['TYPEOPERATION'] = str(row.get('TYPEOPERATION', ''))
-        objet_facture['ACT_CODEACTE'] = str(row.get('ACT_CODEACTE', ''))
+        # objet_facture['ACT_CODEACTE'] = str(row.get('ACT_CODEACTE', ''))
         
         AG_CODEAGENCE = None
         JT_DATEJOURNEETRAVAIL = None
@@ -348,7 +348,8 @@ def pvgCreationFacture():
                 objet_mode_reglement['MC_LIBELLEBANQUE'] = str(row.get('MC_LIBELLEBANQUE', ''))
                 objet_mode_reglement['MC_MONTANT_FACTURE'] = row.get('MC_MONTANT_FACTURE', '')
                 objet_mode_reglement['MC_MONTANT_CONSTATIONFACTURE'] = row.get('MC_MONTANT_CONSTATIONFACTURE', '')
-                objet_mode_reglement['ACT_CODEACTE'] = str(objet_facture['ACT_CODEACTE'])
+                objet_mode_reglement['ACT_CODEACTE'] = str(row.get('ACT_CODEACTE'))
+                objet_mode_reglement['AS_CODEASSURANCE'] = str(row.get('AS_CODEASSURANCE'))
                 clsmouvement_infos.append(objet_mode_reglement) 
             except ValueError as e:
                 # Retourner un message d'erreur en cas de problème de type de données
@@ -457,6 +458,7 @@ def pvgReglementFacture():
                 objet_mode_reglement['MC_LIBELLEBANQUE'] = str(row.get('MC_LIBELLEBANQUE', ''))
                 objet_mode_reglement['MC_MONTANT_FACTURE'] = row.get('MC_MONTANT_FACTURE', '')
                 objet_mode_reglement['ACT_CODEACTE'] = str(row.get('ACT_CODEACTE', '')) 
+                objet_mode_reglement['AS_CODEASSURANCE'] = str(row.get('AS_CODEASSURANCE', '')) 
                 
                 clsmouvement_infos.append(objet_mode_reglement) 
             except ValueError as e:
@@ -2316,6 +2318,37 @@ def ComboTypeshemacomptable():
         
         #finally:
             #db_connexion.close()     
+  
+@api_bp.route('/pvgComboTypespiece', methods=['POST'])
+def ComboTypespiece():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        user_info = {}
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = pvgComboTypespiece(db_connexion)
+                
+                
+            if len(response) > 0 :
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()     
+  
   
 @api_bp.route('/pvgComboTypeshemacomptableVersement', methods=['POST'])
 def ComboTypeshemacomptableVersement():

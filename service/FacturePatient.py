@@ -107,8 +107,6 @@ def insert_facture(connexion, facture_info):
     params = {
         'FT_CODEFACTURE': facture_info.get('FT_CODEFACTURE') or None,
         'PT_IDPATIENT': facture_info.get('PT_IDPATIENT') or None,
-        'ACT_CODEACTE': facture_info.get('ACT_CODEACTE') or None,
-        'AS_CODEASSURANCE': facture_info.get('AS_CODEASSURANCE') or None,
         'MC_DATESAISIE': datetime.strptime(facture_info['MC_DATESAISIE'], "%d/%m/%Y"),
         'OP_CODEOPERATEUR': facture_info['OP_CODEOPERATEUR'],
         'FT_ANNULATION': facture_info['FT_ANNULATION'],
@@ -119,7 +117,7 @@ def insert_facture(connexion, facture_info):
 
     try:
         cursor = connexion.cursor()
-        cursor.execute("EXEC dbo.PC_FACTUREPATIENT ?, ?, ?, ?, ?,?, ?, ?, ?, ?", list(params.values()))
+        cursor.execute("EXEC dbo.PC_FACTUREPATIENT ?, ?, ?, ?, ?,?, ?, ?", list(params.values()))
     except Exception as e:
         connexion.rollback()
         raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
@@ -163,8 +161,6 @@ def update_facture(connexion, facture_info):
     params = {
         'FT_CODEFACTURE': facture_info['FT_CODEFACTURE'] if 'FT_CODEFACTURE' in facture_info and facture_info['FT_CODEFACTURE'] else None,
         'PT_IDPATIENT': facture_info['PT_IDPATIENT'],
-        'ACT_CODEACTE': facture_info['ACT_CODEACTE'],
-        'AS_CODEASSURANCE': facture_info['AS_CODEASSURANCE'],
         'MC_DATESAISIE': facture_info['MC_DATESAISIE'],
         'OP_CODEOPERATEUR': facture_info['OP_CODEOPERATEUR'],
         'FT_ANNULATION': facture_info['FT_ANNULATION'],
@@ -175,7 +171,7 @@ def update_facture(connexion, facture_info):
 
     try:
         cursor = connexion.cursor()
-        cursor.execute("EXEC dbo.PC_FACTUREPATIENT ?, ?, ?, ?, ?,?, ?, ?, ?, ?", list(params.values()))
+        cursor.execute("EXEC dbo.PC_FACTUREPATIENT ?, ?, ?, ?, ?,?, ?, ?", list(params.values()))
         connexion.commit()
         get_commit(connexion,facture_info)
         #cursor.close()
@@ -188,8 +184,6 @@ def delete_facture(connexion, facture_info):
     params = {
         'FT_CODEFACTURE': facture_info['FT_CODEFACTURE'] if 'FT_CODEFACTURE' in facture_info and facture_info['FT_CODEFACTURE'] else None,
         'PT_IDPATIENT': None,
-        'ACT_CODEACTE': None,
-        'AS_CODEASSURANCE': None,
         'MC_DATESAISIE': parse_datetime('01/01/1900'),
         'OP_CODEOPERATEUR': None,
         'FT_ANNULATION': '',
@@ -200,7 +194,7 @@ def delete_facture(connexion, facture_info):
 
     try:
         cursor = connexion.cursor()
-        cursor.execute("EXEC dbo.PC_FACTUREPATIENT ?, ?, ?, ?, ?,?, ?, ?, ?, ?", list(params.values()))
+        cursor.execute("EXEC dbo.PC_FACTUREPATIENT ?, ?, ?, ?, ?,?, ?, ?", list(params.values()))
         connexion.commit()
         get_commit(connexion,facture_info)
         #cursor.close()

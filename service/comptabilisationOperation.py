@@ -381,7 +381,8 @@ def pvg_constatation_facture(connexion, cls_mouvement_comptable):
         'MONTANT': cls_mouvement_comptable['MC_MONTANT_CONSTATIONFACTURE'] if 'MC_MONTANT_CONSTATIONFACTURE' in cls_mouvement_comptable and cls_mouvement_comptable['MC_MONTANT_CONSTATIONFACTURE'] else 0,
         'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None,
         'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or None,
-        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or None
+        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or None,
+        'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
     }
 
      # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
@@ -395,7 +396,7 @@ def pvg_constatation_facture(connexion, cls_mouvement_comptable):
         raise Exception(MYSQL_REPONSE)
     # Exécution de la procédure stockée
     try:
-        cursor.execute("EXECUTE PS_COMPTABILISATION  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?", list(params.values()))
+        cursor.execute("EXECUTE PS_COMPTABILISATION  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?", list(params.values()))
     except Exception as e:
         cursor.close()
         # En cas d'erreur, annuler la transaction
@@ -446,7 +447,8 @@ def pvg_comptabilisation_operation1(connexion, cls_mouvement_comptable):
         'MONTANT': cls_mouvement_comptable['MC_MONTANT_FACTURE'],
         'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None,
         'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or None,
-        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or None
+        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or None,
+        'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
     }
 
      # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
@@ -460,7 +462,7 @@ def pvg_comptabilisation_operation1(connexion, cls_mouvement_comptable):
         raise Exception(MYSQL_REPONSE)
     # Exécution de la procédure stockée
     try:
-        cursor.execute("EXECUTE PS_COMPTABILISATION  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?", list(params.values()))
+        cursor.execute("EXECUTE PS_COMPTABILISATION  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?", list(params.values()))
     except Exception as e:
         cursor.close()
         # En cas d'erreur, annuler la transaction
@@ -509,7 +511,8 @@ def pvg_comptabilisation_operation2(connexion, cls_mouvement_comptable):
         'MONTANT': cls_mouvement_comptable['MC_MONTANT_FACTURE'],
         'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None,
         'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or None,
-        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or None
+        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or None,
+        'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
     }
 
      # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
@@ -523,7 +526,7 @@ def pvg_comptabilisation_operation2(connexion, cls_mouvement_comptable):
         raise Exception(MYSQL_REPONSE)
     # Exécution de la procédure stockée
     try:
-        cursor.execute("EXECUTE PS_COMPTABILISATION  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?", list(params.values()))
+        cursor.execute("EXECUTE PS_COMPTABILISATION  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?", list(params.values()))
     except Exception as e:
         cursor.close()
         # En cas d'erreur, annuler la transaction
@@ -598,7 +601,8 @@ def pvg_comptabilisation_operation_caisse1(connexion, cls_mouvement_comptable):
         'MONTANT': cls_mouvement_comptable.get('MC_MONTANT_FACTURE') or 0,
         'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or '',#None,
         'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or '',#None,
-        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or '',#None
+        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or '',
+        'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
     }
 
      # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
@@ -612,7 +616,7 @@ def pvg_comptabilisation_operation_caisse1(connexion, cls_mouvement_comptable):
         raise Exception(MYSQL_REPONSE)
     # Exécution de la procédure stockée
     try:
-        cursor.execute("EXECUTE PS_COMPTABILISATION  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?", list(params.values()))
+        cursor.execute("EXECUTE PS_COMPTABILISATION  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?", list(params.values()))
     except Exception as e:
         cursor.close()
         # En cas d'erreur, annuler la transaction
@@ -661,7 +665,8 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
         'MONTANT': cls_mouvement_comptable.get('MC_MONTANT_FACTURE') or 0,
         'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or '',
         'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or '',
-        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or ''
+        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or '',
+        'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
     }
 
      # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
@@ -675,7 +680,7 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
         raise Exception(MYSQL_REPONSE)
     # Exécution de la procédure stockée
     try:
-        cursor.execute("EXECUTE PS_COMPTABILISATION  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?", list(params.values()))
+        cursor.execute("EXECUTE PS_COMPTABILISATION  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?", list(params.values()))
         cursor.nextset()
     except Exception as e:
         cursor.close()

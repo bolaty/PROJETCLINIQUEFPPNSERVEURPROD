@@ -5,7 +5,39 @@ import datetime
 from datetime import datetime
 from tools.toolDate import parse_datetime
 
+def pvgComboTypespiece(connexion):
+    """
+    Récupère les opérateurs en fonction des critères fournis.
+    - vppCritere[0] : Code agence (obligatoire si présent).
+    - vppCritere[1] : Code opérateur (optionnel).
+    """
+    cursor = connexion.cursor()
 
+
+    # Requête SQL
+    vapRequete = f"""
+        SELECT PI_CODEPIECE,PI_LIBELLEPIECE FROM dbo.PIECEIDENTITE  ORDER BY PI_LIBELLEPIECE
+    """
+    
+    try:
+        # Exécution de la requête
+        cursor.execute(vapRequete)
+        rows = cursor.fetchall()
+
+        # Formatage des résultats
+        results = []
+        for row in rows:
+            result = {
+                'PI_CODEPIECE': row[0],
+                'PI_LIBELLEPIECE': row[1]
+            }
+            results.append(result)
+        return results
+
+    except Exception as e:
+        # Gestion des erreurs
+        connexion.rollback()
+        raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
 
 def pvgComboTypeshemacomptableVersement(connexion):
     """
@@ -91,7 +123,7 @@ def pvgChargerDansDataSetSC_SCHEMACOMPTABLECODE(connexion, *vppCritere):
                 'SC_SENS': row[9],
                 'SC_LIBELLE': row[10],
                 'SC_COMPTABILISATIONJOURNAL': row[11],
-                'SC_MONTANTNUMERIQUE': row[12],
+                'SC_MONTANTNUMERIQUE': int(row[12]),
                 'SC_BLOCAGECOMPTE': row[13],
                 'SC_LIGNECACHEE': row[14],
                 'SC_SENSBILLETAGE': row[15],
