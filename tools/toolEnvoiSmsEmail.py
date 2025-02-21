@@ -175,7 +175,50 @@ def envoi_email_reedition(connexion, objet_envoi, resultat):
         connexion.close() 
         print("Erreur lors du traitement asynchrone:", e)
         
+def traitement_asynchroneVersement(connexion, clsMouvementcomptable, listOperation):
+    try:
+        # Votre traitement asynchrone ici
+        for idx in range(len(listOperation)):
+            if "@" in listOperation[idx]['EJ_EMAILCLIENT']:
+                smtpServeur = "smtp.gmail.com"
+                portSmtp = 587
+                adresseEmail = listOperation[idx]['AG_EMAIL']
+                motDePasse = listOperation[idx]['AG_EMAILMOTDEPASSE']
+                destinataire = listOperation[idx]['EJ_EMAILCLIENT']#'bolatykouassieuloge@gmail.com'
+                sujet = "ALERT OPERATION"
+                corpsMessage = listOperation[idx]['SL_MESSAGECLIENT']
+                message = MIMEMultipart()
+                message['From'] = adresseEmail
+                message['To'] = destinataire
+                message['Subject'] = sujet
+                message.attach(MIMEText(corpsMessage, 'plain'))
+                with smtplib.SMTP(smtpServeur, portSmtp) as server:
+                    server.starttls()
+                    server.login(adresseEmail, motDePasse)
+                    server.sendmail(adresseEmail, destinataire, message.as_string())
+        
+        for idx in range(len(listOperation)):
+            # Préparation de l'appel à l'API SMS et mise à jour du SMS
+            LIENDAPISMS = LIENAPISMS + "Service/wsApisms.svc/SendMessage"
+            Objet ={}
+                # Appel de l'API SMS
+            if not IsValidateIP(LIENDAPISMS):
+                    Objet["SL_RESULTAT"] = "FALSE"
+                    Objet["SL_MESSAGE"] = "L'API SMS doit être configurée !!!"
+                    
+                    return Objet
+            
+            reponse = excecuteServiceWebNew(listOperation[idx], "post", LIENDAPISMS,listOperation[idx]["SL_MESSAGECLIENT"])
+            
+        if reponse or len(reponse) == 0:
+            
+            pass
+        #connexion.close() 
+        #pass
 
+    except Exception as e:
+        #connexion.close() 
+        print("Erreur lors du traitement asynchrone:", e)
         
 def traitement_asynchrone(connexion, clsMouvementcomptable, listOperation):
     try:

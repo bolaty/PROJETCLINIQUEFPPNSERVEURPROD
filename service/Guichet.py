@@ -127,7 +127,8 @@ def pvgChargerDansDataSetSC_SCHEMACOMPTABLECODE(connexion, *vppCritere):
                 'SC_BLOCAGECOMPTE': row[13],
                 'SC_LIGNECACHEE': row[14],
                 'SC_SENSBILLETAGE': row[15],
-                'SC_AFFICHER': row[16]
+                'SC_AFFICHER': row[16],
+                'SC_CHOIXCOMPTE': row[17]
             }
             results.append(result)
         return results

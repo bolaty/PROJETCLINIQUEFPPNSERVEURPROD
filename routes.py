@@ -2,7 +2,7 @@ from flask import Blueprint,request, jsonify,current_app,current_app as app,send
 from service.dashboard import dashboard
 from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture, get_code_facture, get_info_comptabilisation
 from service.parametres import liste_operateur, liste_des_agences, liste_des_profils, liste_des_services, liste_des_parametres, modifier_des_agences
-from service.comptabilisationOperation import pvgComptabilisationOperationsFacture, pvgComptabilisationOperations, pvgComptabilisationOperationsCaisse
+from service.comptabilisationOperation import pvgComptabilisationVersement, pvgComptabilisationOperationsFacture, pvgComptabilisationOperations, pvgComptabilisationOperationsCaisse
 from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition,editionPatient, journal_edition, gd_livre_edition, balance_edition,point_par_acte_edition,formation_edition,solde_edition
 from service.auth import connexion_utilisateur
 from service.journee_de_travail_et_exercice import valeur_scalaire_requete_max, valeur_scalaire_requete_count, insert_journee_travail, table_libelle_date_systeme_serveur, liste_journee_travail, update_journee_travail_statut
@@ -2817,13 +2817,13 @@ def pvgGetParametre():
             #db_connexion.close()
             
 ################################################################
-#                                                             GESTION DES PARAMETRES                                                                  #
+#                    GESTION DES PARAMETRES                    #
 ################################################################
 
 
 
 ################################################################
-#                                                GESTION DES OPERATIONS DE CAISSES                                                        #
+#                      GESTION DES OPERATIONS DE CAISSES       #
 ################################################################
 
 @api_bp.route('/famille_operation', methods=['POST'])
@@ -2911,14 +2911,14 @@ def pvgGetOperation():
             #db_connexion.close()
             
 ################################################################
-#                                                GESTION DES OPERATIONS DE CAISSES                                                        #
+#       GESTION DES OPERATIONS DE CAISSES                      #
 ################################################################
 
 
 
 
 # ################################################################
-#                                                       GESTION DES JOURNEES DE TRAVAIL                                                         #
+#       GESTION DES JOURNEES DE TRAVAIL                      #
 #################################################################
 
 @api_bp.route('/valeur_scalaire_requete_max_journee', methods=['POST'])
@@ -3202,13 +3202,13 @@ def pvgUpdateJourneeTravail():
             db_connexion.close()
             
 # ################################################################
-#                                                       GESTION DES JOURNEES DE TRAVAIL                                                         #
+#        GESTION DES JOURNEES DE TRAVAIL                         #
 #################################################################
 
 
 
 # ################################################################
-#                                                              GESTION DE LA COMPTABILITE                                                              #
+#           GESTION DE LA COMPTABILITE                      
 #################################################################
 
 @api_bp.route('/reedition', methods=['POST'])
@@ -3369,8 +3369,112 @@ def pvgOperationCaisse():
         #db_connexion.close() """
         
 # ################################################################
-#                                                              GESTION DE LA COMPTABILITE                                                              #
+#         GESTION DE LA COMPTABILITE                            #
 #################################################################
+
+# ################################################################
+#         GESTION GUICHET                                        #
+#################################################################
+
+
+
+@api_bp.route('/pvgAjouterComptabilisation', methods=['POST'])
+def OperationVersementRetrait():
+    # Récupérer les données du corps de la requête
+    
+    request_data = request.json
+    # Extraire les données nécessaires pour l'appel à la fonction
+    Objet = request_data['Objet']
+   # billetages = request_data['Objet']['clsBilletages']
+   
+    clsEtatmouvementacomptabiliserss = []
+    
+    
+    
+    # Boucle sur les éléments de 'Objet'
+    for row in request_data['Objet']:
+            clsEtatmouvementacomptabilisers = {}
+
+            # Assigner chaque propriété une à une
+            clsEtatmouvementacomptabilisers['AG_CODEAGENCE'] = row.get('AG_CODEAGENCE', None)
+            clsEtatmouvementacomptabilisers['MC_DATEPIECE'] = row.get('MC_DATEPIECE', None)
+            clsEtatmouvementacomptabilisers['MC_NUMPIECE'] = row.get('MC_NUMPIECE', None)
+            clsEtatmouvementacomptabilisers['MC_NUMSEQUENCE'] = row.get('MC_NUMSEQUENCE', None)
+            clsEtatmouvementacomptabilisers['MR_CODEMODEREGLEMENT'] = row.get('MR_CODEMODEREGLEMENT', None)
+            clsEtatmouvementacomptabilisers['PT_IDPATIENT'] = row.get('PT_IDPATIENT', None)
+            clsEtatmouvementacomptabilisers['FT_CODEFACTURE'] = row.get('FT_CODEFACTURE', None)
+            clsEtatmouvementacomptabilisers['OP_CODEOPERATEUR'] = row.get('OP_CODEOPERATEUR', None)
+            clsEtatmouvementacomptabilisers['MC_MONTANTDEBIT'] = row.get('MC_MONTANTDEBIT', None)
+            clsEtatmouvementacomptabilisers['MC_MONTANTCREDIT'] = row.get('MC_MONTANTCREDIT', None)
+            clsEtatmouvementacomptabilisers['MC_DATESAISIE'] = row.get('MC_DATESAISIE', None)
+            clsEtatmouvementacomptabilisers['MC_ANNULATION'] = row.get('MC_ANNULATION', None)
+            clsEtatmouvementacomptabilisers['JO_CODEJOURNAL'] = row.get('JO_CODEJOURNAL', None)
+            clsEtatmouvementacomptabilisers['MC_REFERENCEPIECE'] = row.get('MC_REFERENCEPIECE', None)
+            clsEtatmouvementacomptabilisers['MC_LIBELLEOPERATION'] = row.get('MC_LIBELLEOPERATION', None)
+            clsEtatmouvementacomptabilisers['PL_CODENUMCOMPTE'] = row.get('PL_CODENUMCOMPTE', None)
+            clsEtatmouvementacomptabilisers['MC_NOMTIERS'] = row.get('MC_NOMTIERS', None)
+            clsEtatmouvementacomptabilisers['MC_CONTACTTIERS'] = row.get('MC_CONTACTTIERS', None)
+            clsEtatmouvementacomptabilisers['MC_EMAILTIERS'] = row.get('MC_EMAILTIERS', None)
+            clsEtatmouvementacomptabilisers['MC_NUMPIECETIERS'] = row.get('MC_NUMPIECETIERS', None)
+            clsEtatmouvementacomptabilisers['MC_TERMINAL'] = row.get('MC_TERMINAL', None)
+            clsEtatmouvementacomptabilisers['MC_AUTRE'] = row.get('MC_AUTRE', None)
+            clsEtatmouvementacomptabilisers['MC_AUTRE1'] = row.get('MC_AUTRE1', None)
+            clsEtatmouvementacomptabilisers['MC_AUTRE2'] = row.get('MC_AUTRE2', None)
+            clsEtatmouvementacomptabilisers['MC_AUTRE3'] = row.get('MC_AUTRE3', None)
+            clsEtatmouvementacomptabilisers['TS_CODETYPESCHEMACOMPTABLE'] = row.get('TS_CODETYPESCHEMACOMPTABLE', None)
+            clsEtatmouvementacomptabilisers['MC_SENSBILLETAGE'] = row.get('MC_SENSBILLETAGE', None)
+            clsEtatmouvementacomptabilisers['MC_LIBELLEBANQUE'] = row.get('MC_LIBELLEBANQUE', None)
+            clsEtatmouvementacomptabilisers['EM_MONTANT'] = row.get('EM_MONTANT', None)
+
+            clsEtatmouvementacomptabiliserss.append(clsEtatmouvementacomptabilisers)
+    
+    
+    # Récupérer la connexion à la base de données depuis current_app
+   # db_connection = current_app.db_connection
+    
+   # db_connection.begin()
+    #try:
+    db_connection = connect_database()
+    db_connection = db_connection.cursor()
+    db_connection.execute("BEGIN TRANSACTION")
+        #db_connection.begin()
+         # Appeler la fonction avec les données récupérées
+    response = pvgComptabilisationVersement(db_connection, clsEtatmouvementacomptabiliserss)
+        
+        # Retourner la réponse au client
+    if response['SL_RESULTAT'] == "TRUE":
+        #db_connection.close()
+        return jsonify({"NUMEROBORDEREAU":str(response['NUMEROBORDEREAU']),"SL_MESSAGE":"Comptabilisation éffectuée avec success !!! / " + response['MESSAGEAPI'] ,"SL_RESULTAT": 'TRUE'}) 
+    else:
+        #db_connection.close()
+        return jsonify({"SL_MESSAGE":response['SL_MESSAGE'] ,"SL_RESULTAT": 'FALSE'}) 
+      
+
+
+
+
+# ################################################################
+#         GESTION GUICHET                               #
+##################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def parse_numeric(value):
