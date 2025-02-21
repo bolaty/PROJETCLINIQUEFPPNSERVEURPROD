@@ -282,7 +282,8 @@ def pvgComptabilisationOperationsCaisse(connexion, clsMouvementcomptables):
                     # Mettre ensemble les informations de l'ordinateur et les séparer par des @
                     sticker_code1 = ip_address + "@" + public_ip_address + "@" + mac_address
                     # 1- Exécution de la fonction pvg_comptabilisation_operation pour la comptabilisation
-                    DataSet = pvg_comptabilisation_operation_caisse2(connexion, clsMouvementcomptable)
+                    if clsMouvementcomptable['TS_CODETYPESCHEMACOMPTABLE'] == '00005': DataSet = pvg_comptabilisation_operation_caisse2(connexion, clsMouvementcomptable)
+                    if clsMouvementcomptable['TS_CODETYPESCHEMACOMPTABLE'] != '00005': DataSet = pvg_comptabilisation_operation_caisse3(connexion, clsMouvementcomptable)
                     
                     # Vérifier si la première instruction s'est terminée avec succès
                     if DataSet:
@@ -802,7 +803,7 @@ def pvg_comptabilisation_operation_caisse1(connexion, cls_mouvement_comptable):
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': '',
         'MONTANT': cls_mouvement_comptable.get('MC_MONTANT_FACTURE') or 0,
-        'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or '',#None,
+        'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None,#None,
         'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or '',#None,
         'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or '',
         'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
@@ -866,7 +867,7 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
         'CODECRYPTAGE': CODECRYPTAGE,
         'TYPEOPERATION': '',
         'MONTANT': cls_mouvement_comptable.get('MC_MONTANT_FACTURE') or 0,
-        'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or '',
+        'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None,
         'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or '',
         'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or '',
         'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
@@ -921,13 +922,102 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
     # Retour des résultats
    # return rows
 
-def recupinfos_num_bordereau(connexion, AG_CODEAGENCE,MC_DATEPIECE,TS_CODETYPESCHEMACOMPTABLE,PT_IDPATIENT,OP_CODEOPERATEUR,MONTANT,ALPHA):
+def pvg_comptabilisation_operation_caisse3(connexion, cls_mouvement_comptable):
+    # Paramètres de la procédure stockée
+    params = {
+        'AG_CODEAGENCE': cls_mouvement_comptable['AG_CODEAGENCE'],
+        'MC_DATEPIECE': parse_datetime(cls_mouvement_comptable['MC_DATEPIECE']),
+        'MC_NUMPIECE': int(cls_mouvement_comptable['MC_NUMPIECE']),
+        'MC_NUMSEQUENCE': cls_mouvement_comptable['MC_NUMSEQUENCE'],
+        'MR_CODEMODEREGLEMENT': cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] if 'MR_CODEMODEREGLEMENT' in cls_mouvement_comptable and cls_mouvement_comptable['MR_CODEMODEREGLEMENT'] else '',
+        'PT_IDPATIENT': cls_mouvement_comptable.get('PT_IDPATIENT') or '',
+        'FT_CODEFACTURE': cls_mouvement_comptable.get('FT_CODEFACTURE') or '',
+        'OP_CODEOPERATEUR': cls_mouvement_comptable['OP_CODEOPERATEUR'],
+        'MC_MONTANTDEBIT': cls_mouvement_comptable.get('MC_MONTANTDEBIT') or 0,
+        'MC_MONTANTCREDIT': cls_mouvement_comptable.get('MC_MONTANTCREDIT') or 0,
+        'MC_DATESAISIE': parse_datetime(cls_mouvement_comptable['MC_DATESAISIE']),
+        'MC_ANNULATION': cls_mouvement_comptable['MC_ANNULATION'],
+        'JO_CODEJOURNAL': cls_mouvement_comptable['JO_CODEJOURNAL'] if 'JO_CODEJOURNAL' in cls_mouvement_comptable and cls_mouvement_comptable['JO_CODEJOURNAL'] else '',
+        'MC_REFERENCEPIECE': cls_mouvement_comptable['MC_REFERENCEPIECE'],
+        'MC_LIBELLEOPERATION': cls_mouvement_comptable['MC_LIBELLEOPERATION'],
+        'PL_CODENUMCOMPTE': cls_mouvement_comptable['PL_CODENUMCOMPTE'] if 'PL_CODENUMCOMPTE' in cls_mouvement_comptable and cls_mouvement_comptable['PL_CODENUMCOMPTE'] else '',
+        'MC_NOMTIERS': cls_mouvement_comptable['MC_NOMTIERS'],
+        'MC_CONTACTTIERS': cls_mouvement_comptable['MC_CONTACTTIERS'],
+        'MC_EMAILTIERS': cls_mouvement_comptable['MC_EMAILTIERS'],
+        'MC_NUMPIECETIERS': cls_mouvement_comptable['MC_NUMPIECETIERS'],
+        'MC_TERMINAL': cls_mouvement_comptable['MC_TERMINAL'],
+        'MC_AUTRE': cls_mouvement_comptable['MC_AUTRE'],
+        'MC_AUTRE1': cls_mouvement_comptable['MC_AUTRE1'],
+        'MC_AUTRE2': cls_mouvement_comptable['MC_AUTRE2'],
+        'MC_AUTRE3': cls_mouvement_comptable['MC_AUTRE3'],
+        'TS_CODETYPESCHEMACOMPTABLE': cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'],#'00003', # operation de caisse --cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'],
+        'MC_SENSBILLETAGE': cls_mouvement_comptable['MC_SENSBILLETAGE'],
+        'MC_LIBELLEBANQUE': cls_mouvement_comptable['MC_LIBELLEBANQUE'],
+        'CODECRYPTAGE': CODECRYPTAGE,
+        'TYPEOPERATION': '',
+        'MONTANT': cls_mouvement_comptable.get('MC_MONTANT_FACTURE') or 0,
+        'ACT_CODEACTE': cls_mouvement_comptable.get('ACT_CODEACTE') or None,
+        'OP_CODEOPERATION': cls_mouvement_comptable.get('OP_CODEOPERATION') or '',
+        'OP_CODEOPERATEURPASSATIONFOND': cls_mouvement_comptable.get('OP_CODEOPERATEURPASSATIONFOND') or '',
+        'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
+    }
+
+     # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
+    try:
+        cursor = connexion.cursor()
+    except Exception as e:
+        cursor.close()
+         # En cas d'erreur, annuler la transaction
+        cursor.execute("ROLLBACK")
+        MYSQL_REPONSE = f'Impossible de récupérer le curseur de la base de données : {str(e.args[1])}'
+        raise Exception(MYSQL_REPONSE)
+    # Exécution de la procédure stockée
+    try:
+        cursor.execute("EXECUTE PS_COMPTABILISATION  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?,?", list(params.values()))
+    except Exception as e:
+        cursor.close()
+        # En cas d'erreur, annuler la transaction
+        #cursor.execute("ROLLBACK")
+        MYSQL_REPONSE = e.args[1]
+        if "varchar" in MYSQL_REPONSE:
+            MYSQL_REPONSE = MYSQL_REPONSE.split("varchar", 1)[1].split("en type de donn", 1)[0]
+       
+        raise Exception(MYSQL_REPONSE)
+        
+       # return {'error': f'Impossible d\'exécuter la procédure stockée : {str(e.args[1])}'}
+    
+  
+    # Récupération des résultats
+    try:
+        # Assurez-vous que la valeur est une chaîne de caractères pour pouvoir la convertir en entier
+        # montant_debit_str = cls_mouvement_comptable['MONTANT'][0]
+
+        # Convertir la chaîne de caractères en entier
+        montant_debit_int = cls_mouvement_comptable['MC_MONTANT_FACTURE']#int(montant_debit_str)
+        resultat = recupinfos_num_bordereau(connexion, cls_mouvement_comptable['AG_CODEAGENCE'], cls_mouvement_comptable['MC_DATEPIECE'], cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'], None, cls_mouvement_comptable['OP_CODEOPERATEUR'],  montant_debit_int, CODECRYPTAGE)
+        """
+        if resultat:
+           result= recup_info_apisms_clientpiece(connexion,cls_mouvement_comptable['OP_CODEOPERATEUR'])
+           resultat["MC_NUMPIECE"]= result
+        """   
+        return resultat    
+    except Exception as e:
+         # En cas d'erreur, annuler la transaction
+        cursor.execute("ROLLBACK")
+        MYSQL_REPONSE = f'Impossible de récupérer les résultats de la procédure stockée : {str(e.args[1])}'
+        raise Exception(MYSQL_REPONSE)
+
+    # Retour des résultats
+   # return rows
+
+
+def recupinfos_num_bordereau(connexion, AG_CODEAGENCE,MC_DATEPIECE,TS_CODETYPESCHEMACOMPTABLE,FT_CODEFACTURE,OP_CODEOPERATEUR,MONTANT,ALPHA):
     try:
         cursor = connexion.cursor()
         
         # Exécution de la fonction SQL
-        cursor.execute("SELECT * FROM dbo.FC_RECUPNUMEROBORDEREAU(?, ?, ?, ?, ?, ?, ?)",
-                       (AG_CODEAGENCE,parse_datetime(MC_DATEPIECE),TS_CODETYPESCHEMACOMPTABLE,PT_IDPATIENT,OP_CODEOPERATEUR,MONTANT,ALPHA))
+        cursor.execute("SELECT * FROM dbo.FC_RECUPNUMEROBORDEREAUOPERATION(?, ?, ?, ?, ?, ?, ?)",
+                       (AG_CODEAGENCE,parse_datetime(MC_DATEPIECE),TS_CODETYPESCHEMACOMPTABLE,FT_CODEFACTURE,OP_CODEOPERATEUR,MONTANT,ALPHA))
 
         # Récupération des résultats
         rows = cursor.fetchall()
@@ -991,7 +1081,7 @@ def recup_info_num_bordereau(connexion, AG_CODEAGENCE,MC_DATEPIECE,TS_CODETYPESC
         cursor = connexion.cursor()
         
         # Exécution de la fonction SQL
-        cursor.execute("SELECT * FROM dbo.FC_RECUPNUMEROBORDEREAU(?, ?, ?, ?, ?, ?, ?)",
+        cursor.execute("SELECT * FROM dbo.FC_RECUPNUMEROBORDEREAUOPERATION(?, ?, ?, ?, ?, ?, ?)",
                        (AG_CODEAGENCE,parse_datetime(MC_DATEPIECE),TS_CODETYPESCHEMACOMPTABLE,FT_CODEFACTURE,OP_CODEOPERATEUR,MONTANT,ALPHA))
 
         # Récupération des résultats

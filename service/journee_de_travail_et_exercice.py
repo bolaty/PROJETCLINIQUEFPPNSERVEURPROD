@@ -161,7 +161,7 @@ def liste_journee_travail(connexion, *vppCritere):
         vap_nom_parametre = []
         vap_valeur_parametre = []
     elif len(vppCritere) == 1:
-        vap_critere = " WHERE AG_CODEAGENCE=?"
+        vap_critere = " WHERE AG_CODEAGENCE=? ORDER BY JT_DATEJOURNEETRAVAIL DESC"
         vap_nom_parametre = ["AG_CODEAGENCE"]
         vap_valeur_parametre = [vppCritere[0]]
     elif len(vppCritere) == 2 and (vppCritere[1] != 'O' and vppCritere[1] != 'F'):
