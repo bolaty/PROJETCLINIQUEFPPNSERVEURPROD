@@ -6,7 +6,7 @@ from service.comptabilisationOperation import pvgComptabilisationVersement, pvgC
 from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition,editionPatient, journal_edition, gd_livre_edition, balance_edition,point_par_acte_edition,formation_edition,solde_edition
 from service.auth import connexion_utilisateur
 from service.journee_de_travail_et_exercice import valeur_scalaire_requete_max, valeur_scalaire_requete_count, insert_journee_travail, table_libelle_date_systeme_serveur, liste_journee_travail, update_journee_travail_statut
-from service.ChargementCombos import get_solde_mouvement_comptable,pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille,pvgComboOperateurCaisse
+from service.ChargementCombos import get_solde_mouvement_comptable,pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille,pvgComboOperateurCaisse,solde_du_compte
 from service.auth import connexion_utilisateur,pvgUserChangePasswordfist,pvgUserDemandePassword
 from service.Utilisateurs import creation_profil,update_profil,delete_profil,update_compte_utilisateur,insert_operateur,delete_compte_utilisateur,Activation_DesActivation_utilisateur
 from service.Patient import ListePatient,insertpatient,deletepatient
@@ -2533,7 +2533,38 @@ def ComboVille():
         except Exception as e:
             db_connexion.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
-                        
+
+
+
+@api_bp.route('/solde_compte_operateur', methods=['POST'])
+def pvgGetSoldeCompteOperateur():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        solde_cpte_op = {}
+        solde_cpte_op['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', '')) 
+        solde_cpte_op['PL_CODENUMCOMPTE'] = str(row.get('PL_CODENUMCOMPTE', '')) 
+        solde_cpte_op['JT_DATEJOURNEETRAVAIL'] = str(row.get('JT_DATEJOURNEETRAVAIL', '')) 
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = solde_du_compte(db_connexion, solde_cpte_op)
+                
+            if len(response) > 0 :
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+                                
 ################################################################
 #                   FIN GESTION COMBOS                         #
 ################################################################

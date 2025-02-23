@@ -178,7 +178,7 @@ def pvgComboOperateurCaisse(connexion, *vppCritere):
         vap_critere = ""
         vap_valeur_parametre = []
     elif len(vppCritere) == 1:
-        vap_critere = " WHERE AG_CODEAGENCE=? AND OP_ACTIF='O'"
+        vap_critere = " WHERE AG_CODEAGENCE=? AND OP_ACTIF='O' AND OP_CAISSIER='O'"
         vap_valeur_parametre = [vppCritere[0]]
     elif len(vppCritere) == 2:
         vap_critere = " WHERE AG_CODEAGENCE=? AND OP_CODEOPERATEUR=? AND OP_ACTIF='O' AND PL_CODENUMCOMPTECAISSE IS NOT NULL"
@@ -447,6 +447,39 @@ def pvgComboVille(connexion, ville_info):
     except Exception as e:
         # En cas d'erreur, lever une exception avec un message approprié
         raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
+    
+    
+    
+def solde_du_compte(connexion, solde_cpte_op):
+    
+    params = {}
+    #return clsSmsouts
+    params = {
+        'AG_CODEAGENCE': solde_cpte_op['AG_CODEAGENCE'],
+        'PL_CODENUMCOMPTE': solde_cpte_op['PL_CODENUMCOMPTE'],
+        'JT_DATEJOURNEETRAVAIL': datetime.strptime(solde_cpte_op['JT_DATEJOURNEETRAVAIL'], "%d/%m/%Y"),
+    }
+   
+    try:
+        cursor = connexion.cursor()
+        
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("SELECT  [dbo].[FC_SOLDECOMPTEPRECEDENT](?,?,?)", list(params.values()))
+                       
+        rows = cursor.fetchone()
+        results = []
+        for row in rows:
+            result = {}
+
+            result['SOLDE'] = row
+ 
+            # Ajouter le dictionnaire à la liste des résultats
+            results.append(result)
+        
+        return results
+    except Exception as e:
+        # En cas d'erreur, lever une exception avec un message approprié
+        raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
 
 
 
@@ -463,7 +496,8 @@ def pvgComboAssure(connexion):
     vapRequete = f"""
         SELECT 
             STAT_CODESTATUT,
-            STAT_LIBELLE
+            STAT_LIBELLE,
+            PL_CODENUMCOMPTE
         FROM STATUTPATIENT 
     """
     
@@ -477,7 +511,8 @@ def pvgComboAssure(connexion):
         for row in rows:
             result = {
                 'STAT_CODESTATUT': row[0],
-                'STAT_LIBELLE': row[1]
+                'STAT_LIBELLE': row[1],
+                'PL_CODENUMCOMPTE': row[2]
             }
             results.append(result)
         return results

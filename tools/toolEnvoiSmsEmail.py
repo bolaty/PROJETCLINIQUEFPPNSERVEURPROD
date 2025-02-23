@@ -230,7 +230,7 @@ def traitement_asynchrone(connexion, clsMouvementcomptable, listOperation):
                 adresseEmail = listOperation[idx]['AG_EMAIL']
                 motDePasse = listOperation[idx]['AG_EMAILMOTDEPASSE']
                 destinataire = listOperation[idx]['EJ_EMAILCLIENT']#'bolatykouassieuloge@gmail.com'
-                sujet = "Code Validation"
+                sujet = "ALERT OPERATION"
                 corpsMessage = listOperation[idx]['SL_MESSAGECLIENT']
                 message = MIMEMultipart()
                 message['From'] = adresseEmail
@@ -325,7 +325,7 @@ def excecuteServiceWebNew(Objetenv, method, url,corpsMessagesms):
                     "SM_RAISONNONENVOISMS": "xxx",
                     "SM_DATEPIECE": "14-01-2025",
                     "LO_LOGICIEL": "01",
-                    "OB_NOMOBJET": "test",
+                    "OB_NOMOBJET": "ALERT OPERATION",
                     "SMSTEXT": corpsMessagesms,
                     "INDICATIF": "225",
                     "SM_NUMSEQUENCE": "1",
