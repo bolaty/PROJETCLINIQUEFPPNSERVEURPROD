@@ -20,7 +20,7 @@ from tools.toolEnvoiSmsEmail import envoi_sms_reedition, envoi_email_reedition
 
 
 #creation du patient
-def insert_patient(connexion, patient_info):
+def insert_patient(cursor, patient_info):
     # Préparation des paramètres
     params = {
         'PT_IDPATIENT': patient_info.get('PT_IDPATIENT') or None,
@@ -43,13 +43,11 @@ def insert_patient(connexion, patient_info):
     }
     
     try:
-        cursor = connexion.cursor()
-        
         try:
             # verifie si le numero de telephone et/ou lemail existe deja. si oui, lever un message d'erreur sinon creer le patient
             cursor.execute("SELECT * FROM dbo.FT_CONTACTEMAILEXIST(?,?,?,?,?,?,?)", (params['AG_CODEAGENCE'], params['PT_CONTACT'], params['PT_EMAIL'], params['PT_CODEPATIENT'], params['PT_MATRICULE'], params['PT_IDPATIENT'], params['CODECRYPTAGE']))
         except Exception as e:
-                connexion.rollback()
+                cursor.rollback()
                 raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
             
         # Récupération des résultats
@@ -59,13 +57,12 @@ def insert_patient(connexion, patient_info):
             raise Exception(message)
         else:
             try:
-                cursor = connexion.cursor()
                 cursor.execute("EXEC dbo.PC_PATIENT ?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?", list(params.values()))
             except Exception as e:
-                connexion.rollback()
+                cursor.rollback()
                 raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
     except Exception as e:
-        connexion.rollback()
+        cursor.rollback()
         # Gérer et formater l'exception correctement
         if len(e.args) == 1:
             raise Exception(f"{e.args[0]}")
@@ -75,10 +72,8 @@ def insert_patient(connexion, patient_info):
 
 
 # recuperation de lid du patient en cours
-def get_id_patient(connexion, _OP_CODEOPERATEUR):
+def get_id_patient(cursor, _OP_CODEOPERATEUR):
     try:
-        cursor = connexion.cursor()
-        
         # Requête paramétrée
         query = "SELECT * FROM dbo.TEMPRECUPERATIONIDPATIENTRESULTAT{}".format(_OP_CODEOPERATEUR)
 
@@ -102,7 +97,7 @@ def get_id_patient(connexion, _OP_CODEOPERATEUR):
 
 
 #creation de la facture
-def insert_facture(connexion, facture_info):
+def insert_facture(cursor, facture_info):
     # Préparation des paramètres
     params = {
         'FT_CODEFACTURE': facture_info.get('FT_CODEFACTURE') or None,
@@ -116,15 +111,14 @@ def insert_facture(connexion, facture_info):
     }
 
     try:
-        cursor = connexion.cursor()
         cursor.execute("EXEC dbo.PC_FACTUREPATIENT ?, ?, ?, ?, ?,?, ?, ?", list(params.values()))
     except Exception as e:
-        connexion.rollback()
+        cursor.rollback()
         raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
     
     
 #creation de la facture
-def get_code_facture(connexion, _AG_CODEAGENCE, _OP_CODEOPERATEUR):
+def get_code_facture(cursor, _AG_CODEAGENCE, _OP_CODEOPERATEUR):
     # Préparation des paramètres
     params = {
         'AG_CODEAGENCE': _AG_CODEAGENCE,
@@ -132,12 +126,9 @@ def get_code_facture(connexion, _AG_CODEAGENCE, _OP_CODEOPERATEUR):
     }
 
     try:
-        cursor = connexion.cursor()
         cursor.execute("EXEC dbo.PS_GENERATIONIDFACTUREPATIENT ?, ?", list(params.values()))
         
         try:
-            cursor = connexion.cursor()
-            
             # Requête paramétrée
             query = "SELECT * FROM dbo.TEMPGENERATIONIDFACTUREPATIENTRESULTAT{}".format(_OP_CODEOPERATEUR)
 
@@ -151,7 +142,7 @@ def get_code_facture(connexion, _AG_CODEAGENCE, _OP_CODEOPERATEUR):
             raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
     
     except Exception as e:
-        connexion.rollback()
+        cursor.rollback()
         raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
 
 

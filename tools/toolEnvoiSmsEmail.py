@@ -220,7 +220,7 @@ def traitement_asynchroneVersement(connexion, clsMouvementcomptable, listOperati
         #connexion.close() 
         print("Erreur lors du traitement asynchrone:", e)
         
-def traitement_asynchrone(connexion, clsMouvementcomptable, listOperation):
+def traitement_asynchrone(cursor, clsMouvementcomptable, listOperation):
     try:
         # Votre traitement asynchrone ici
         for idx in range(len(listOperation)):
@@ -245,7 +245,7 @@ def traitement_asynchrone(connexion, clsMouvementcomptable, listOperation):
         for idx in range(len(listOperation)):
             """
             AG_CODEAGENCE = clsMouvementcomptable['AG_CODEAGENCE']
-            vlpEnvoyerSms = pvgDecisionEnvoiSMS(connexion, AG_CODEAGENCE)
+            vlpEnvoyerSms = pvgDecisionEnvoiSMS(cursor, AG_CODEAGENCE)
             if vlpEnvoyerSms:
                 clsParametreAppelApi = {}
                 clsParametreAppelApi['AG_CODEAGENCE'] = clsMouvementcomptable['AG_CODEAGENCE']
@@ -268,7 +268,7 @@ def traitement_asynchrone(connexion, clsMouvementcomptable, listOperation):
                 #AG_CODEAGENCE, SM_TELEPHONE, OP_CODEOPERATEUR, SM_DATEPIECE, SMSTEXT, TE_CODESMSTYPEOPERATION,
                 # SM_NUMSEQUENCE, SM_DATEEMISSIONSMS,  SM_STATUT, TYPEOPERATION, SL_LIBELLE2
                 clsParams = pvgTraitementSms(
-                    connexion,
+                    cursor,
                     clsParametreAppelApi['AG_CODEAGENCE'],
                     clsParametreAppelApi['CL_CONTACT'],#"2250788635251"
                     clsParametreAppelApi['OP_CODEOPERATEUR'],

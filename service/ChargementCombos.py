@@ -461,10 +461,10 @@ def solde_du_compte(connexion, solde_cpte_op):
     }
    
     try:
-        cursor = connexion.cursor()
+        cursor = connexion
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("SELECT  [dbo].[FC_SOLDECOMPTEPRECEDENT](?,?,?)", list(params.values()))
+        cursor.execute("SELECT [dbo].[FC_SOLDECOMPTEPRECEDENT](?,?,?)", list(params.values()))
                        
         rows = cursor.fetchone()
         results = []

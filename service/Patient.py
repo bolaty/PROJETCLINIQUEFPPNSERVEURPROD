@@ -100,13 +100,13 @@ def insertpatient(connexion, patient_info):
     }
     
     try:
-        cursor = connexion.cursor()
+        cursor = connexion
         
         try:
             # verifie si le numero de telephone et/ou lemail existe deja. si oui, lever un message d'erreur sinon creer le patient
             cursor.execute("SELECT * FROM dbo.FT_CONTACTEMAILEXIST(?,?,?,?,?,?,?)", (params['AG_CODEAGENCE'], params['PT_CONTACT'], params['PT_EMAIL'], params['PT_CODEPATIENT'], params['PT_MATRICULE'], params['PT_IDPATIENT'], params['CODECRYPTAGE']))
         except Exception as e:
-                connexion.rollback()
+                cursor.rollback()
                 raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
             
         # Récupération des résultats
@@ -116,9 +116,9 @@ def insertpatient(connexion, patient_info):
             raise Exception(message)
         else:
             try:
-                # cursor = connexion.cursor()
+                # cursor = cursor.cursor()
                 cursor.execute("EXEC dbo.PC_PATIENTSIMPLE ?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?", list(params.values()))
-                connexion.commit()
+                cursor.commit()
                 
                 # Définition de la variable CODECRYPTAGE
 
@@ -142,10 +142,10 @@ def insertpatient(connexion, patient_info):
                     thread_traitement.start()
                 
             except Exception as e:
-                connexion.rollback()
+                cursor.rollback()
                 raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
     except Exception as e:
-        connexion.rollback()
+        cursor.rollback()
         # Gérer et formater l'exception correctement
         if len(e.args) == 1:
             raise Exception(f"{e.args[0]}")
@@ -180,11 +180,11 @@ def deletepatient(connexion, patient_info):
     try:
         cursor = connexion
         cursor.execute("EXEC dbo.PC_PATIENTSIMPLE ?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?, ?, ?, ?,?, ?", list(params.values()))
-        connexion.commit()
-        get_commit(connexion,patient_info)
+        cursor.commit()
+        get_commit(cursor,patient_info)
         #cursor.close()
     except Exception as e:
-        connexion.rollback()
+        cursor.rollback()
         MYSQL_REPONSE = e.args[1]
         if "varchar" in MYSQL_REPONSE:
                MYSQL_REPONSE = MYSQL_REPONSE.split("varchar", 1)[1].split("en type de donn", 1)[0]
@@ -200,10 +200,10 @@ def get_commit(connexion,clsBilletages):
             'MC_DATEPIECE3': '01/01/1900'
         }
         try:
-            connexion.commit()
+            cursor.commit()
             cursor.execute("EXECUTE [PC_COMMIT]  ?, ?", list(params.values()))
             #instruction pour valider la commande de mise à jour
-            connexion.commit()
+            cursor.commit()
         except Exception as e:
             # En cas d'erreur, annuler la transaction
             cursor.execute("ROLLBACK")
@@ -220,7 +220,7 @@ def get_commit(connexion,clsBilletages):
  
  
 def pvgTableLabelAgence(connection, *vppCritere):
-    cursor = connection.cursor()
+    cursor = connection
 
     if len(vppCritere) == 1:
         vapCritere = " WHERE AG_CODEAGENCE=? AND AG_ACTIF='O'"
@@ -311,11 +311,11 @@ def traitement_asynchrone(connection, clsAgence, resultatUserCreation):
         reponse = excecuteServiceWeb(resultatUserCreation, "post", LIENDAPISMS,corpsMessagesms)
         
         if reponse or len(reponse) == 0:
-           connection.close() 
+           #connection.close() 
            pass
 
     except Exception as e:
-        connection.close() 
+        #connection.close() 
         print("Erreur lors du traitement asynchrone:", e)       
 
 

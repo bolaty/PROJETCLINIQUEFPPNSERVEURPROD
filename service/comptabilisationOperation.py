@@ -95,18 +95,18 @@ def pvgComptabilisationVersement(connection, clsMouvementcomptables):
 
 
 
-def pvgComptabilisationOperations(connexion, clsMouvementcomptables):
+def pvgComptabilisationOperations(cursor, clsMouvementcomptables):
         try:
             listOperation = []
             statutinternet = IsNetworkConnected()
             if statutinternet != 400:
                 # generation du numero de piece pour la facture
-                vlpNumPiece = pvgNumeroPiece(connexion, clsMouvementcomptables[0]['AG_CODEAGENCE'], clsMouvementcomptables[0]['MC_DATEPIECE'],clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
+                vlpNumPiece = pvgNumeroPiece(cursor, clsMouvementcomptables[0]['AG_CODEAGENCE'], clsMouvementcomptables[0]['MC_DATEPIECE'],clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
                 clsMouvementcomptables[0]['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
-                pvg_constatation_facture(connexion, clsMouvementcomptables[0])
+                pvg_constatation_facture(cursor, clsMouvementcomptables[0])
                 
                 # generation du numero de piece pour le reglement de facture
-                vlpNumPiece = pvgNumeroPiece(connexion, clsMouvementcomptables[0]['AG_CODEAGENCE'], clsMouvementcomptables[0]['MC_DATEPIECE'],clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
+                vlpNumPiece = pvgNumeroPiece(cursor, clsMouvementcomptables[0]['AG_CODEAGENCE'], clsMouvementcomptables[0]['MC_DATEPIECE'],clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
                 clsMouvementcomptables[0]['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
                 # vlpNumPiece = pvgRecupNumeroPiece(connexion, clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
                 for i, clsMouvementcomptable in enumerate(clsMouvementcomptables):
@@ -121,7 +121,7 @@ def pvgComptabilisationOperations(connexion, clsMouvementcomptables):
                         # Mettre ensemble les informations de l'ordinateur et les séparer par des @
                         sticker_code1 = ip_address + "@" + public_ip_address + "@" + mac_address
                         # 1- Exécution de la fonction pvg_comptabilisation_operation pour la comptabilisation
-                        DataSet = pvg_comptabilisation_operation1(connexion, clsMouvementcomptable)
+                        DataSet = pvg_comptabilisation_operation1(cursor, clsMouvementcomptable)
                     else:
                         # Dernière itération
                         clsMouvementcomptable['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
@@ -134,14 +134,14 @@ def pvgComptabilisationOperations(connexion, clsMouvementcomptables):
                         # Mettre ensemble les informations de l'ordinateur et les séparer par des @
                         sticker_code1 = ip_address + "@" + public_ip_address + "@" + mac_address
                         # 1- Exécution de la fonction pvg_comptabilisation_operation pour la comptabilisation
-                        DataSet = pvg_comptabilisation_operation2(connexion, clsMouvementcomptable)
+                        DataSet = pvg_comptabilisation_operation2(cursor, clsMouvementcomptable)
                         
                         # Vérifier si la première instruction s'est terminée avec succès
                         if DataSet:
                             listOperation.append(DataSet)
                             # 2- Exécution de la fonction pvgDecisionEnvoiSMS pour l'envoi ou non du sms
                             # 3- Exécution de la fonction pvpGenererMouchard pour l'insertion dans le mouchard DataSet["MC_NUMPIECE"]
-                            pvpGenererMouchard(connexion, clsMouvementcomptable['AG_CODEAGENCE'], clsMouvementcomptable['OP_CODEOPERATEUR'], vlpNumPiece[0]['MC_NUMPIECE'], "A", sticker_code1, LIBELLEACTION)
+                            pvpGenererMouchard(cursor, clsMouvementcomptable['AG_CODEAGENCE'], clsMouvementcomptable['OP_CODEOPERATEUR'], vlpNumPiece[0]['MC_NUMPIECE'], "A", sticker_code1, LIBELLEACTION)
 
                             # 4- Exécution de la fonction pvgBordereau pour obtenir les informations du mouvement comptable
                             clsMouvementcomptable = DataSet
@@ -160,8 +160,8 @@ def pvgComptabilisationOperations(connexion, clsMouvementcomptables):
                         
                         # Démarrer le traitement asynchrone dans un thread
                         if listOperation is not None and Retour['SL_RESULTAT'] == "TRUE":
-                            get_commit(connexion, clsMouvementcomptables)
-                            thread_traitement = threading.Thread(target=traitement_asynchrone, args=(connexion, clsMouvementcomptables[0], listOperation))
+                            get_commit(cursor, clsMouvementcomptables)
+                            thread_traitement = threading.Thread(target=traitement_asynchrone, args=(cursor, clsMouvementcomptables[0], listOperation))
                             thread_traitement.daemon = True  # Définir le thread comme démon
                             thread_traitement.start()
                 
@@ -248,12 +248,12 @@ def pvgComptabilisationOperationsFacture(connexion, clsMouvementcomptables):
             Retour['SL_RESULTAT'] = "FALSE"
             return Retour        
         
-def pvgComptabilisationOperationsCaisse(connexion, clsMouvementcomptables):
+def pvgComptabilisationOperationsCaisse(cursor, clsMouvementcomptables):
     try:
         listOperation = []
         statutinternet = IsNetworkConnected()
         if statutinternet != 400:
-            vlpNumPiece = pvgNumeroPiece(connexion, clsMouvementcomptables[0]['AG_CODEAGENCE'], clsMouvementcomptables[0]['MC_DATEPIECE'],clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
+            vlpNumPiece = pvgNumeroPiece(cursor, clsMouvementcomptables[0]['AG_CODEAGENCE'], clsMouvementcomptables[0]['MC_DATEPIECE'],clsMouvementcomptables[0]['OP_CODEOPERATEUR'])
             clsMouvementcomptables[0]['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
             # clsMouvementcomptables[0]['MC_REFERENCEPIECE'] = vlpNumPiece[0]['MC_REFERENCEPIECE']
 
@@ -269,8 +269,8 @@ def pvgComptabilisationOperationsCaisse(connexion, clsMouvementcomptables):
                     # Mettre ensemble les informations de l'ordinateur et les séparer par des @
                     sticker_code1 = ip_address + "@" + public_ip_address + "@" + mac_address
                     # 1- Exécution de la fonction pvg_comptabilisation_operation pour la comptabilisation
-                    if clsMouvementcomptable['TS_CODETYPESCHEMACOMPTABLE'] == '00005': DataSet = pvg_comptabilisation_operation_caisse1(connexion, clsMouvementcomptable)
-                    if clsMouvementcomptable['TS_CODETYPESCHEMACOMPTABLE'] != '00005': DataSet = pvg_comptabilisation_operation_caisse2(connexion, clsMouvementcomptable)
+                    if clsMouvementcomptable['TS_CODETYPESCHEMACOMPTABLE'] == '00005': DataSet = pvg_comptabilisation_operation_caisse1(cursor, clsMouvementcomptable)
+                    if clsMouvementcomptable['TS_CODETYPESCHEMACOMPTABLE'] != '00005': DataSet = pvg_comptabilisation_operation_caisse2(cursor, clsMouvementcomptable)
                 else:
                     # Dernière itération
                     clsMouvementcomptable['MC_NUMPIECE'] = vlpNumPiece[0]['MC_NUMPIECE']
@@ -283,15 +283,15 @@ def pvgComptabilisationOperationsCaisse(connexion, clsMouvementcomptables):
                     # Mettre ensemble les informations de l'ordinateur et les séparer par des @
                     sticker_code1 = ip_address + "@" + public_ip_address + "@" + mac_address
                     # 1- Exécution de la fonction pvg_comptabilisation_operation pour la comptabilisation
-                    if clsMouvementcomptable['TS_CODETYPESCHEMACOMPTABLE'] == '00005': DataSet = pvg_comptabilisation_operation_caisse3(connexion, clsMouvementcomptable)
-                    if clsMouvementcomptable['TS_CODETYPESCHEMACOMPTABLE'] != '00005': DataSet = pvg_comptabilisation_operation_caisse4(connexion, clsMouvementcomptable)
+                    if clsMouvementcomptable['TS_CODETYPESCHEMACOMPTABLE'] == '00005': DataSet = pvg_comptabilisation_operation_caisse3(cursor, clsMouvementcomptable)
+                    if clsMouvementcomptable['TS_CODETYPESCHEMACOMPTABLE'] != '00005': DataSet = pvg_comptabilisation_operation_caisse4(cursor, clsMouvementcomptable)
                     
                     # Vérifier si la première instruction s'est terminée avec succès
                     if DataSet:
                         listOperation.append(DataSet)
                         # 2- Exécution de la fonction pvgDecisionEnvoiSMS pour l'envoi ou non du sms
                         # 3- Exécution de la fonction pvpGenererMouchard pour l'insertion dans le mouchard DataSet["MC_NUMPIECE"]
-                        pvpGenererMouchard(connexion, clsMouvementcomptable['AG_CODEAGENCE'], clsMouvementcomptable['OP_CODEOPERATEUR'], vlpNumPiece[0]['MC_NUMPIECE'], "A", sticker_code1, LIBELLEACTION)
+                        pvpGenererMouchard(cursor, clsMouvementcomptable['AG_CODEAGENCE'], clsMouvementcomptable['OP_CODEOPERATEUR'], vlpNumPiece[0]['MC_NUMPIECE'], "A", sticker_code1, LIBELLEACTION)
 
                         # 4- Exécution de la fonction pvgBordereau pour obtenir les informations du mouvement comptable
                         clsMouvementcomptable = DataSet
@@ -310,8 +310,8 @@ def pvgComptabilisationOperationsCaisse(connexion, clsMouvementcomptables):
                     
                     # Démarrer le traitement asynchrone dans un thread
                     if listOperation is not None and Retour['SL_RESULTAT'] == "TRUE":
-                        get_commit(connexion, clsMouvementcomptables)
-                        thread_traitement = threading.Thread(target=traitement_asynchrone, args=(connexion, clsMouvementcomptables[0], listOperation))
+                        get_commit(cursor, clsMouvementcomptables)
+                        thread_traitement = threading.Thread(target=traitement_asynchrone, args=(cursor, clsMouvementcomptables[0], listOperation))
                         thread_traitement.daemon = True  # Définir le thread comme démon
                         thread_traitement.start()
             
@@ -368,7 +368,9 @@ def pvgNumeroPieceComptable(connexion, _AG_CODEAGENCE, _MC_DATEPIECE, _OP_CODEOP
         MYSQL_REPONSE = f'Impossible de récupérer les résultats de la procédure stockée : {str(e.args[1])}'
         raise Exception(MYSQL_REPONSE)
 
-def pvgNumeroPiece(connexion, _AG_CODEAGENCE, _MC_DATEPIECE, _OP_CODEOPERATEUR):
+
+
+def pvgNumeroPiece(curseur, _AG_CODEAGENCE, _MC_DATEPIECE, _OP_CODEOPERATEUR):
     params = {
         'AG_CODEAGENCE': _AG_CODEAGENCE,
         'MC_DATEPIECE': datetime.strptime(_MC_DATEPIECE, "%d/%m/%Y"),
@@ -377,7 +379,7 @@ def pvgNumeroPiece(connexion, _AG_CODEAGENCE, _MC_DATEPIECE, _OP_CODEOPERATEUR):
 
     # Exécution de la procédure stockée
     try:
-        cursor = connexion
+        cursor = curseur
     except Exception as e:
         cursor.close()
          # En cas d'erreur, annuler la transaction
@@ -397,7 +399,7 @@ def pvgNumeroPiece(connexion, _AG_CODEAGENCE, _MC_DATEPIECE, _OP_CODEOPERATEUR):
       
     # Récupération des résultats
     try:
-        resultatIncrement = recup_info_increment_piece_op(connexion, _OP_CODEOPERATEUR)
+        resultatIncrement = recup_info_increment_piece_op(curseur, _OP_CODEOPERATEUR)
          
         return resultatIncrement    
     except Exception as e:
@@ -405,7 +407,9 @@ def pvgNumeroPiece(connexion, _AG_CODEAGENCE, _MC_DATEPIECE, _OP_CODEOPERATEUR):
         cursor.execute("ROLLBACK")
         MYSQL_REPONSE = f'Impossible de récupérer les résultats de la procédure stockée : {str(e.args[1])}'
         raise Exception(MYSQL_REPONSE)
-    
+
+
+
 def recup_info_increment_piece(connexion, _OP_CODEOPERATEUR):
     try:
         cursor = connexion
@@ -429,9 +433,8 @@ def recup_info_increment_piece(connexion, _OP_CODEOPERATEUR):
         MYSQL_REPONSE = str(e.args[1])
         raise Exception(MYSQL_REPONSE)
 
-def recup_info_increment_piece_op(connexion, _OP_CODEOPERATEUR):
+def recup_info_increment_piece_op(cursor, _OP_CODEOPERATEUR):
     try:
-        cursor = connexion.cursor()
         query = "SELECT * FROM dbo.TEMPINCREMENTRESULTAT{}".format(_OP_CODEOPERATEUR)
         # Exécution de la fonction SQL
         cursor.execute(query)
@@ -478,7 +481,7 @@ def pvgRecupNumeroPiece(connexion, _OP_CODEOPERATEUR):
     
     
 
-def pvg_constatation_facture(connexion, cls_mouvement_comptable):
+def pvg_constatation_facture(curseur, cls_mouvement_comptable):
     # Paramètres de la procédure stockée
     params = {
         'AG_CODEAGENCE': cls_mouvement_comptable['AG_CODEAGENCE'],
@@ -518,9 +521,9 @@ def pvg_constatation_facture(connexion, cls_mouvement_comptable):
         'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
     }
 
-     # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
+    # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
     try:
-        cursor = connexion
+        cursor = curseur
     except Exception as e:
         cursor.close()
          # En cas d'erreur, annuler la transaction
@@ -617,7 +620,7 @@ def pvg_comptabilisation(connexion, cls_mouvement_comptable):
 
   
   
-def pvg_comptabilisation_operation1(connexion, cls_mouvement_comptable):
+def pvg_comptabilisation_operation1(curseur, cls_mouvement_comptable):
     # Paramètres de la procédure stockée
     params = {
         'AG_CODEAGENCE': cls_mouvement_comptable['AG_CODEAGENCE'],
@@ -657,9 +660,9 @@ def pvg_comptabilisation_operation1(connexion, cls_mouvement_comptable):
         'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
     }
 
-     # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
+    # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
     try:
-        cursor = connexion
+        cursor = curseur
     except Exception as e:
         cursor.close()
          # En cas d'erreur, annuler la transaction
@@ -681,7 +684,7 @@ def pvg_comptabilisation_operation1(connexion, cls_mouvement_comptable):
 
 
 
-def pvg_comptabilisation_operation2(connexion, cls_mouvement_comptable):
+def pvg_comptabilisation_operation2(curseur, cls_mouvement_comptable):
     # Paramètres de la procédure stockée
     params = {
         'AG_CODEAGENCE': cls_mouvement_comptable['AG_CODEAGENCE'],
@@ -721,9 +724,9 @@ def pvg_comptabilisation_operation2(connexion, cls_mouvement_comptable):
         'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
     }
 
-     # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
+    # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
     try:
-        cursor = connexion
+        cursor = curseur
     except Exception as e:
         cursor.close()
          # En cas d'erreur, annuler la transaction
@@ -753,7 +756,7 @@ def pvg_comptabilisation_operation2(connexion, cls_mouvement_comptable):
 
         # Convertir la chaîne de caractères en entier
         montant_debit_int = cls_mouvement_comptable['MC_MONTANT_FACTURE']#int(montant_debit_str)
-        resultat = recup_info_num_bordereau(connexion, cls_mouvement_comptable['AG_CODEAGENCE'], cls_mouvement_comptable['MC_DATEPIECE'], '00002', cls_mouvement_comptable['FT_CODEFACTURE'], cls_mouvement_comptable['OP_CODEOPERATEUR'],  montant_debit_int, CODECRYPTAGE)
+        resultat = recup_info_num_bordereau(curseur, cls_mouvement_comptable['AG_CODEAGENCE'], cls_mouvement_comptable['MC_DATEPIECE'], '00002', cls_mouvement_comptable['FT_CODEFACTURE'], cls_mouvement_comptable['OP_CODEOPERATEUR'],  montant_debit_int, CODECRYPTAGE)
         """
         if resultat:
            result= recup_info_apisms_clientpiece(connexion,cls_mouvement_comptable['OP_CODEOPERATEUR'])
@@ -771,7 +774,7 @@ def pvg_comptabilisation_operation2(connexion, cls_mouvement_comptable):
 
 
 
-def pvg_comptabilisation_operation_caisse1(connexion, cls_mouvement_comptable):
+def pvg_comptabilisation_operation_caisse1(curseur, cls_mouvement_comptable):
     # Paramètres de la procédure stockée
     params = {
         'AG_CODEAGENCE': cls_mouvement_comptable['AG_CODEAGENCE'],
@@ -811,9 +814,9 @@ def pvg_comptabilisation_operation_caisse1(connexion, cls_mouvement_comptable):
         'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
     }
 
-     # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
+    # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
     try:
-        cursor = connexion.cursor()
+        cursor = curseur
     except Exception as e:
         cursor.close()
          # En cas d'erreur, annuler la transaction
@@ -836,7 +839,7 @@ def pvg_comptabilisation_operation_caisse1(connexion, cls_mouvement_comptable):
     
     
 
-def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
+def pvg_comptabilisation_operation_caisse2(curseur, cls_mouvement_comptable):
     # Paramètres de la procédure stockée
     params = {
         'AG_CODEAGENCE': cls_mouvement_comptable['AG_CODEAGENCE'],
@@ -876,9 +879,9 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
         'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
     }
 
-     # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
+    # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
     try:
-        cursor = connexion.cursor()
+        cursor = curseur
     except Exception as e:
         cursor.close()
          # En cas d'erreur, annuler la transaction
@@ -901,7 +904,7 @@ def pvg_comptabilisation_operation_caisse2(connexion, cls_mouvement_comptable):
 
 
 
-def pvg_comptabilisation_operation_caisse3(connexion, cls_mouvement_comptable):
+def pvg_comptabilisation_operation_caisse3(curseur, cls_mouvement_comptable):
     # Paramètres de la procédure stockée
     params = {
         'AG_CODEAGENCE': cls_mouvement_comptable['AG_CODEAGENCE'],
@@ -941,9 +944,9 @@ def pvg_comptabilisation_operation_caisse3(connexion, cls_mouvement_comptable):
         'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
     }
 
-     # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
+    # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
     try:
-        cursor = connexion.cursor()
+        cursor = curseur
     except Exception as e:
         cursor.close()
          # En cas d'erreur, annuler la transaction
@@ -974,13 +977,13 @@ def pvg_comptabilisation_operation_caisse3(connexion, cls_mouvement_comptable):
 
         # Convertir la chaîne de caractères en entier
         montant_debit_int = cls_mouvement_comptable['MC_MONTANT_FACTURE']#int(montant_debit_str)
-        resultat = recupinfos_num_bordereau(connexion, cls_mouvement_comptable['AG_CODEAGENCE'], cls_mouvement_comptable['MC_DATEPIECE'], cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'], None, cls_mouvement_comptable['OP_CODEOPERATEUR'],  montant_debit_int, CODECRYPTAGE)
+        resultat = recupinfos_num_bordereau(curseur, cls_mouvement_comptable['AG_CODEAGENCE'], cls_mouvement_comptable['MC_DATEPIECE'], cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'], None, cls_mouvement_comptable['OP_CODEOPERATEUR'],  montant_debit_int, CODECRYPTAGE)
         """
         if resultat:
            result= recup_info_apisms_clientpiece(connexion,cls_mouvement_comptable['OP_CODEOPERATEUR'])
            resultat["MC_NUMPIECE"]= result
         """   
-        return resultat    
+        return resultat
     except Exception as e:
          # En cas d'erreur, annuler la transaction
         cursor.execute("ROLLBACK")
@@ -992,7 +995,7 @@ def pvg_comptabilisation_operation_caisse3(connexion, cls_mouvement_comptable):
 
 
 
-def pvg_comptabilisation_operation_caisse4(connexion, cls_mouvement_comptable):
+def pvg_comptabilisation_operation_caisse4(curseur, cls_mouvement_comptable):
     # Paramètres de la procédure stockée
     params = {
         'AG_CODEAGENCE': cls_mouvement_comptable['AG_CODEAGENCE'],
@@ -1032,9 +1035,9 @@ def pvg_comptabilisation_operation_caisse4(connexion, cls_mouvement_comptable):
         'AS_CODEASSURANCE': cls_mouvement_comptable.get('AS_CODEASSURANCE') or None
     }
 
-     # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
+    # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
     try:
-        cursor = connexion.cursor()
+        cursor = curseur
     except Exception as e:
         cursor.close()
          # En cas d'erreur, annuler la transaction
@@ -1065,7 +1068,7 @@ def pvg_comptabilisation_operation_caisse4(connexion, cls_mouvement_comptable):
 
         # Convertir la chaîne de caractères en entier
         montant_debit_int = cls_mouvement_comptable['MC_MONTANT_FACTURE']#int(montant_debit_str)
-        resultat = recupinfos_num_bordereau2(cursor, cls_mouvement_comptable['AG_CODEAGENCE'], cls_mouvement_comptable['MC_DATEPIECE'], cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'], None, cls_mouvement_comptable['OP_CODEOPERATEUR'],  montant_debit_int, CODECRYPTAGE)
+        resultat = recupinfos_num_bordereau(curseur, cls_mouvement_comptable['AG_CODEAGENCE'], cls_mouvement_comptable['MC_DATEPIECE'], cls_mouvement_comptable['TS_CODETYPESCHEMACOMPTABLE'], None, cls_mouvement_comptable['OP_CODEOPERATEUR'],  montant_debit_int, CODECRYPTAGE)
         """
         if resultat:
            result= recup_info_apisms_clientpiece(connexion,cls_mouvement_comptable['OP_CODEOPERATEUR'])
@@ -1083,43 +1086,8 @@ def pvg_comptabilisation_operation_caisse4(connexion, cls_mouvement_comptable):
 
 
 
-def recupinfos_num_bordereau(connexion, AG_CODEAGENCE,MC_DATEPIECE,TS_CODETYPESCHEMACOMPTABLE,FT_CODEFACTURE,OP_CODEOPERATEUR,MONTANT,ALPHA):
+def recupinfos_num_bordereau(cursor, AG_CODEAGENCE,MC_DATEPIECE,TS_CODETYPESCHEMACOMPTABLE,FT_CODEFACTURE,OP_CODEOPERATEUR,MONTANT,ALPHA):
     try:
-        cursor = connexion.cursor()
-        
-        # Exécution de la fonction SQL
-        cursor.execute("SELECT * FROM dbo.FC_RECUPNUMEROBORDEREAUOPERATION(?, ?, ?, ?, ?, ?, ?)",
-                       (AG_CODEAGENCE,parse_datetime(MC_DATEPIECE),TS_CODETYPESCHEMACOMPTABLE,FT_CODEFACTURE,OP_CODEOPERATEUR,MONTANT,ALPHA))
-
-        # Récupération des résultats
-        rows = cursor.fetchall()
-        # Création d'un dictionnaire pour stocker les données récupérées
-        borderau = {}
-        # Traitement des résultats
-        for row in rows:
-            borderau['AG_CODEAGENCE'] = row.AG_CODEAGENCE
-            borderau['MC_DATEPIECE'] = row.MC_DATEPIECE
-            borderau['NUMEROBORDEREAU'] = row.NUMEROBORDEREAU
-            borderau['PT_IDPATIENT'] = row.PT_IDPATIENT
-            borderau['EJ_TELEPHONE'] = row.EJ_TELEPHONE
-            borderau['SL_MESSAGECLIENT'] = row.SL_MESSAGECLIENT
-            borderau['AG_EMAIL'] = row.AG_EMAIL
-            borderau['AG_EMAILMOTDEPASSE'] = row.AG_EMAILMOTDEPASSE
-            borderau['SL_MESSAGEOBJET'] = row.SL_MESSAGEOBJET
-            borderau['EJ_EMAILCLIENT'] = row.EJ_EMAILCLIENT
-            borderau['MC_LIBELLEOPERATION'] = row.MC_LIBELLEOPERATION
-            # Faites ce que vous voulez avec les données récupérées
-            return borderau
-    except Exception as e:
-        cursor.execute("ROLLBACK")
-        MYSQL_REPONSE = str(e.args[1])
-        raise Exception(MYSQL_REPONSE)
-    
-
-def recupinfos_num_bordereau2(cursor, AG_CODEAGENCE,MC_DATEPIECE,TS_CODETYPESCHEMACOMPTABLE,FT_CODEFACTURE,OP_CODEOPERATEUR,MONTANT,ALPHA):
-    try:
-        # cursor = connexion.cursor()
-        
         # Exécution de la fonction SQL
         cursor.execute("SELECT * FROM dbo.FC_RECUPNUMEROBORDEREAUOPERATION(?, ?, ?, ?, ?, ?, ?)",
                        (AG_CODEAGENCE,parse_datetime(MC_DATEPIECE),TS_CODETYPESCHEMACOMPTABLE,FT_CODEFACTURE,OP_CODEOPERATEUR,MONTANT,ALPHA))
@@ -1182,10 +1150,8 @@ def recupnum_bordereau(connexion, AG_CODEAGENCE,MC_DATEPIECE,TS_CODETYPESCHEMACO
         MYSQL_REPONSE = str(e.args[1])
         raise Exception(MYSQL_REPONSE)    
 
-def recup_info_num_bordereau(connexion, AG_CODEAGENCE,MC_DATEPIECE,TS_CODETYPESCHEMACOMPTABLE,FT_CODEFACTURE,OP_CODEOPERATEUR,MONTANT,ALPHA):
+def recup_info_num_bordereau(cursor, AG_CODEAGENCE,MC_DATEPIECE,TS_CODETYPESCHEMACOMPTABLE,FT_CODEFACTURE,OP_CODEOPERATEUR,MONTANT,ALPHA):
     try:
-        cursor = connexion.cursor()
-        
         # Exécution de la fonction SQL
         cursor.execute("SELECT * FROM dbo.FC_RECUPNUMEROBORDEREAUOPERATION(?, ?, ?, ?, ?, ?, ?)",
                        (AG_CODEAGENCE,parse_datetime(MC_DATEPIECE),TS_CODETYPESCHEMACOMPTABLE,FT_CODEFACTURE,OP_CODEOPERATEUR,MONTANT,ALPHA))
@@ -1216,7 +1182,7 @@ def recup_info_num_bordereau(connexion, AG_CODEAGENCE,MC_DATEPIECE,TS_CODETYPESC
 
 
 
-def pvpGenererMouchard(connexion,clsObjetEnvoiOE_A, clsObjetEnvoiOE_Y, vppAction, vppTypeAction,TERMINALIDENTIFIANT,MC_LIBELLEOPERATION):
+def pvpGenererMouchard(cursor,clsObjetEnvoiOE_A, clsObjetEnvoiOE_Y, vppAction, vppTypeAction,TERMINALIDENTIFIANT,MC_LIBELLEOPERATION):
     clsMouchard = {}
     clsMouchard['AG_CODEAGENCE'] = clsObjetEnvoiOE_A
     clsMouchard['OP_CODEOPERATEUR'] = clsObjetEnvoiOE_Y
@@ -1247,7 +1213,7 @@ def pvpGenererMouchard(connexion,clsObjetEnvoiOE_A, clsObjetEnvoiOE_Y, vppAction
         'TYPEOPERATION': 0
     }
 
-     # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
+    """ # Récupérer la connexion et le curseur de la base de données depuis cls_donnee
     try:
         cursor = connexion
     except Exception as e:
@@ -1255,7 +1221,7 @@ def pvpGenererMouchard(connexion,clsObjetEnvoiOE_A, clsObjetEnvoiOE_Y, vppAction
          # En cas d'erreur, annuler la transaction
         cursor.execute("ROLLBACK")
         MYSQL_REPONSE = f'Impossible de récupérer le curseur de la base de données : {str(e.args[1])}'
-        raise Exception(MYSQL_REPONSE)
+        raise Exception(MYSQL_REPONSE) """
 
     # Exécution de la procédure stockée
     try:
@@ -1300,18 +1266,17 @@ def IsValidateIP(ipaddress):
 
 
 
-def get_commit(connexion, clsMouvementcomptables):
+def get_commit(cursor, clsMouvementcomptables):
     try:
-        cursor = connexion
         params = {
             'AG_CODEAGENCE3': '1000',
             'MC_DATEPIECE3': '01/01/1900'
         }
         try:
-            connexion.commit()
+            cursor.commit()
             cursor.execute("EXECUTE [PC_COMMIT]  ?, ?", list(params.values()))
             #instruction pour valider la commande de mise à jour
-            connexion.commit()
+            cursor.commit()
         except Exception as e:
             # En cas d'erreur, annuler la transaction
             cursor.execute("ROLLBACK")

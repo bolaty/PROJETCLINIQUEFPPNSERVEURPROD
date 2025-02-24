@@ -25,7 +25,7 @@ class clsAgence:
         
         
         
-def creation_profil(connection, operateur_info):
+def creation_profil(connexion, operateur_info):
     params = {
         'PO_CODEPROFIL': "",
         'PO_LIBELLE': operateur_info['PO_LIBELLE'],
@@ -35,16 +35,18 @@ def creation_profil(connection, operateur_info):
     
 
     try:
-        cursor = connection
+        cursor = connexion
         cursor.execute("EXEC dbo.PC_PROFIL ?, ?, ?, ?", list(params.values()))
-        connection.commit()
-        get_commit(connection,operateur_info)
+        cursor.commit()
+        get_commit(connexion,operateur_info)
         #cursor.close()
     except Exception as e:
-        connection.rollback()
+        cursor.rollback()
         raise Exception(f"Erreur lors de la modification: {str(e.args[1])}")       
         
-def update_profil(connection, operateur_info):
+        
+        
+def update_profil(connexion, operateur_info):
     params = {
         'PO_CODEPROFIL': operateur_info['PO_CODEPROFIL'],
         'PO_LIBELLE': operateur_info['PO_LIBELLE'],
@@ -54,16 +56,18 @@ def update_profil(connection, operateur_info):
     
 
     try:
-        cursor = connection
+        cursor = connexion
         cursor.execute("EXEC dbo.PC_PROFIL ?, ?, ?, ?", list(params.values()))
-        connection.commit()
-        get_commit(connection,operateur_info)
+        cursor.commit()
+        get_commit(connexion,operateur_info)
         #cursor.close()
     except Exception as e:
-        connection.rollback()
+        cursor.rollback()
         raise Exception(f"Erreur lors de la modification: {str(e.args[1])}")            
 
-def delete_profil(connection, operateur_info):
+
+
+def delete_profil(connexion, operateur_info):
     params = {
         'PO_CODEPROFIL': operateur_info['PO_CODEPROFIL'],
         'PO_LIBELLE': "",
@@ -73,22 +77,23 @@ def delete_profil(connection, operateur_info):
     
 
     try:
-        cursor = connection
+        cursor = connexion
         cursor.execute("EXEC dbo.PC_PROFIL ?, ?, ?, ?", list(params.values()))
-        connection.commit()
-        get_commit(connection,operateur_info)
+        cursor.commit()
+        get_commit(connexion,operateur_info)
         #cursor.close()
     except Exception as e:
-        connection.rollback()
+        cursor.rollback()
         MYSQL_REPONSE = e.args[1]
         if "varchar" in MYSQL_REPONSE:
                MYSQL_REPONSE = MYSQL_REPONSE.split("varchar", 1)[1].split("en type de donn", 1)[0]
                
         raise Exception(MYSQL_REPONSE)            
-        
-#creation utilisateur...
 
-def insert_operateur(connection, operateur_info):
+
+
+#creation utilisateur...
+def insert_operateur(connexion, operateur_info):
     code_aleatoire = generer_code_aleatoire()
     # Préparation des paramètres
     params = {
@@ -119,20 +124,20 @@ def insert_operateur(connection, operateur_info):
 
     try:
         # Exécution de la procédure stockée
-        cursor = connection
+        cursor = connexion
         cursor.execute(
             "EXEC dbo.PC_OPERATEUR ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?",
             list(params.values())
         )
     except Exception as e:
-        connection.rollback()
+        cursor.rollback()
         raise Exception(f"Erreur lors de l'insertion : {str(e.args[1])}")
     
     try:
         # Récupération des informations supplémentaires après insertion
-        resultat_operateur = recup_InfoUsercompte(connection, code_aleatoire)
+        resultat_operateur = recup_InfoUsercompte(connexion, code_aleatoire)
         
-        clsAgence = pvgTableLabelAgence(connection, operateur_info['AG_CODEAGENCE'],CODECRYPTAGE)
+        clsAgence = pvgTableLabelAgence(connexion, operateur_info['AG_CODEAGENCE'],CODECRYPTAGE)
         
         operateur_info['OP_LOGIN'] = resultat_operateur[0]['OP_LOGIN']
         operateur_info['OP_MOTPASSE'] = resultat_operateur[0]['OP_MOTPASSE']
@@ -143,10 +148,10 @@ def insert_operateur(connection, operateur_info):
         
         if resultat_operateur[0]['SL_RESULTAT'] == "TRUE":
             # Validation de la transaction
-            get_commit(connection, operateur_info)
+            get_commit(connexion, operateur_info)
             
             # Démarrage d'un traitement asynchrone dans un thread
-            thread_traitement = threading.Thread(target=traitement_asynchrone, args=(connection, clsAgence, resultat_operateur))
+            thread_traitement = threading.Thread(target=traitement_asynchrone, args=(connexion, clsAgence, resultat_operateur))
             thread_traitement.daemon = True
             thread_traitement.start()
         
@@ -158,7 +163,7 @@ def insert_operateur(connection, operateur_info):
    
     
 #mofications
-def update_compte_utilisateur(connection, operateur_info):
+def update_compte_utilisateur(connexion, operateur_info):
     params = {
         'OP_CODEOPERATEUR': int(operateur_info['OP_CODEOPERATEUR']),
         'AG_CODEAGENCE': operateur_info['AG_CODEAGENCE'],
@@ -187,17 +192,19 @@ def update_compte_utilisateur(connection, operateur_info):
     
 
     try:
-        cursor = connection
+        cursor = connexion
         cursor.execute("EXEC dbo.PC_OPERATEUR ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?", list(params.values()))
-        connection.commit()
-        get_commit(connection,operateur_info)
+        cursor.commit()
+        get_commit(connexion,operateur_info)
         #cursor.close()
     except Exception as e:
-        connection.rollback()
+        cursor.rollback()
         raise Exception(f"Erreur lors de la modification: {str(e.args[1])}")
 
+
+
 #suppression
-def delete_compte_utilisateur(connection, operateur_info):
+def delete_compte_utilisateur(connexion, operateur_info):
     params = {
         'OP_CODEOPERATEUR': operateur_info['OP_CODEOPERATEUR'],
         'AG_CODEAGENCE': operateur_info['AG_CODEAGENCE'],
@@ -225,17 +232,17 @@ def delete_compte_utilisateur(connection, operateur_info):
     }
 
     try:
-        cursor = connection
+        cursor = connexion
         cursor.execute("EXEC dbo.PC_OPERATEUR ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?", list(params.values()))
-        connection.commit()
-        get_commit(connection,operateur_info)
+        cursor.commit()
+        get_commit(connexion,operateur_info)
         #cursor.close()
     except Exception as e:
-        connection.rollback()
+        cursor.rollback()
         raise Exception(f"Erreur lors de la suppression: {str(e.args[1])}")
 
 
-def Activation_DesActivation_utilisateur(connection, operateur_info):
+def Activation_DesActivation_utilisateur(connexion, operateur_info):
     params = {
         'OP_CODEOPERATEUR': operateur_info['OP_CODEOPERATEUR'],
         'AG_CODEAGENCE': operateur_info['AG_CODEAGENCE'],
@@ -263,20 +270,20 @@ def Activation_DesActivation_utilisateur(connection, operateur_info):
     }
 
     try:
-        cursor = connection.cursor()
+        cursor = connexion.cursor()
         cursor.execute("EXEC dbo.PC_OPERATEUR ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?", list(params.values()))
-        connection.commit()
-        get_commit(connection,operateur_info)
+        connexion.commit()
+        get_commit(connexion,operateur_info)
         #cursor.close()
     except Exception as e:
-        connection.rollback()
+        connexion.rollback()
         raise Exception(f"Erreur lors de la suppression: {str(e.args[1])}")
 
 
 
-def recup_InfoUsercompte(connection,OP_CODEOPERATEUR):
+def recup_InfoUsercompte(connexion,OP_CODEOPERATEUR):
     try:
-        cursor = connection
+        cursor = connexion
         varreq="SELECT * FROM TEMPCOMPTEUTULISATEURRESULTAT"+OP_CODEOPERATEUR
         # Exécution de la fonction SQL
         cursor.execute(varreq)
@@ -302,8 +309,8 @@ def recup_InfoUsercompte(connection,OP_CODEOPERATEUR):
         MYSQL_REPONSE = str(e.args[1])
         raise Exception(MYSQL_REPONSE)   
     
-def pvgTableLabelAgence(connection, *vppCritere):
-    cursor = connection
+def pvgTableLabelAgence(connexion, *vppCritere):
+    cursor = connexion
 
     if len(vppCritere) == 1:
         vapCritere = " WHERE AG_CODEAGENCE=? AND AG_ACTIF='O'"
@@ -348,7 +355,7 @@ def pvgTableLabelAgence(connection, *vppCritere):
         MYSQL_REPONSE = f'Impossible d\'exécuter la procédure stockée : {str(e.args[1])}'
         raise Exception(MYSQL_REPONSE)  
     
-def traitement_asynchrone(connection, clsAgence, resultatUserCreation):
+def traitement_asynchrone(connexion, clsAgence, resultatUserCreation):
     try:
         # Votre traitement asynchrone ici
         for idx in range(len(resultatUserCreation)):
@@ -402,11 +409,11 @@ def traitement_asynchrone(connection, clsAgence, resultatUserCreation):
         reponse = excecuteServiceWeb(resultatUserCreation, "post", LIENDAPISMS,corpsMessagesms)
         
         if reponse or len(reponse) == 0:
-           connection.close() 
+           connexion.close() 
            pass
 
     except Exception as e:
-        connection.close() 
+        connexion.close() 
         print("Erreur lors du traitement asynchrone:", e)       
 
 
@@ -488,19 +495,19 @@ def excecuteServiceWeb(Objetenv, method, url,corpsMessagesms):
 
 
     
-def get_commit(connection,clsBilletages):
+def get_commit(connexion,clsBilletages):
     try:
        for row in clsBilletages: 
-        cursor = connection
+        cursor = connexion
         params = {
             'AG_CODEAGENCE3': '1000',
             'MC_DATEPIECE3': '01/01/1900'
         }
         try:
-            connection.commit()
+            connexion.commit()
             cursor.execute("EXECUTE [PC_COMMIT]  ?, ?", list(params.values()))
             #instruction pour valider la commande de mise à jour
-            connection.commit()
+            connexion.commit()
         except Exception as e:
             # En cas d'erreur, annuler la transaction
             cursor.execute("ROLLBACK")

@@ -20,7 +20,7 @@ import random
 import os
 from tools.toolCodeFacture import generer_code_facture
 from tools.toolDate import parse_datetime
-from tools.toolJournee import test_journee_fermee
+from tools.toolJournee import test_journee_fermee,test_journee_fermeeVersement
 api_bp = Blueprint('api', __name__)
 
 
@@ -92,25 +92,25 @@ def pvginsert_patient():
                 cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
-                response = test_journee_fermee(db_connexion, *vpp_critere)
+                response = test_journee_fermee(cursor, *vpp_critere)
 
                 if response[0]['NBRE'] == 0:
                     return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
         
                 # Appeler la fonction d'insertion dans la base de données
-                reponse = insertpatient(db_connexion, patient_info)
+                reponse = insertpatient(cursor, patient_info)
                 
                 # Valider la transaction
-                db_connexion.commit()
+                cursor.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE'}), 200
 
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": f" {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         #finally:
-            db_connexion.close()
+            cursor.close()
 
             
             
@@ -126,8 +126,6 @@ def pvgdeletepatient():
             # Validation des chaînes de caractères
             patient_info['PT_IDPATIENT'] = str(row.get('PT_IDPATIENT', ''))
             
-            
-
         except ValueError as e:
             # Retourner un message d'erreur en cas de problème de type de données
             return jsonify({"SL_MESSAGE": f"Erreur de type de données : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
@@ -148,16 +146,16 @@ def pvgdeletepatient():
                 reponse = deletepatient(cursor, patient_info)
                 
                 # Valider la transaction
-                db_connexion.commit()
+                cursor.commit()
 
             return jsonify({"SL_MESSAGE": "Suppression réussie!", "SL_RESULTAT": 'TRUE'}), 200
 
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": f" {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         #finally:
-            db_connexion.close()  
+            cursor.close()  
 
 
 
@@ -270,7 +268,7 @@ def pvgCreationFacture():
         cursor = db_connexion.cursor()
         cursor.execute("BEGIN TRANSACTION")
 
-        response = test_journee_fermee(db_connexion, *vpp_critere)
+        response = test_journee_fermee(cursor, *vpp_critere)
 
         if response[0]['NBRE'] == 0:
             return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
@@ -278,7 +276,7 @@ def pvgCreationFacture():
         if objet_facture['TYPEOPERATION'] != '7':
             try:
                 # creer le patient
-                insert_patient(db_connexion, objet_facture)
+                insert_patient(cursor, objet_facture)
             except ValueError as e:
                 result = {}
 
@@ -291,14 +289,14 @@ def pvgCreationFacture():
                 return jsonify(response)
             
             # recuperer lid du patient
-            id_patient = get_id_patient(db_connexion, objet_facture['OP_CODEOPERATEUR'])
+            id_patient = get_id_patient(cursor, objet_facture['OP_CODEOPERATEUR'])
             objet_facture['PT_IDPATIENT'] = id_patient[0]['PT_IDPATIENT']
         
         # creer la facture du patient
         try:
             # generer le code de la facture
             # objet_facture['FT_CODEFACTURE'] = generer_code_facture(objet_facture['AG_CODEAGENCE'])
-            objet_facture['FT_CODEFACTURE'] = get_code_facture(db_connexion, objet_facture['AG_CODEAGENCE'], objet_facture['OP_CODEOPERATEUR'])
+            objet_facture['FT_CODEFACTURE'] = get_code_facture(cursor, objet_facture['AG_CODEAGENCE'], objet_facture['OP_CODEOPERATEUR'])
         except ValueError as e:
             result = {}
 
@@ -311,7 +309,7 @@ def pvgCreationFacture():
             return jsonify(response)
         
         # creation de la facture
-        insert_facture(db_connexion, objet_facture)
+        insert_facture(cursor, objet_facture)
         
         # Consigner les mouvements
         clsmouvement_infos = []
@@ -360,24 +358,24 @@ def pvgCreationFacture():
 
         try:
             # Appeler la fonction d'insertion dans la base de données
-            response = pvgComptabilisationOperations(db_connexion, clsmouvement_infos)
+            response = pvgComptabilisationOperations(cursor, clsmouvement_infos)
                         
             # Retourner la réponse au client
             if response['SL_RESULTAT'] == "TRUE":
-                #db_connexion.close()
+                #cursor.close()
                 return jsonify({"NUMEROBORDEREAUREGLEMENT":str(response['NUMEROBORDEREAU']),"MC_LIBELLEOPERATION":str(response['MC_LIBELLEOPERATION']),"SL_MESSAGE":"Comptabilisation éffectuée avec success !" + response['MESSAGEAPI'] ,"SL_RESULTAT": 'TRUE'}) 
             else:
-                ##db_connexion.close()
+                ##cursor.close()
                 return jsonify({"SL_MESSAGE":response['SL_MESSAGE'] ,"SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
     except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
     """ #finally:
-        #db_connexion.close() """
+        #cursor.close() """
 
 @api_bp.route('/ReglementFacture', methods=['POST'])
 def pvgReglementFacture():
@@ -417,7 +415,7 @@ def pvgReglementFacture():
                 vpp_critere = ()
                 
                 
-            response = test_journee_fermee(db_connexion, *vpp_critere)
+            response = test_journee_fermee(cursor, *vpp_critere)
 
             if response[0]['NBRE'] == 0:
                 return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
@@ -470,24 +468,24 @@ def pvgReglementFacture():
 
         try:
             # Appeler la fonction d'insertion dans la base de données
-            response = pvgComptabilisationOperationsFacture(db_connexion, clsmouvement_infos)
+            response = pvgComptabilisationOperationsFacture(cursor, clsmouvement_infos)
                         
             # Retourner la réponse au client
             if response['SL_RESULTAT'] == "TRUE":
-                #db_connexion.close()
+                #cursor.close()
                 return jsonify({"NUMEROBORDEREAUREGLEMENT":str(response['NUMEROBORDEREAU']),"MC_LIBELLEOPERATION":str(response['MC_LIBELLEOPERATION']),"SL_MESSAGE":"Comptabilisation éffectuée avec success !" + response['MESSAGEAPI'] ,"SL_RESULTAT": 'TRUE'}) 
             else:
-                ##db_connexion.close()
+                ##cursor.close()
                 return jsonify({"SL_MESSAGE":response['SL_MESSAGE'] ,"SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
     except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
     """ #finally:
-        #db_connexion.close() """
+        #cursor.close() """
 
 
 
@@ -643,13 +641,13 @@ def pvgExtourneOperation():
             with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
-                response = test_journee_fermee(db_connexion, *vpp_critere)
+                response = test_journee_fermee(cursor, *vpp_critere)
 
                 if response[0]['NBRE'] == 0:
                     return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
         
                 # Appeler la fonction de suppression
-                ExtourneOperation(db_connexion, str(row.get('AG_CODEAGENCE', '')), str(row.get('MV_DATEPIECECOMPTABILISATION')),str(row.get('MV_DATEPIECE', '')),
+                ExtourneOperation(cursor, str(row.get('AG_CODEAGENCE', '')), str(row.get('MV_DATEPIECECOMPTABILISATION')),str(row.get('MV_DATEPIECE', '')),
                                              str(row.get('MV_NUMPIECE1', '')), str(row.get('MV_NUMPIECE3')),str(row.get('OP_CODEOPERATEUR', '')),str(row.get('TYPEOPERATION', '')))
                 user_infos = [
                 {
@@ -661,16 +659,16 @@ def pvgExtourneOperation():
                     'JT_STATUT':"O",
                 }
                 ]
-                get_commit(db_connexion,user_infos)
+                get_commit(cursor,user_infos)
             
                 return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'})
             
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE":  str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            #db_connexion.close()
+            #cursor.close()
 
 @api_bp.route('/ExtourneFacture', methods=['POST'])
 def pvgExtourneFacture():
@@ -721,16 +719,16 @@ def pvgExtourneFacture():
         db_connexion = connect_database()
 
         try:
-            with db_connexion.cursor() as cursor:
+            with cursor.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
-                response = test_journee_fermee(db_connexion, *vpp_critere)
+                response = test_journee_fermee(cursor, *vpp_critere)
 
                 if response[0]['NBRE'] == 0:
                     return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
                 
                 # Appeler la fonction de suppression
-                ExtourneFacture(db_connexion, str(row.get('AG_CODEAGENCE', '')), str(row.get('MV_DATEPIECECOMPTABILISATION')),str(row.get('FT_CODEFACTURE', '')),str(row.get('MC_DATESAISIE', '')),
+                ExtourneFacture(cursor, str(row.get('AG_CODEAGENCE', '')), str(row.get('MV_DATEPIECECOMPTABILISATION')),str(row.get('FT_CODEFACTURE', '')),str(row.get('MC_DATESAISIE', '')),
                                               str(row.get('MV_NUMPIECE3')),str(row.get('OP_CODEOPERATEUR', '')),str(row.get('TYPEOPERATION', '')))
                 user_infos = [
                 {
@@ -742,16 +740,16 @@ def pvgExtourneFacture():
                     'JT_STATUT':"O",
                 }
                 ]
-                get_commit(db_connexion,user_infos)
+                get_commit(cursor,user_infos)
             
                 return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'})
             
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE":  str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            #db_connexion.close()
+            #cursor.close()
 
 
 @api_bp.route('/recu_edition', methods=['POST'])
@@ -1034,6 +1032,7 @@ def pvgeditionPatient():
         editionPatient_info['STAT_CODESTATUT'] = str(row.get('STAT_CODESTATUT'))
         editionPatient_info['AS_CODEASSURANCE'] = str(row.get('AS_CODEASSURANCE'))
         editionPatient_info['SX_CODESEXE'] = str(row.get('SX_CODESEXE'))
+        editionPatient_info['CODESTATUTSOLDE'] = str(row.get('CODESTATUTSOLDE'))
         
 
         # Connexion à la base de données
@@ -1388,7 +1387,7 @@ def pvgcreation_profil():
                 cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
-                response = test_journee_fermee(db_connexion, *vpp_critere)
+                response = test_journee_fermee(cursor, *vpp_critere)
 
                 if response[0]['NBRE'] == 0:
                     return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
@@ -1397,12 +1396,12 @@ def pvgcreation_profil():
                 reponse = creation_profil(cursor, profil_info)
                 
                 # Valider la transaction
-                db_connexion.commit()
+                cursor.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
 
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
 
@@ -1455,7 +1454,7 @@ def pvgupdate_profil():
                 cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
-                response = test_journee_fermee(db_connexion, *vpp_critere)
+                response = test_journee_fermee(cursor, *vpp_critere)
 
                 if response[0]['NBRE'] == 0:
                     return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
@@ -1464,12 +1463,12 @@ def pvgupdate_profil():
                 reponse = update_profil(cursor, profil_info)
                 
                 # Valider la transaction
-                db_connexion.commit()
+                cursor.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
 
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
    
 @api_bp.route('/delete_profil', methods=['POST'])
@@ -1505,12 +1504,12 @@ def pvgdelete_profil():
                 reponse = delete_profil(cursor, profil_info)
                 
                 # Valider la transaction
-                db_connexion.commit()
+                cursor.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
 
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": f"{str(e)}", "SL_RESULTAT": 'FALSE'}), 200
  
 
@@ -1599,7 +1598,7 @@ def pvginsert_operateur():
                 cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
-                response = test_journee_fermee(db_connexion, *vpp_critere)
+                response = test_journee_fermee(cursor, *vpp_critere)
 
                 if response[0]['NBRE'] == 0:
                     return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
@@ -1608,12 +1607,12 @@ def pvginsert_operateur():
                 reponse = insert_operateur(cursor, operateur_info)
                 
                 # Valider la transaction
-                db_connexion.commit()
+                cursor.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
 
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         
@@ -1687,7 +1686,7 @@ def pvgupdate_compte_utilisateur():
                 cursor = db_connexion.cursor()
                 cursor.execute("BEGIN TRANSACTION")
                 
-                response = test_journee_fermee(db_connexion, *vpp_critere)
+                response = test_journee_fermee(cursor, *vpp_critere)
 
                 if response[0]['NBRE'] == 0:
                     return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
@@ -1696,16 +1695,16 @@ def pvgupdate_compte_utilisateur():
                 reponse = update_compte_utilisateur(cursor, operateur_info)
                 
                 # Valider la transaction
-                db_connexion.commit()
+                cursor.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
 
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         #finally:
-            db_connexion.close()
+            cursor.close()
             
             
 @api_bp.route('/delete_compte_utilisateur', methods=['POST'])
@@ -1742,16 +1741,16 @@ def pvgdelete_compte_utilisateur():
                 reponse = delete_compte_utilisateur(cursor, operateur_info)
                 
                 # Valider la transaction
-                db_connexion.commit()
+                cursor.commit()
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE', "data": reponse}), 200
 
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
 
         #finally:
-            db_connexion.close()            
+            cursor.close()            
             
 
 ################################################################
@@ -2554,7 +2553,7 @@ def pvgGetSoldeCompteOperateur():
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = solde_du_compte(db_connexion, solde_cpte_op)
+                response = solde_du_compte(cursor, solde_cpte_op)
                 
             if len(response) > 0 :
                 return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
@@ -2562,7 +2561,7 @@ def pvgGetSoldeCompteOperateur():
                 return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
                                 
 ################################################################
@@ -3215,22 +3214,22 @@ def pvgUpdateJourneeTravail():
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                update_journee_travail_statut(db_connexion, AG_CODEAGENCE,JT_DATEJOURNEETRAVAIL,JT_STATUT)
+                update_journee_travail_statut(cursor, AG_CODEAGENCE,JT_DATEJOURNEETRAVAIL,JT_STATUT)
                 user_infos = [{
                     'AG_CODEAGENCE':"1000",
                     'JT_STATUT':"O",
                 }]
-                get_commit(db_connexion,user_infos)
+                get_commit(cursor,user_infos)
                
                 return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'})
             
         
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la mise a jour : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            db_connexion.close()
+            cursor.close()
             
 # ################################################################
 #        GESTION DES JOURNEES DE TRAVAIL                         #
@@ -3331,7 +3330,7 @@ def pvgOperationCaisse():
         cursor = db_connexion.cursor()
         cursor.execute("BEGIN TRANSACTION")
         
-        response = test_journee_fermee(db_connexion, *vpp_critere)
+        response = test_journee_fermee(cursor, *vpp_critere)
 
         if response[0]['NBRE'] == 0:
             return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
@@ -3380,24 +3379,24 @@ def pvgOperationCaisse():
 
         try:
             # Appeler la fonction d'insertion dans la base de données
-            response = pvgComptabilisationOperationsCaisse(db_connexion, clsmouvement_infos)
+            response = pvgComptabilisationOperationsCaisse(cursor, clsmouvement_infos)
                         
             # Retourner la réponse au client
             if response['SL_RESULTAT'] == "TRUE":
-                ##db_connexion.close()
+                ##cursor.close()
                 return jsonify({"NUMEROBORDEREAUREGLEMENT":str(response['NUMEROBORDEREAU']),"MC_LIBELLEOPERATION":str(response['MC_LIBELLEOPERATION']),"SL_MESSAGE":"Comptabilisation éffectuée avec success !" + response['MESSAGEAPI'] ,"SL_RESULTAT": 'TRUE'}) 
             else:
-                ##db_connexion.close()
+                ##cursor.close()
                 return jsonify({"SL_MESSAGE":response['SL_MESSAGE'] ,"SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": f"Erreur lors de l'insertion : {str(e)}", "SL_RESULTAT": 'FALSE'}), 200
     except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
     """ #finally:
-        #db_connexion.close() """
+        #cursor.close() """
         
 # ################################################################
 #         GESTION DE LA COMPTABILITE                            #
@@ -3459,7 +3458,26 @@ def OperationVersementRetrait():
 
             clsEtatmouvementacomptabiliserss.append(clsEtatmouvementacomptabilisers)
     
-    
+    AG_CODEAGENCE = None
+    MC_DATESAISIE = None
+    OP_CODEOPERATEUR = None
+    if clsEtatmouvementacomptabiliserss[0]['OP_CODEOPERATEUR']:
+        AG_CODEAGENCE = clsEtatmouvementacomptabiliserss[0]['AG_CODEAGENCE']
+    if clsEtatmouvementacomptabiliserss[0]['MC_DATESAISIE']:
+        MC_DATESAISIE  = clsEtatmouvementacomptabiliserss[0]['MC_DATESAISIE']
+    if clsEtatmouvementacomptabiliserss[0]['OP_CODEOPERATEUR']:
+        OP_CODEOPERATEUR  = clsEtatmouvementacomptabiliserss[0]['OP_CODEOPERATEUR']
+
+    # Préparer les paramètres pour la fonction
+    if AG_CODEAGENCE and MC_DATESAISIE and OP_CODEOPERATEUR:
+        vpp_critere = (AG_CODEAGENCE, MC_DATESAISIE, OP_CODEOPERATEUR)
+    elif AG_CODEAGENCE and MC_DATESAISIE:
+        vpp_critere = (AG_CODEAGENCE, MC_DATESAISIE)
+    elif AG_CODEAGENCE:
+        vpp_critere = (AG_CODEAGENCE,)
+    else:
+        vpp_critere = ()
+            
     # Récupérer la connexion à la base de données depuis current_app
    # db_connection = current_app.db_connection
     
@@ -3468,6 +3486,13 @@ def OperationVersementRetrait():
     db_connection = connect_database()
     db_connection = db_connection.cursor()
     db_connection.execute("BEGIN TRANSACTION")
+    
+    responses = test_journee_fermeeVersement(db_connection, *vpp_critere)
+
+    if responses[0]['NBRE'] == 0:
+        return jsonify({"SL_MESSAGE": 'Cette journée a été déjà fermée ou non encore ouverte !' ,"SL_RESULTAT": 'FALSE'})
+        
+    
         #db_connection.begin()
          # Appeler la fonction avec les données récupérées
     response = pvgComptabilisationVersement(db_connection, clsEtatmouvementacomptabiliserss)

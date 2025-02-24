@@ -18,7 +18,7 @@ def ExtourneOperation(connexion,AG_CODEAGENCE,MV_DATEPIECECOMPTABILISATION,MV_DA
     """
     
     try:
-        cursor = connexion.cursor()
+        cursor = connexion
         vlpNumPiece = pvgNumeroPiece(connexion, AG_CODEAGENCE, datetime.strptime(MV_DATEPIECECOMPTABILISATION, "%d/%m/%Y"),OP_CODEOPERATEUR)
         MV_NUMPIECE3 = vlpNumPiece[0]['MC_NUMPIECE']
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
@@ -46,7 +46,7 @@ def ExtourneFacture(connexion,AG_CODEAGENCE,MV_DATEPIECECOMPTABILISATION,FT_CODE
     """
     
     try:
-        cursor = connexion.cursor()
+        cursor = connexion
         vlpNumPiece = pvgNumeroPiece(connexion, AG_CODEAGENCE, datetime.strptime(MC_DATESAISIE, "%d/%m/%Y"),OP_CODEOPERATEUR)
         MV_NUMPIECE3 = vlpNumPiece[0]['MC_NUMPIECE']
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
@@ -464,14 +464,15 @@ def editionPatient(connexion, editionPatient_info):
         'OP_CODEOPERATEUREDITION': editionPatient_info['OP_CODEOPERATEUREDITION'],
         'STAT_CODESTATUT': editionPatient_info['STAT_CODESTATUT'],
         'AS_CODEASSURANCE': editionPatient_info['AS_CODEASSURANCE'],
-        'SX_CODESEXE': editionPatient_info['SX_CODESEXE']
+        'SX_CODESEXE': editionPatient_info['SX_CODESEXE'],
+        'CODESTATUTSOLDE': editionPatient_info['CODESTATUTSOLDE']
     }
     
     try:
         cursor = connexion.cursor()
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("EXEC PS_ETATLISTEDESPATIENTS ?,?,?,?,?,?,?,?,?,?", list(params.values()))
+        cursor.execute("EXEC PS_ETATLISTEDESPATIENTS ?,?,?,?,?,?,?,?,?,?,?", list(params.values()))
         
         rows = cursor.fetchall()
         results = []
@@ -495,6 +496,7 @@ def editionPatient(connexion, editionPatient_info):
             result['PF_CODEPROFESSION'] = row.PF_CODEPROFESSION
             result['PF_LIBELLE'] = row.PF_LIBELLE
             result['PT_CODEPATIENT'] = row.PT_CODEPATIENT
+            result['ET_SOLDECOMPTE'] = row.ET_SOLDECOMPTE
   
             # Ajouter le dictionnaire à la liste des résultats
             results.append(result)
@@ -686,7 +688,7 @@ def pvgNumeroPiece(connexion, _AG_CODEAGENCE, _MC_DATEPIECE, _OP_CODEOPERATEUR):
 
 def recup_info_increment_piece_op(connexion, _OP_CODEOPERATEUR):
     try:
-        cursor = connexion.cursor()
+        cursor = connexion
         query = "SELECT * FROM dbo.TEMPINCREMENTRESULTAT{}".format(_OP_CODEOPERATEUR)
         # Exécution de la fonction SQL
         cursor.execute(query)
