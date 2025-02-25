@@ -38,7 +38,7 @@ def test_journee_fermeeVersement(connexion, *vppCritere):
         raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")
     
 def test_journee_fermee(connexion, *vppCritere):
-    cursor = connexion.cursor()
+    cursor = connexion
     
     vppCritere2 = (vppCritere[0], vppCritere[1], 'O')
     criteres, valeurs = pvpChoixCritere(vppCritere2)
@@ -61,7 +61,7 @@ def test_journee_fermee(connexion, *vppCritere):
             results.append(result)
   
         if results[0]['NBRE'] != 0:
-            clsOperateur= pvgTableLabel(cursor, vppCritere);
+            clsOperateur= pvgTableLabel(connexion, vppCritere);
             if clsOperateur[0]['OP_JOURNEEOUVERTE'] == "N" and clsOperateur[0]['OP_CAISSIER'] == "O":
                 result = {
                     'NBRE': '0',
@@ -137,7 +137,7 @@ def pvgTableLabelVersement(connexion, vppCritere):
 
 
 def pvgTableLabel(connexion, vppCritere):
-    cursor = connexion.cursor()
+    cursor = connexion
     
     vppCritere2 = (vppCritere[0], vppCritere[2])
     # vppCritere2 = (vppCritere[0],)
