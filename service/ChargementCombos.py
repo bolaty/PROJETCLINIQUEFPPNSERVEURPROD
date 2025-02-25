@@ -304,7 +304,30 @@ def pvgComboCompte(connexion, *vppCritere):
 
     # Requête SQL
     vapRequete = f"""
-        SELECT PL_CODENUMCOMPTE, PL_NUMCOMPTE, PL_LIBELLE
+        SELECT 
+        PL_CODENUMCOMPTE
+        ,PL_NUMCOMPTE
+        ,PL_LIBELLE
+        ,SO_CODESOCIETE
+        ,PL_COMPTECOLLECTIF
+        ,PL_REPORTDEBIT
+        ,PL_REPORTCREDIT
+        ,PL_MONTANTPERIODEPRECEDENTDEBIT
+        ,PL_MONTANTPERIODEPRECEDENTCREDIT
+        ,PL_MONTANTPERIODEDEBITENCOURS
+        ,PL_MONTANTPERIODECREDITENCOURS
+        ,PL_MONTANTSOLDEFINALDEBIT
+        ,PL_MONTANTSOLDEFINALCREDIT
+        ,PL_SENS
+        ,PL_TYPECOMPTE
+        ,PL_COMPTERESULTATINSTANCE
+        ,PL_EXCEDENTEXERCICE
+        ,PL_DEFICITEXERCICE
+        ,PL_ACTIF
+        ,PL_AUTORISEINVERSION
+        ,PL_SAISIE_ANALYTIQUE
+        ,PL_TESTSURCOMPTETIERS
+        ,PL_COMPTEREFERENTIELCOMPTABLE
         FROM PLANCOMPTABLE
         {vap_critere}
         ORDER BY PL_NUMCOMPTE
@@ -322,6 +345,26 @@ def pvgComboCompte(connexion, *vppCritere):
                 'PL_CODENUMCOMPTE': row[0],
                 'PL_NUMCOMPTE': row[1],
                 'PL_LIBELLE': row[2],
+                'SO_CODESOCIETE': row[3],
+                'PL_COMPTECOLLECTIF': row[4],
+                'PL_REPORTDEBIT': row[5],
+                'PL_REPORTCREDIT': row[6],
+                'PL_MONTANTPERIODEPRECEDENTDEBIT': row[7],
+                'PL_MONTANTPERIODEPRECEDENTCREDIT': row[8],
+                'PL_MONTANTPERIODEDEBITENCOURS': row[9],
+                'PL_MONTANTPERIODECREDITENCOURS': row[10],
+                'PL_MONTANTSOLDEFINALDEBIT': row[11],
+                'PL_MONTANTSOLDEFINALCREDIT': row[12],
+                'PL_SENS': row[13],
+                'PL_TYPECOMPTE': row[14],
+                'PL_COMPTERESULTATINSTANCE': row[15],
+                'PL_EXCEDENTEXERCICE': row[16],
+                'PL_DEFICITEXERCICE': row[17],
+                'PL_ACTIF': row[18],
+                'PL_AUTORISEINVERSION': row[19],
+                'PL_SAISIE_ANALYTIQUE': row[20],
+                'PL_TESTSURCOMPTETIERS': row[21],
+                'PL_COMPTEREFERENTIELCOMPTABLE': row[22],
             }
             results.append(result)
         return results
@@ -332,7 +375,47 @@ def pvgComboCompte(connexion, *vppCritere):
 
     finally:
         cursor.close()
+        
+def pvgComboTypeTiers(connexion):
+    """
+    Récupère les opérateurs en fonction des critères fournis.
+    - vppCritere[0] : Code agence (obligatoire si présent).
+    - vppCritere[1] : Code opérateur (optionnel).
+    """
+    cursor = connexion.cursor()
 
+    
+    
+    # Requête SQL
+    vapRequete = f"""
+        SELECT 
+            TC_CODETYPETIERS,
+            TC_LIBELLE
+        FROM TYPETIERS 
+    """
+    
+    try:
+        # Exécution de la requête
+        cursor.execute(vapRequete)
+        rows = cursor.fetchall()
+
+        # Formatage des résultats
+        results = []
+        for row in rows:
+            result = {
+                'TC_CODETYPETIERS': row[0],
+                'TC_LIBELLE': row[1]
+            }
+            results.append(result)
+        return results
+
+    except Exception as e:
+        # Gestion des erreurs
+        connexion.rollback()
+        raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
+
+    finally:
+        cursor.close()
 
 def pvgComboModeReglement(connexion):
     """
@@ -537,7 +620,7 @@ def pvgComboTypeshemacomptable(connexion):
 
     # Requête SQL
     vapRequete = f"""
-        SELECT TS_CODETYPESCHEMACOMPTABLE,TS_LIBELLE FROM dbo.TYPESCHEMACOMPTABLE ORDER BY TS_LIBELLE
+        SELECT TS_CODETYPESCHEMACOMPTABLE,TS_LIBELLE FROM dbo.TYPESCHEMACOMPTABLE ORDER BY TS_CODETYPESCHEMACOMPTABLE 
     """
     
     try:
@@ -562,6 +645,44 @@ def pvgComboTypeshemacomptable(connexion):
 
     finally:
         cursor.close()       
+        
+def pvgComboJournal(connexion):
+    """
+    Récupère les opérateurs en fonction des critères fournis.
+    - vppCritere[0] : Code agence (obligatoire si présent).
+    - vppCritere[1] : Code opérateur (optionnel).
+    """
+    cursor = connexion.cursor()
+
+
+    # Requête SQL
+    vapRequete = f"""
+        SELECT JO_CODEJOURNAL, JO_LIBELLE, JO_NUMEROORDRE FROM  JOURNAL ORDER BY JO_LIBELLE DESC
+    """
+    
+    try:
+        # Exécution de la requête
+        cursor.execute(vapRequete)
+        rows = cursor.fetchall()
+
+        # Formatage des résultats
+        results = []
+        for row in rows:
+            result = {
+                'JO_CODEJOURNAL': row[0],
+                'JO_LIBELLE': row[1],
+                'JO_NUMEROORDRE': row[2]
+            }
+            results.append(result)
+        return results
+
+    except Exception as e:
+        # Gestion des erreurs
+        connexion.rollback()
+        raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
+
+    finally:
+        cursor.close()               
 
 def pvgComboAssurance(connexion):
     """

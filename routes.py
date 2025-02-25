@@ -6,10 +6,10 @@ from service.comptabilisationOperation import pvgComptabilisationVersement, pvgC
 from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition,editionPatient, journal_edition, gd_livre_edition, balance_edition,point_par_acte_edition,formation_edition,solde_edition
 from service.auth import connexion_utilisateur
 from service.journee_de_travail_et_exercice import valeur_scalaire_requete_max, valeur_scalaire_requete_count, insert_journee_travail, table_libelle_date_systeme_serveur, liste_journee_travail, update_journee_travail_statut
-from service.ChargementCombos import get_solde_mouvement_comptable,pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille,pvgComboOperateurCaisse,solde_du_compte
+from service.ChargementCombos import pvgComboTypeTiers,pvgComboJournal,get_solde_mouvement_comptable,pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille,pvgComboOperateurCaisse,solde_du_compte
 from service.auth import connexion_utilisateur,pvgUserChangePasswordfist,pvgUserDemandePassword
 from service.Utilisateurs import creation_profil,update_profil,delete_profil,update_compte_utilisateur,insert_operateur,delete_compte_utilisateur,Activation_DesActivation_utilisateur
-from service.Patient import ListePatient,insertpatient,deletepatient
+from service.Patient import ListePatient,insertpatient,deletepatient,ListeComptePatient
 from service.Guichet import pvgComboTypeshemacomptableVersement,pvgChargerDansDataSetSC_SCHEMACOMPTABLECODE,pvgComboTypespiece
 from models.models import clsObjetEnvoi
 from datetime import datetime
@@ -157,7 +157,49 @@ def pvgdeletepatient():
         #finally:
             cursor.close()  
 
+@api_bp.route('/ListeComptePatient', methods=['POST'])
+def pvgComptePatient():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+    
+    for row in request_data['Objet']:
+        Patient_info = {}
 
+        # Validation et récupération des données pour la suppression
+        Patient_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE'))
+        Patient_info['PT_CODEPATIENT'] = str(row.get('PT_CODEPATIENT'))
+        Patient_info['PL_NUMCOMPTE'] = str(row.get('PL_NUMCOMPTE'))
+        Patient_info['DATEDEBUT'] = str(row.get('DATEDEBUT'))
+        Patient_info['DATEFIN'] = str(row.get('DATEFIN'))
+        Patient_info['PT_MATRICULE'] = str(row.get('PT_MATRICULE'))
+        Patient_info['PT_NOMPRENOMS'] = str(row.get('PT_NOMPRENOMS'))
+        Patient_info['STAT_CODESTATUT'] = str(row.get('STAT_CODESTATUT'))
+        Patient_info['PT_CONTACT'] = str(row.get('PT_CONTACT'))
+        
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = ListeComptePatient(db_connexion, Patient_info)
+            
+            if len(response) > 0:
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify([{"SL_MESSAGE": "Aucuns élement trouvé !!!", "SL_RESULTAT": 'FALSE'}])
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close() 
 
 
 @api_bp.route('/ListePatient', methods=['POST'])
@@ -902,6 +944,8 @@ def pvgJournal():
         journal_info['MONTANTDEBUT'] = str(row.get('MONTANTDEBUT'))
         journal_info['MONTANTFIN'] = str(row.get('MONTANTFIN'))
         journal_info['NUMBORDEREAU'] = str(row.get('NUMBORDEREAU'))
+        journal_info['JO_CODEJOURNAL'] = str(row.get('JO_CODEJOURNAL'))
+        journal_info['TS_CODETYPESCHEMACOMPTABLE'] = str(row.get('TS_CODETYPESCHEMACOMPTABLE'))
 
         # Connexion à la base de données
         db_connexion = connect_database()
@@ -2288,6 +2332,36 @@ def ComboAssure():
         #finally:
             #db_connexion.close()       
  
+@api_bp.route('/pvgComboJournal', methods=['POST'])
+def ComboJournal():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        user_info = {}
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = pvgComboJournal(db_connexion)
+                
+                
+            if len(response) > 0 :
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()     
+
 @api_bp.route('/pvgComboTypeshemacomptable', methods=['POST'])
 def ComboTypeshemacomptable():
     request_data = request.json
@@ -2348,6 +2422,38 @@ def ComboTypespiece():
         #finally:
             #db_connexion.close()     
   
+
+@api_bp.route('/pvgComboTypeTiers', methods=['POST'])
+def ComboTypeTiers():
+    request_data = request.json
+    
+    for row in request_data['Objet']:
+        user_info = {}
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = pvgComboTypeTiers(db_connexion)
+                
+                
+            if len(response) > 0 :
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors de la recuperation : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()   
+
+
   
 @api_bp.route('/pvgComboTypeshemacomptableVersement', methods=['POST'])
 def ComboTypeshemacomptableVersement():
@@ -2469,7 +2575,7 @@ def ComboCompte():
             if len(response) > 0 :
                 return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
             else:
-                return jsonify({"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'})
+                return jsonify([{"SL_MESSAGE": 'Aucun élément trouvé', "SL_RESULTAT": 'FALSE'}])
         
         except Exception as e:
             db_connexion.rollback()

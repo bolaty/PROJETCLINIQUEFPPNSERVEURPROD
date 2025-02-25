@@ -320,14 +320,16 @@ def journal_edition(connexion, journal_info):
         'AS_CODEASSURANCE': journal_info['AS_CODEASSURANCE'],
         'MONTANTDEBUT': journal_info.get('MONTANTDEBUT') or 0,
         'MONTANTFIN': journal_info.get('MONTANTFIN') or 0,
-        'NUMBORDEREAU': journal_info['NUMBORDEREAU']
+        'NUMBORDEREAU': journal_info['NUMBORDEREAU'],
+        'JO_CODEJOURNAL': journal_info['JO_CODEJOURNAL'] or '',
+        'TS_CODETYPESCHEMACOMPTABLE': journal_info['TS_CODETYPESCHEMACOMPTABLE'] or '',
     }
     
     try:
         cursor = connexion.cursor()
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("EXEC PS_ETATJOURNAL ?,?,?,?,?,?,?,?,?,?,?,?,?,?", list(params.values()))
+        cursor.execute("EXEC PS_ETATJOURNAL ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?", list(params.values()))
         
         rows = cursor.fetchall()
         results = []

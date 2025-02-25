@@ -20,6 +20,65 @@ class clsAgence:
         self.AG_RAISONSOCIAL = ''
         self.AG_EMAILMOTDEPASSE = ''
         self.AG_EMAIL = ''
+
+
+# Liste des comptes Patients
+def ListeComptePatient(connexion, Patient_info):
+    
+     # Préparation des paramètres
+    params = {
+        'AG_CODEAGENCE': Patient_info['AG_CODEAGENCE'],
+        'PT_CODEPATIENT': Patient_info['PT_CODEPATIENT'] or '',
+        'PL_NUMCOMPTE': Patient_info['PL_NUMCOMPTE'] or '',
+        'PT_MATRICULE': Patient_info['PT_MATRICULE'] or '',
+        'PT_NOMPRENOMS': Patient_info['PT_NOMPRENOMS'] or '',
+        'DATEDEBUT': datetime.strptime(Patient_info['DATEDEBUT'], "%d/%m/%Y"),
+        'DATEFIN': datetime.strptime(Patient_info['DATEFIN'], "%d/%m/%Y"),
+        'STAT_CODESTATUT': Patient_info['STAT_CODESTATUT'] or '',
+        'PT_CONTACT': Patient_info['PT_CONTACT'],
+        'CODECRYPTAGE': CODECRYPTAGE
+    }
+    
+    try:
+        cursor = connexion.cursor()
+        
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("SELECT * FROM dbo.FT_PATIENTPARTYPECOMPTE(?,?,?,?,?,?,?,?,?,?)",list(params.values()))
+        
+        rows = cursor.fetchall()
+        results = []
+        for row in rows:
+            result = {}
+            
+            result['AG_CODEAGENCE'] = row.AG_CODEAGENCE
+            result['PT_IDPATIENT'] = row.PT_IDPATIENT
+            result['PT_CODEPATIENT'] = row.PT_CODEPATIENT
+            result['PT_MATRICULE'] = row.PT_MATRICULE
+            result['PT_CONTACT'] = row.PT_CONTACT
+            result['PT_DATESAISIE'] = row.PT_DATESAISIE.strftime("%d/%m/%Y")  # Formatage de la date
+            result['PT_NOMPRENOMS'] = row.PT_NOMPRENOMS
+            result['PT_EMAIL'] = row.PT_EMAIL 
+            result['PT_DATENAISSANCE'] = row.PT_DATENAISSANCE.strftime("%d/%m/%Y")  # Formatage de la date
+            result['PT_LIEUHABITATION'] = row.PT_LIEUHABITATION
+            result['PT_PROFESSION'] = row.PT_PROFESSION
+            result['SX_CODESEXE'] = row.SX_CODESEXE
+            result['STAT_CODESTATUT'] = row.STAT_CODESTATUT
+            result['STAT_LIBELLE'] = row.STAT_LIBELLE
+            result['OP_CODEOPERATEUR'] = row.OP_CODEOPERATEUR
+            result['PL_CODENUMCOMPTE'] = row.PL_CODENUMCOMPTE
+            result['PL_NUMCOMPTE'] = row.PL_NUMCOMPTE
+            result['PL_COMPTECOLLECTIF'] = row.PL_COMPTECOLLECTIF
+            result['PL_TYPECOMPTE'] = row.PL_TYPECOMPTE
+            result['PL_SAISIE_ANALYTIQUE'] = row.PL_SAISIE_ANALYTIQUE
+  
+            # Ajouter le dictionnaire à la liste des résultats
+            results.append(result)
+        
+        return results
+    except Exception as e:
+        # En cas d'erreur, lever une exception avec un message approprié
+        raise Exception(f"Erreur lors de la récupération des données: {str(e.args[1])}")   
+
         
 
 # Liste des Patients
