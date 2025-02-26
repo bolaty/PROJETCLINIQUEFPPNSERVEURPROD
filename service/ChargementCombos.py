@@ -376,6 +376,98 @@ def pvgComboCompte(connexion, *vppCritere):
     finally:
         cursor.close()
         
+def pvgTableLabelAvecSolde(connexion, SO_CODESOCIETE,AG_CODEAGENCE,PL_NUMCOMPTE,MC_DATEPIECE):
+    """
+    Récupère les comptes en fonction des critères fournis.
+    - vppCritere[0] : Code société (obligatoire si présent).
+    - vppCritere[1] : Numéro de compte (optionnel).
+    - vppCritere[2] : Type de compte (optionnel).
+    """
+    cursor = connexion.cursor()
+
+    
+    try:
+        # Exécution de la requête
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("SELECT * FROM FC_PLANCOMPTABLEAVECSOLDEUNITAIRE(?,?,?,?)",(SO_CODESOCIETE,AG_CODEAGENCE,PL_NUMCOMPTE,datetime.strptime(MC_DATEPIECE, "%d/%m/%Y")))
+                       
+        rows = cursor.fetchall()
+
+        # Formatage des résultats
+        results = []
+        for row in rows:
+            result = {
+                'PL_CODENUMCOMPTE': row.PL_CODENUMCOMPTE,
+                'PL_NUMCOMPTE': row.PL_NUMCOMPTE,
+                'PL_LIBELLE': row.PL_LIBELLE,
+                'PL_SENS': row.PL_SENS,
+                'PL_TYPECOMPTE': row.PL_TYPECOMPTE,
+                'PL_ACTIF': row.PL_ACTIF,
+                'PL_SOLDECOMPTE': int(row.PL_SOLDECOMPTE),
+                'PL_COMPTETIERS': row.PL_COMPTETIERS,
+                'PL_SAISIE_ANALYTIQUE': row.PL_SAISIE_ANALYTIQUE,
+                'PL_TESTSURCOMPTETIERS': row.PL_TESTSURCOMPTETIERS
+            }
+            
+            # Formatage avec séparateur de milliers et prise en charge des nombres négatifs
+            result['PL_SOLDECOMPTE'] = f"{result['PL_SOLDECOMPTE']:,.0f}".replace(",", " ")
+            
+            results.append(result)
+        return results
+
+    except Exception as e:
+        # Gestion des erreurs
+        raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
+
+    finally:
+        cursor.close()  
+        
+        
+def pvgSoldeCompteClient(connexion, AG_CODEAGENCE,PT_IDPATIENT,PL_CODENUMCOMPTE ):
+    """
+    Récupère les comptes en fonction des critères fournis.
+    - vppCritere[0] : Code société (obligatoire si présent).
+    - vppCritere[1] : Numéro de compte (optionnel).
+    - vppCritere[2] : Type de compte (optionnel).
+    """
+    cursor = connexion.cursor()
+
+    
+    try:
+        # Exécution de la requête
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        # Requête SQL
+        sql_query = """
+            SELECT 
+                SUM(MC_MONTANTCREDIT) - SUM(MC_MONTANTDEBIT) AS Soldes
+            FROM 
+                dbo.VUE_MOUVEMENTCOMPTABLE
+            WHERE 
+                AG_CODEAGENCE = ? 
+                AND PT_IDPATIENT = ? 
+                AND PL_CODENUMCOMPTE = ?
+        """
+        
+        
+        cursor.execute(sql_query, (AG_CODEAGENCE, int(PT_IDPATIENT), int(PL_CODENUMCOMPTE)))
+        
+        result = cursor.fetchone()
+        soldes = int(result[0]) if result and result[0] is not None else 0  # Éviter les valeurs NULL
+        
+        # Formatage avec séparateur de milliers et prise en charge des nombres négatifs
+        soldes = f"{soldes:,.0f}".replace(",", " ")
+        
+        return soldes
+
+    except Exception as e:
+        # Gestion des erreurs
+        raise Exception(f"Erreur lors de l'exécution de la requête : {str(e)}")
+
+    finally:
+        cursor.close()         
+        
+              
+        
 def pvgComboTypeTiers(connexion):
     """
     Récupère les opérateurs en fonction des critères fournis.

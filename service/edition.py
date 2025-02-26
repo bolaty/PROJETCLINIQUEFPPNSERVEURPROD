@@ -125,11 +125,11 @@ def recu_edition(connexion,AG_CODEAGENCE,MC_DATEPIECE,NUMEROBORDEREAU):
 
 
 # brouillard de caisse
-def brouillard_caisse_edition(connection, broui_caisse_info):
+def brouillard_caisse_edition(connexion, broui_caisse_info):
     """
     Récupère les données de la procédure SQL [PS_ETATMOUVEMENTCOMPTABLE].
     
-    :param connection: Connexion à la base de données SQL Server
+    :param connexion: Connexion à la base de données SQL Server
     :param AG_CODEAGENCE: Nature du compte (varchar)
     :param DATEDEBUT: Indicateur actif (varchar)
     :param DATEFIN: Type d'écran (varchar)
@@ -138,7 +138,7 @@ def brouillard_caisse_edition(connection, broui_caisse_info):
     :return: Liste de dictionnaires représentant les enregistrements de la table
     """
     try:
-        cursor = connection.cursor()
+        cursor = connexion.cursor()
         
         DATEDEBUT = parse_datetime(broui_caisse_info['DATEDEBUT'])
         DATEFIN = parse_datetime(broui_caisse_info['DATEFIN'])
@@ -249,9 +249,9 @@ def brouillard_caisse_edition(connection, broui_caisse_info):
 
 
 # brouillard de caisse
-def solde_edition(connection, solde_info):
+def solde_edition(connexion, solde_info):
     try:
-        cursor = connection.cursor()
+        cursor = connexion
         
         DATEDEBUT = parse_datetime(solde_info['DATEDEBUT'])
         DATEFIN = parse_datetime(solde_info['DATEFIN'])
@@ -289,7 +289,9 @@ def solde_edition(connection, solde_info):
                 'PL_TYPECOMPTE': row.PL_TYPECOMPTE,
                 'PT_MATRICULE': row.PT_MATRICULE,
                 'MC_NUMPIECE': row.MC_NUMPIECE,
-                'SOLDE': int(row.SOLDE)
+                'SOLDE': int(row.SOLDE),
+                'OP_NOMPRENOM': row.OP_NOMPRENOM,
+                'MR_LIBELLE': row.MR_LIBELLE
             }
             
             results.append(result)

@@ -29,7 +29,7 @@ def ListeComptePatient(connexion, Patient_info):
     params = {
         'AG_CODEAGENCE': Patient_info['AG_CODEAGENCE'],
         'PT_CODEPATIENT': Patient_info['PT_CODEPATIENT'] or '',
-        'PL_NUMCOMPTE': Patient_info['PL_NUMCOMPTE'] or '',
+        'TC_CODETYPETIERS': Patient_info['TC_CODETYPETIERS'] or '',
         'PT_MATRICULE': Patient_info['PT_MATRICULE'] or '',
         'PT_NOMPRENOMS': Patient_info['PT_NOMPRENOMS'] or '',
         'DATEDEBUT': datetime.strptime(Patient_info['DATEDEBUT'], "%d/%m/%Y"),

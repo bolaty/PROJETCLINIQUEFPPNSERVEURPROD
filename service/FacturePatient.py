@@ -252,14 +252,16 @@ def list_facture(connexion, clsListeFacture):
         'MC_DATESAISIE1': datetime.strptime(clsListeFacture['MC_DATESAISIE1'], "%d/%m/%Y"),
         'MC_DATESAISIE2': datetime.strptime(clsListeFacture['MC_DATESAISIE2'], "%d/%m/%Y"),
         'CODECRYPTAGE': CODECRYPTAGE,
-        'TYPEOPERATION': int(clsListeFacture['TYPEOPERATION'])
+        'TYPEOPERATION': int(clsListeFacture['TYPEOPERATION']),
+        'MONTANT1': int(clsListeFacture.get('MONTANT1') or 0),
+        'MONTANT2': int(clsListeFacture.get('MONTANT2') or 0)
     }
    
     try:
-        cursor = connexion.cursor()
+        cursor = connexion
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("SELECT * FROM dbo.FT_FACTUREPATIENTPARTYPE(?,?,?,?,?,?,?,?,?,?,?,?,?)", list(params.values()))
+        cursor.execute("SELECT * FROM dbo.FT_FACTUREPATIENTPARTYPE(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", list(params.values()))
                        
         rows = cursor.fetchall()
         results = []

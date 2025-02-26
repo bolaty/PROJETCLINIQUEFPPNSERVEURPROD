@@ -6,7 +6,7 @@ from service.comptabilisationOperation import pvgComptabilisationVersement, pvgC
 from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition,editionPatient, journal_edition, gd_livre_edition, balance_edition,point_par_acte_edition,formation_edition,solde_edition
 from service.auth import connexion_utilisateur
 from service.journee_de_travail_et_exercice import valeur_scalaire_requete_max, valeur_scalaire_requete_count, insert_journee_travail, table_libelle_date_systeme_serveur, liste_journee_travail, update_journee_travail_statut
-from service.ChargementCombos import pvgComboTypeTiers,pvgComboJournal,get_solde_mouvement_comptable,pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille,pvgComboOperateurCaisse,solde_du_compte
+from service.ChargementCombos import pvgSoldeCompteClient, pvgTableLabelAvecSolde, pvgComboTypeTiers,pvgComboJournal,get_solde_mouvement_comptable,pvgPeriodiciteDateDebutFin,pvgComboCompte,pvgComboTypeshemacomptable,pvgComboAssurance,pvgComboAssure,pvgComboActe,pvgComboModeReglement,pvgComboperiode,pvgComboTableLabelAgence,pvgComboOperateur,pvgComboExercice,pvgComboPeriodicite, pvgComboSexe, pvgComboProfession, liste_des_familles_operations, liste_des_operations, pvgComboPays, pvgComboVille,pvgComboOperateurCaisse,solde_du_compte
 from service.auth import connexion_utilisateur,pvgUserChangePasswordfist,pvgUserDemandePassword
 from service.Utilisateurs import creation_profil,update_profil,delete_profil,update_compte_utilisateur,insert_operateur,delete_compte_utilisateur,Activation_DesActivation_utilisateur
 from service.Patient import ListePatient,insertpatient,deletepatient,ListeComptePatient
@@ -170,7 +170,7 @@ def pvgComptePatient():
         # Validation et récupération des données pour la suppression
         Patient_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE'))
         Patient_info['PT_CODEPATIENT'] = str(row.get('PT_CODEPATIENT'))
-        Patient_info['PL_NUMCOMPTE'] = str(row.get('PL_NUMCOMPTE'))
+        Patient_info['TC_CODETYPETIERS'] = str(row.get('TC_CODETYPETIERS'))
         Patient_info['DATEDEBUT'] = str(row.get('DATEDEBUT'))
         Patient_info['DATEFIN'] = str(row.get('DATEFIN'))
         Patient_info['PT_MATRICULE'] = str(row.get('PT_MATRICULE'))
@@ -585,6 +585,8 @@ def pvgGetFactureParType():
         clsListeFacture['MC_DATESAISIE1'] = row.get('MC_DATESAISIE1')
         clsListeFacture['MC_DATESAISIE2'] = row.get('MC_DATESAISIE2')
         clsListeFacture['TYPEOPERATION'] = row.get('TYPEOPERATION')
+        clsListeFacture['MONTANT1'] = row.get('MONTANT1')
+        clsListeFacture['MONTANT2'] = row.get('MONTANT2')
         
         # required_keys = ['BI_CODEBIENS', 'BI_LIBELLEBIENS', 'TY_CODETYPENATUREBIENS', 'CODECRYPTAGE']
 
@@ -603,7 +605,7 @@ def pvgGetFactureParType():
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression ou récupération
-                response = list_facture(db_connexion, clsListeFacture)
+                response = list_facture(cursor, clsListeFacture)
                 
                 if len(response) > 0:
                     #cursor.execute("COMMIT")
@@ -620,11 +622,11 @@ def pvgGetFactureParType():
                     
         
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify([{"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'}])
         
         #finally:
-            #db_connexion.close()
+            #cursor.close()
             
 ################################################################
 #                           GESTION DES FACTURES                                                                  #
@@ -794,6 +796,77 @@ def pvgExtourneFacture():
             #cursor.close()
 
 
+@api_bp.route('/pvgSoldeCompteClient', methods=['POST'])
+def SoldeCompteClient():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+    
+    for row in request_data['Objet']:
+        compte_info = {}
+        
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = pvgSoldeCompteClient(db_connexion, str(row.get('AG_CODEAGENCE', '')),str(row.get('PT_IDPATIENT', '')), str(row.get('PL_CODENUMCOMPTE')))
+            
+            if response:
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify([{"SL_MESSAGE": "Aucuns élement trouvé !!!", "SL_RESULTAT": 'FALSE'}])
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()
+
+@api_bp.route('/pvgTableLabelAvecSolde', methods=['POST'])
+def TableLabelAvecSolde():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+    
+    for row in request_data['Objet']:
+        compte_info = {}
+
+        # Validation et récupération des données pour la suppression
+        #SO_CODESOCIETE,AG_CODEAGENCE,PL_NUMCOMPTE,MC_DATEPIECE
+        compte_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', ''))
+        compte_info['MC_DATEPIECE'] = str(row.get('MC_DATEPIECE'))
+        compte_info['SO_CODESOCIETE'] = str(row.get('SO_CODESOCIETE', ''))
+        compte_info['PL_NUMCOMPTE'] = str(row.get('PL_NUMCOMPTE', ''))
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression
+                response = pvgTableLabelAvecSolde(db_connexion,str(row.get('SO_CODESOCIETE', '')), str(row.get('AG_CODEAGENCE', '')),str(row.get('PL_NUMCOMPTE', '')), str(row.get('MC_DATEPIECE')))
+            
+            if len(response) > 0:
+                return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
+            else:
+                return jsonify([{"SL_MESSAGE": "Aucuns élement trouvé !!!", "SL_RESULTAT": 'FALSE'}])
+        
+        except Exception as e:
+            db_connexion.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        #finally:
+            #db_connexion.close()
+
 @api_bp.route('/recu_edition', methods=['POST'])
 def pvgRecuEdition():
     request_data = request.json
@@ -859,7 +932,7 @@ def pvgSolde():
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = solde_edition(db_connexion, solde_info)
+                response = solde_edition(cursor, solde_info)
             
             if len(response) > 0:
                 return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
@@ -867,11 +940,11 @@ def pvgSolde():
                 return jsonify({"SL_MESSAGE": "Aucuns élement trouvé !!!", "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            #db_connexion.close()
+            #cursor.close()
 
 
 
