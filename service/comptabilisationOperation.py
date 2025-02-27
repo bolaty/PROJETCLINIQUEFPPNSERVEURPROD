@@ -95,8 +95,9 @@ def pvgComptabilisationVersement(connection, clsMouvementcomptables):
 
 
 
-def pvgComptabilisationOperations(cursor, clsMouvementcomptables):
+def pvgComptabilisationOperations(connexion, clsMouvementcomptables):
         try:
+            cursor = connexion
             listOperation = []
             statutinternet = IsNetworkConnected()
             if statutinternet != 400:

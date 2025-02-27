@@ -977,7 +977,7 @@ def pvgBrouillardCaisse():
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression
-                response = brouillard_caisse_edition(db_connexion, broui_caisse_info)
+                response = brouillard_caisse_edition(cursor, broui_caisse_info)
             
             if len(response) > 0:
                 return jsonify({"SL_MESSAGE": "Opération éffectuée avec succès !!!", "SL_RESULTAT": 'TRUE'},response)
@@ -985,11 +985,11 @@ def pvgBrouillardCaisse():
                 return jsonify({"SL_MESSAGE": "Aucuns élement trouvé !!!", "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            #db_connexion.close()
+            #cursor.close()
 
 
 
@@ -1344,7 +1344,7 @@ def pvgUserLogin():
                 response = connexion_utilisateur(cursor, clsInfoUsersconnect)
                 
                 # Valider la transaction si tout s'est bien passé
-                db_connexion.commit()
+                cursor.commit()
             
             # Retourner la réponse au client
             if len(response) > 0:
@@ -1353,11 +1353,11 @@ def pvgUserLogin():
                 return jsonify({"SL_MESSAGE": 'Login ou mot de passe incorrect', "SL_RESULTAT": 'FALSE'})
         
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors de la connexion : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         #finally:
-            #db_connexion.close()                    
+            #cursor.close()                    
 
 
 @api_bp.route('/pvgUserChangePasswordfist', methods=['POST'])

@@ -138,7 +138,7 @@ def brouillard_caisse_edition(connexion, broui_caisse_info):
     :return: Liste de dictionnaires représentant les enregistrements de la table
     """
     try:
-        cursor = connexion.cursor()
+        cursor = connexion
         
         DATEDEBUT = parse_datetime(broui_caisse_info['DATEDEBUT'])
         DATEFIN = parse_datetime(broui_caisse_info['DATEFIN'])
@@ -248,7 +248,7 @@ def brouillard_caisse_edition(connexion, broui_caisse_info):
 
 
 
-# brouillard de caisse
+# solde edition
 def solde_edition(connexion, solde_info):
     try:
         cursor = connexion
@@ -291,7 +291,8 @@ def solde_edition(connexion, solde_info):
                 'MC_NUMPIECE': row.MC_NUMPIECE,
                 'SOLDE': int(row.SOLDE),
                 'OP_NOMPRENOM': row.OP_NOMPRENOM,
-                'MR_LIBELLE': row.MR_LIBELLE
+                'MR_LIBELLE': row.MR_LIBELLE,
+                'MC_HEUREACTION': row.MC_HEUREACTION
             }
             
             results.append(result)
@@ -356,6 +357,7 @@ def journal_edition(connexion, journal_info):
             result['MC_NUMPIECE'] = row.MC_NUMPIECE
             result['MC_NUMSEQUENCE'] = row.MC_NUMSEQUENCE
             result['MR_LIBELLE'] = row.MR_LIBELLE
+            result['MC_HEUREACTION'] = row.MC_HEUREACTION
   
             # Ajouter le dictionnaire à la liste des résultats
             results.append(result)

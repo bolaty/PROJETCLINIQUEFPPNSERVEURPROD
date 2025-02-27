@@ -20,7 +20,8 @@ from tools.toolEnvoiSmsEmail import envoi_sms_reedition, envoi_email_reedition
 
 
 #creation du patient
-def insert_patient(cursor, patient_info):
+def insert_patient(connexion, patient_info):
+    cursor = connexion
     # Préparation des paramètres
     params = {
         'PT_IDPATIENT': patient_info.get('PT_IDPATIENT') or None,
@@ -291,6 +292,7 @@ def list_facture(connexion, clsListeFacture):
             result['STAT_CODESTATUT'] = row.STAT_CODESTATUT
             result['NUMEROBORDEREAU'] = row.NUMEROBORDEREAU
             result['PT_CODEPATIENT'] = row.PT_CODEPATIENT
+            result['MR_LIBELLE'] = row.MR_LIBELLE
             # Ajouter le dictionnaire à la liste des résultats
             results.append(result)
         
