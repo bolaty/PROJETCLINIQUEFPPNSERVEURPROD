@@ -189,7 +189,7 @@ def modifier_des_agences(connexion, clsAgence, tab_email, tab_contact):
             params['AG_TELEPHONEDESTI5'] = tab_contact[4]
         
     try:
-        cursor = connexion.cursor()
+        cursor = connexion
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
         cursor.execute("EXEC dbo.PC_AGENCE ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?", list(params.values()))

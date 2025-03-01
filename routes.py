@@ -763,7 +763,7 @@ def pvgExtourneFacture():
         db_connexion = connect_database()
 
         try:
-            with cursor.cursor() as cursor:
+            with db_connexion.cursor() as cursor:
                 cursor.execute("BEGIN TRANSACTION")
                 
                 response = test_journee_fermee(cursor, *vpp_critere)
@@ -2886,18 +2886,18 @@ def modificationAgence():
                 cursor.execute("BEGIN TRANSACTION")
                 
                 # Appeler la fonction de suppression ou récupération
-                modifier_des_agences(db_connexion, clsAgence, request_data['Objet'][0]['AG_EMAIL_DESTI'], request_data['Objet'][0]['AG_TELEPHONE_DESTI'])
+                modifier_des_agences(cursor, clsAgence, request_data['Objet'][0]['AG_EMAIL_DESTI'], request_data['Objet'][0]['AG_TELEPHONE_DESTI'])
                 
                 cursor.execute("COMMIT")
                 return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'})
              
         
         except Exception as e:
-            db_connexion.rollback()
+            cursor.rollback()
             return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
         
         # finally:
-            # db_connexion.close()
+            # cursor.close()
             
             
 
