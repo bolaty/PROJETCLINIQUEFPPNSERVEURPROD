@@ -179,7 +179,7 @@ def traitement_asynchroneVersement(connexion, clsMouvementcomptable, listOperati
     try:
         # Votre traitement asynchrone ici
         for idx in range(len(listOperation)):
-            if "@" in listOperation[idx]['EJ_EMAILCLIENT']:
+            if listOperation[idx].get('EJ_EMAILCLIENT') and "@" in listOperation[idx]['EJ_EMAILCLIENT']:
                 smtpServeur = "smtp.gmail.com"
                 portSmtp = 587
                 adresseEmail = listOperation[idx]['AG_EMAIL']
@@ -224,7 +224,7 @@ def traitement_asynchrone(cursor, clsMouvementcomptable, listOperation):
     try:
         # Votre traitement asynchrone ici
         for idx in range(len(listOperation)):
-            if "@" in listOperation[idx]['EJ_EMAILCLIENT']:
+            if listOperation[idx].get('EJ_EMAILCLIENT') and "@" in listOperation[idx]['EJ_EMAILCLIENT']:
                 smtpServeur = "smtp.gmail.com"
                 portSmtp = 587
                 adresseEmail = listOperation[idx]['AG_EMAIL']

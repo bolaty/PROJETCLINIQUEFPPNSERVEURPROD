@@ -289,6 +289,10 @@ def pvgComptabilisationOperationsCaisse(cursor, clsMouvementcomptables):
                     
                     # Vérifier si la première instruction s'est terminée avec succès
                     if DataSet:
+                        if clsMouvementcomptable['MC_EMAILTIERS'] != '':
+                              DataSet['EJ_EMAILCLIENT'] = clsMouvementcomptable['MC_EMAILTIERS']
+                        if clsMouvementcomptable['MC_CONTACTTIERS'] != '':
+                              DataSet['EJ_TELEPHONE'] = clsMouvementcomptable['MC_CONTACTTIERS']
                         listOperation.append(DataSet)
                         # 2- Exécution de la fonction pvgDecisionEnvoiSMS pour l'envoi ou non du sms
                         # 3- Exécution de la fonction pvpGenererMouchard pour l'insertion dans le mouchard DataSet["MC_NUMPIECE"]

@@ -359,7 +359,7 @@ def traitement_asynchrone(connexion, clsAgence, resultatUserCreation):
     try:
         # Votre traitement asynchrone ici
         for idx in range(len(resultatUserCreation)):
-            if "@" in resultatUserCreation[idx]['OP_EMAIL']:
+            if resultatUserCreation[idx].get('OP_EMAIL') and "@" in resultatUserCreation[idx]['OP_EMAIL']:
                 smtpServeur = "smtp.gmail.com"
                 portSmtp = 587
                 adresseEmail = clsAgence.AG_EMAIL

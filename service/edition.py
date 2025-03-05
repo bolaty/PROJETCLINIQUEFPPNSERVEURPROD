@@ -146,7 +146,7 @@ def brouillard_caisse_edition(connexion, broui_caisse_info):
         # Préparation des paramètres
         params = {
             'AG_CODEAGENCE': broui_caisse_info['AG_CODEAGENCE'],
-            'OP_CODEOPERATEUR': broui_caisse_info['OP_CODEOPERATEUR'],
+            'OP_CODEOPERATEUR': broui_caisse_info.get('OP_CODEOPERATEUR') or None,
             'DATEDEBUT': DATEDEBUT,
             'DATEFIN': DATEFIN,
             'CODECRYPTAGE': CODECRYPTAGE,

@@ -180,25 +180,25 @@ def insertpatient(connexion, patient_info):
                 cursor.commit()
                 
                 # Définition de la variable CODECRYPTAGE
-
-                # Requête SQL avec la variable passée comme paramètre
-                cursor.execute("""
-                    SELECT MAX(PT_IDPATIENT) FROM PATIENT 
-                """)
-                resultat = cursor.fetchone()[0]
-                
-                patient_info['PT_IDPATIENT'] = str(resultat)[4:]#resultat
-                
-                clsAgence = pvgTableLabelAgence(connexion, patient_info['AG_CODEAGENCE'],CODECRYPTAGE)
-        
-                if clsAgence.AG_EMAIL is not None:
-                    # Validation de la transaction
-                    get_commit(connexion,patient_info)
+                if int(patient_info['TYPEOPERATION']) == 0:
+                    # Requête SQL avec la variable passée comme paramètre
+                    cursor.execute("""
+                        SELECT MAX(PT_IDPATIENT) FROM PATIENT 
+                    """)
+                    resultat = cursor.fetchone()[0]
                     
-                    # Démarrage d'un traitement asynchrone dans un thread
-                    thread_traitement = threading.Thread(target=traitement_asynchrone, args=(connexion, clsAgence, patient_info))
-                    thread_traitement.daemon = True
-                    thread_traitement.start()
+                    patient_info['PT_IDPATIENT'] = str(resultat)[4:]#resultat
+                    
+                    clsAgence = pvgTableLabelAgence(connexion, patient_info['AG_CODEAGENCE'],CODECRYPTAGE)
+            
+                    if clsAgence.AG_EMAIL is not None:
+                        # Validation de la transaction
+                        get_commit(connexion,patient_info)
+                        
+                        # Démarrage d'un traitement asynchrone dans un thread
+                        thread_traitement = threading.Thread(target=traitement_asynchrone, args=(connexion, clsAgence, patient_info))
+                        thread_traitement.daemon = True
+                        thread_traitement.start()
                 
             except Exception as e:
                 cursor.rollback()
@@ -327,8 +327,8 @@ def pvgTableLabelAgence(connection, *vppCritere):
 def traitement_asynchrone(connection, clsAgence, resultatUserCreation):
     try:
         # Votre traitement asynchrone ici
-        if "@" in resultatUserCreation['PT_EMAIL']:
-            if "@" in resultatUserCreation['PT_EMAIL']:
+        if resultatUserCreation.get('PT_EMAIL') and "@" in resultatUserCreation['PT_EMAIL']:
+            if resultatUserCreation.get('PT_EMAIL') and "@" in resultatUserCreation['PT_EMAIL']:
                 smtpServeur = "smtp.gmail.com"
                 portSmtp = 587
                 adresseEmail = clsAgence.AG_EMAIL
