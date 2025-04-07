@@ -60,6 +60,9 @@ def dashboard(connexion, cls_dashboard):
             result['MONTANT_TOTAL_CHEQUE'] = row.MONTANT_TOTAL_CHEQUE
             result['NOMBRE_VIREMENT'] = row.NOMBRE_VIREMENT
             result['MONTANT_TOTAL_VIREMENT'] = row.MONTANT_TOTAL_VIREMENT
+            result['MONTANT_TOTAL_ACTE_GLOBALE'] = row.MONTANT_TOTAL_ACTE_GLOBALE
+            result['MONTANT_TOTAL_DEPENSE'] = row.MONTANT_TOTAL_DEPENSE
+            result['MONTANT_TOTAL_DEPENSE_GLOBALE'] = row.MONTANT_TOTAL_DEPENSE_GLOBALE
   
             # Ajouter le dictionnaire à la liste des résultats
             results.append(result)

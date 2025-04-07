@@ -1,3 +1,6 @@
+from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+import smtplib
 from flask import Blueprint,request, jsonify,current_app,current_app as app,send_file
 from service.dashboard import dashboard
 from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture, get_code_facture, get_info_comptabilisation
@@ -1310,7 +1313,50 @@ def pvgDashboard():
         
         #finally:
             #db_connexion.close()
-            
+
+
+@api_bp.route('/send_email', methods=['POST'])
+def send_email():
+    try:
+        # Récupération de l'email et du fichier depuis FormData
+        email = request.form.get('email')
+        ag_email = request.form.get('ag_email')
+        ag_email_mdp = request.form.get('ag_email_mdp')
+        file = request.files.get('file')
+
+        if not email or not file or not ag_email or not ag_email_mdp:
+            return jsonify({'error': 'Email ou fichier manquant'}), 400
+        
+        if not ag_email or not ag_email_mdp:
+            return jsonify({'error': 'Aucun email agence configuré'}), 400
+
+        file_content = file.read()
+
+        # Création de l'email
+        msg = EmailMessage()
+        msg['Subject'] = 'Votre rapport PDF'
+        msg['From'] = ag_email
+        msg['To'] = email
+        msg.set_content("Bonjour,\n\nVoici le rapport PDF en pièce jointe.")
+
+        msg.add_attachment(
+            file_content,
+            maintype='application',
+            subtype='pdf',
+            filename=file.filename
+        )
+
+        # Envoi de l'email via SMTP
+        with smtplib.SMTP('smtp.gmail.com', 587) as smtp:
+            smtp.starttls()
+            smtp.login(ag_email, ag_email_mdp)
+            smtp.send_message(msg)
+
+        return jsonify({'message': 'Email envoyé avec succès.'}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 ################################################################
 #                      GESTION DASHBOARD                                                                  #
 ################################################################
@@ -3691,24 +3737,6 @@ def OperationVersementRetrait():
 # ################################################################
 #         GESTION GUICHET                               #
 ##################################################################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
