@@ -147,6 +147,7 @@ def brouillard_caisse_edition(connexion, broui_caisse_info):
         params = {
             'AG_CODEAGENCE': broui_caisse_info['AG_CODEAGENCE'],
             'OP_CODEOPERATEUR': broui_caisse_info.get('OP_CODEOPERATEUR') or None,
+            'TYPEBROUILLARD': broui_caisse_info.get('TYPEBROUILLARD') or None,
             'DATEDEBUT': DATEDEBUT,
             'DATEFIN': DATEFIN,
             'CODECRYPTAGE': CODECRYPTAGE,
@@ -158,7 +159,7 @@ def brouillard_caisse_edition(connexion, broui_caisse_info):
         }
     
         # Exécuter la procédure stockée avec le bon schéma (assure-toi que 'dbo' est le bon schéma)
-        cursor.execute("EXEC dbo.PS_ETATBROUILLARDCAISSE ?,?,?,?,?,?,?,?,?,?", list(params.values()))
+        cursor.execute("EXEC dbo.PS_ETATBROUILLARDCAISSE ?,?,?,?,?,?,?,?,?,?,?", list(params.values()))
         # cursor.execute("EXEC dbo.PS_ETATBROUILLARDCAISSE ?,?,?,?,?,?,?", list(params.values()))
         
         # Passer aux résultats (au cas où la procédure exécute plusieurs commandes)

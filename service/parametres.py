@@ -84,6 +84,7 @@ def liste_des_agences(connexion):
             result = {}
 	
             result['AG_CODEAGENCE'] = row.AG_CODEAGENCE
+            result['AG_AGENCECODE'] = row.AG_AGENCECODE
             result['SO_CODESOCIETE'] = row.SO_CODESOCIETE
             result['AG_RAISONSOCIAL'] = row.AG_RAISONSOCIAL
             result['AG_DATECREATION'] = row.AG_DATECREATION.strftime("%d/%m/%Y")
@@ -118,6 +119,7 @@ def liste_des_agences(connexion):
     
 def modifier_des_agences(connexion, clsAgence, tab_email, tab_contact):
     params = {
+        'AG_AGENCECODE': clsAgence['AG_AGENCECODE'],
         'AG_CODEAGENCE': clsAgence['AG_CODEAGENCE'],
         'SO_CODESOCIETE': clsAgence['SO_CODESOCIETE'],
         'AG_RAISONSOCIAL': clsAgence['AG_RAISONSOCIAL'],
@@ -192,7 +194,7 @@ def modifier_des_agences(connexion, clsAgence, tab_email, tab_contact):
         cursor = connexion
         
         # Exécuter la fonction SQL avec le codecryptage comme paramètre
-        cursor.execute("EXEC dbo.PC_AGENCE ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?", list(params.values()))
+        cursor.execute("EXEC dbo.PC_AGENCE ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?", list(params.values()))
     except Exception as e:
         connexion.rollback()
         raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")

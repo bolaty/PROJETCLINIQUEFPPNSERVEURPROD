@@ -964,6 +964,7 @@ def pvgBrouillardCaisse():
         # Validation et récupération des données pour la suppression
         broui_caisse_info['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE'))
         broui_caisse_info['OP_CODEOPERATEUR'] = str(row.get('OP_CODEOPERATEUR'))
+        broui_caisse_info['TYPEBROUILLARD'] = str(row.get('TYPEBROUILLARD'))
         broui_caisse_info['DATEDEBUT'] = str(row.get('DATEDEBUT'))
         broui_caisse_info['DATEFIN'] = str(row.get('DATEFIN'))
         broui_caisse_info['TYPEETAT'] = str(row.get('TYPEETAT'))
@@ -2910,6 +2911,7 @@ def modificationAgence():
 
     for row in request_data['Objet']:
         clsAgence = {}
+        clsAgence['AG_AGENCECODE'] = str(row.get('AG_AGENCECODE', ''))
         clsAgence['AG_CODEAGENCE'] = str(row.get('AG_CODEAGENCE', ''))
         clsAgence['SO_CODESOCIETE'] = str(row.get('SO_CODESOCIETE', ''))
         clsAgence['AG_RAISONSOCIAL'] = str(row.get('AG_RAISONSOCIAL', ''))
