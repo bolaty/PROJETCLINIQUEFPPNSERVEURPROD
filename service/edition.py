@@ -570,7 +570,7 @@ def gd_livre_edition(connexion, gd_livre_info):
             'JO_CODEJOURNAL': row.JO_CODEJOURNAL,
             'MC_NUMPIECE': row.MC_NUMPIECE,
             'MC_NUMSEQUENCE': row.MC_NUMSEQUENCE,
-            'SOLDE': solde,
+            'SOLDE': row.SOLDE,
             'SOLDEPRECEDENT': row.SOLDEPRECEDENT,
             'MR_LIBELLE': row.MR_LIBELLE
             }
