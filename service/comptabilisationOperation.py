@@ -556,7 +556,7 @@ def pvg_comptabilisation(connexion, cls_mouvement_comptable):
     params = {
         'AG_CODEAGENCE': cls_mouvement_comptable.get('AG_CODEAGENCE'),
         'MC_DATEPIECE': parse_datetime(cls_mouvement_comptable.get('MC_DATEPIECE')),
-        'MC_NUMPIECE': cls_mouvement_comptable.get('MC_NUMPIECE'),
+        'MC_NUMPIECE': int(cls_mouvement_comptable.get('MC_NUMPIECE')),
         'MC_NUMSEQUENCE': cls_mouvement_comptable.get('MC_NUMSEQUENCE'),
         'MR_CODEMODEREGLEMENT': cls_mouvement_comptable.get('MR_CODEMODEREGLEMENT'),
         'PT_IDPATIENT': cls_mouvement_comptable.get('PT_IDPATIENT') or None,
