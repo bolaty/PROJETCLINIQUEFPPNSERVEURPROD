@@ -104,7 +104,8 @@ def pvginsert_patient():
                 reponse = insertpatient(cursor, patient_info)
                 
                 # Valider la transaction
-                cursor.commit()
+                # cursor.commit()
+                get_commit(cursor,request_data)
 
             return jsonify({"SL_MESSAGE": "Insertion réussie!", "SL_RESULTAT": 'TRUE'}), 200
 
@@ -3739,6 +3740,24 @@ def OperationVersementRetrait():
 # ################################################################
 #         GESTION GUICHET                               #
 ##################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -236,7 +236,8 @@ def brouillard_caisse_edition(connexion, broui_caisse_info):
                 'SOLDEACTUELMOOV': int(row.SOLDEACTUELMOOV),
                 'SOLDEACTUELCHEQUE': int(row.SOLDEACTUELCHEQUE),
                 'SOLDEACTUELVIREMENT': int(row.SOLDEACTUELVIREMENT),
-                'SOLDE': int(row.SOLDE)
+                'SOLDE': int(row.SOLDE),
+                'MC_HEUREACTION': row.MC_HEUREACTION if row.MC_HEUREACTION else None,
             }
             
             results.append(result)
