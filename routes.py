@@ -4,7 +4,7 @@ import smtplib
 from flask import Blueprint,request, jsonify,current_app,current_app as app,send_file
 from service.dashboard import dashboard
 from service.FacturePatient import insert_patient, get_id_patient, insert_facture, update_facture, delete_facture, get_facture, list_facture, get_code_facture, get_info_comptabilisation
-from service.parametres import liste_operateur, liste_des_agences, liste_des_profils, liste_des_services, liste_des_parametres, modifier_des_agences
+from service.parametres import liste_operateur, liste_des_agences, liste_des_profils, liste_des_services, liste_des_parametres, modifier_des_agences, modifier_param
 from service.comptabilisationOperation import pvgComptabilisationVersement, pvgComptabilisationOperationsFacture, pvgComptabilisationOperations, pvgComptabilisationOperationsCaisse
 from service.edition import recu_edition,ExtourneOperation,ExtourneFacture, brouillard_caisse_edition,editionPatient, journal_edition, gd_livre_edition, balance_edition,point_par_acte_edition,formation_edition,solde_edition
 from service.auth import connexion_utilisateur
@@ -3073,7 +3073,51 @@ def pvgGetParametre():
         
         #finally:
             #db_connexion.close()
-            
+
+
+
+@api_bp.route('/modifier_parametrage', methods=['POST'])
+def modificationParametrage():
+    request_data = request.json
+    
+    if 'Objet' not in request_data:
+        return jsonify({"SL_MESSAGE": "Données manquantes.code erreur (300) voir le noeud Objet", "SL_RESULTAT": 'FALSE'})
+
+    for row in request_data['Objet']:
+        clsAgence = {}
+        clsAgence['PP_CODEPARAMETRE'] = str(row.get('PP_CODEPARAMETRE', ''))
+        clsAgence['SO_CODESOCIETE'] = str(row.get('SO_CODESOCIETE', ''))
+        clsAgence['PP_LIBELLE'] = str(row.get('PP_LIBELLE', ''))
+        clsAgence['PP_MONTANTMINI'] = str(row.get('PP_MONTANTMINI', ''))
+        clsAgence['PP_MONTANTMAXI'] = str(row.get('PP_MONTANTMAXI', ''))
+        clsAgence['PP_TAUX'] = str(row.get('PP_TAUX', ''))
+        clsAgence['PP_MONTANT'] = str(row.get('PP_MONTANT', ''))
+        clsAgence['PP_VALEUR'] = str(row.get('PP_VALEUR', ''))
+        clsAgence['PL_CODENUMCOMPTE'] = str(row.get('PL_CODENUMCOMPTE', ''))
+        clsAgence['PP_AFFICHER'] = str(row.get('PP_AFFICHER', ''))
+
+        # Connexion à la base de données
+        db_connexion = connect_database()
+
+        try:
+            with db_connexion.cursor() as cursor:
+                cursor.execute("BEGIN TRANSACTION")
+                
+                # Appeler la fonction de suppression ou récupération
+                modifier_param(cursor, clsAgence)
+                
+                cursor.execute("COMMIT")
+                return jsonify({"SL_MESSAGE": "Opération effectuée avec succès !!!", "SL_RESULTAT": 'TRUE'})
+             
+        
+        except Exception as e:
+            cursor.rollback()
+            return jsonify({"SL_MESSAGE": "Erreur lors du chargement : " + str(e), "SL_RESULTAT": 'FALSE'})
+        
+        # finally:
+            # cursor.close()
+  
+  
 ################################################################
 #                    GESTION DES PARAMETRES                    #
 ################################################################

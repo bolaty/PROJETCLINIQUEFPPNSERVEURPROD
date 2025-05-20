@@ -94,7 +94,7 @@ def connexion_utilisateur(connexion, clsInfoUsersconnect):
             clsUserConnect['SO_CODESOCIETE'] = row.SO_CODESOCIETE
             clsUserConnect['AG_BOITEPOSTAL'] = row.AG_BOITEPOSTAL
             clsUserConnect['AG_NUMEROAGREMENT'] = row.AG_NUMEROAGREMENT
-            clsUserConnect['PARAM_TRAP'] = row.PARAM_TRAP
+            # clsUserConnect['PARAM_TRAP'] = row.PARAM_TRAP
             RetourUserConnect.append(clsUserConnect)
         # Faites ce que vous voulez avec les données récupérées
         return RetourUserConnect

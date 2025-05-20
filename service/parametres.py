@@ -198,8 +198,35 @@ def modifier_des_agences(connexion, clsAgence, tab_email, tab_contact):
     except Exception as e:
         connexion.rollback()
         raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
+     
     
-    
+
+def modifier_param(connexion, clsAgence):
+    params = {
+        'PP_CODEPARAMETRE': clsAgence['PP_CODEPARAMETRE'],
+        'SO_CODESOCIETE': clsAgence['SO_CODESOCIETE'],
+        'PP_LIBELLE': clsAgence['PP_LIBELLE'],
+        'PP_MONTANTMINI': float(clsAgence.get('PP_MONTANTMINI') or 0),
+        'PP_MONTANTMAXI': float(clsAgence.get('PP_MONTANTMINI') or 0),
+        'PP_TAUX': float(clsAgence.get('PP_MONTANTMINI') or 0),
+        'PP_MONTANT': float(clsAgence.get('PP_MONTANTMINI') or 0),
+        'PP_VALEUR': clsAgence['PP_VALEUR'],
+        'PL_CODENUMCOMPTE': int(clsAgence['PL_CODENUMCOMPTE']),
+        'PP_AFFICHER': clsAgence['PP_AFFICHER'],
+        'CODECRYPTAGE': CODECRYPTAGE,
+        'TYPEOPERATION': 1
+    }
+
+    try:
+        cursor = connexion
+        
+        # Exécuter la fonction SQL avec le codecryptage comme paramètre
+        cursor.execute("EXEC dbo.PC_PARAMETRE ?,?,?,?,?,?,?,?,?,?,?,?", list(params.values()))
+    except Exception as e:
+        connexion.rollback()
+        raise Exception(f"Erreur lors de l'insertion: {str(e.args[1])}")
+ 
+ 
     
 def liste_des_profils(connexion):
     
